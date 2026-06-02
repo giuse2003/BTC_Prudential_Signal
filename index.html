@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>BTC / EUR — Dashboard</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <main class="container">
+      <header class="header">
+        <div>
+          <h1>BTC / EUR</h1>
+          <p class="subtitle">Prezzo spot da Coinbase (endpoint pubblico)</p>
+        </div>
+        <div class="status" id="status">
+          <span class="dot" aria-hidden="true"></span>
+          <span id="statusText">In attesa…</span>
+        </div>
+      </header>
+
+      <section class="card grid">
+        <div class="metric">
+          <div class="label">Prezzo</div>
+          <div class="value" id="price">—</div>
+          <div class="hint">EUR per 1 BTC</div>
+        </div>
+
+        <div class="metric">
+          <div class="label">Ora</div>
+          <div class="value mono" id="time">—</div>
+          <div class="hint">Ultimo aggiornamento</div>
+        </div>
+
+        <div class="metric">
+          <div class="label">Refresh</div>
+          <div class="value">
+            <select id="refreshSelect" class="select" aria-label="Intervallo refresh">
+              <option value="5000">5s</option>
+              <option value="10000" selected>10s</option>
+              <option value="30000">30s</option>
+              <option value="60000">60s</option>
+            </select>
+          </div>
+          <div class="hint">Intervallo di aggiornamento</div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="row">
+          <h2>Ultimi valori</h2>
+          <button class="btn" id="clearHistory">Svuota</button>
+        </div>
+        <div class="tableWrap">
+          <table class="table" aria-label="Storico prezzi">
+            <thead>
+              <tr>
+                <th>Timestamp</th>
+                <th class="right">Prezzo (EUR)</th>
+              </tr>
+            </thead>
+            <tbody id="historyBody"></tbody>
+          </table>
+        </div>
+        <p class="footnote">
+          Nota: è lo <span class="mono">spot price</span>. Non è un consiglio finanziario.
+        </p>
+      </section>
+    </main>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
+
