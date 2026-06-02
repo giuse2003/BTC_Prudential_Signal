@@ -98,6 +98,16 @@ def add_52w_high_low(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
+def add_price_momentum(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Momentum del prezzo rispetto a N giorni fa.
+    """
+    df = df.copy()
+    days = CFG.momentum_days
+    df[f"Close_{days}d_ago"] = df["Close"].shift(days)
+    return df
+
+
 def compute_all_indicators(df_ohlc: pd.DataFrame) -> pd.DataFrame:
     """
     Calcola tutti gli indicatori richiesti e li inserisce in un DataFrame.
@@ -110,6 +120,7 @@ def compute_all_indicators(df_ohlc: pd.DataFrame) -> pd.DataFrame:
     df = add_volume_features(df)
     df = add_atr_14(df, CFG.atr_period)
     df = add_52w_high_low(df)
+    df = add_price_momentum(df)
 
     return df
 

@@ -55,6 +55,7 @@ def save_text_report(
     metrics_strategy,
     metrics_bh,
     out_path: str | Path,
+    price_eur: float | None = None,
 ) -> Path:
     """
     Crea il report testuale completo.
@@ -65,7 +66,7 @@ def save_text_report(
     latest = df.iloc[-1]
     day = df.index[-1].strftime("%Y-%m-%d")
 
-    motivazione = explain_latest_row(df)
+    motivazione = explain_latest_row(df, price_eur=price_eur)
 
     # Informazioni su indicatori (richiesti / utili dal report testuale).
     atr = float(latest.get("ATR", float("nan")))
@@ -138,8 +139,8 @@ def plot_price_and_sma_with_signals(df: pd.DataFrame, out_path: str | Path) -> P
     ax.plot(df.index, df["SMA50"], color="#60a5fa", linewidth=1.0, label=f"SMA{CFG.sma_fast}")
     ax.plot(df.index, df["SMA200"], color="#a78bfa", linewidth=1.0, label=f"SMA{CFG.sma_slow}")
 
-    buy_labels = {"ACCUMULO GRADUALE", "ACQUISTO", "ACQUISTO FORTE"}
-    sell_label = "RIDURRE ESPOSIZIONE"
+    buy_labels = {"ACQUISTA"}
+    sell_label = "VENDI / RIDUCI ESPOSIZIONE"
 
     buy_df = df[df["Segnale"].isin(buy_labels)]
     sell_df = df[df["Segnale"] == sell_label]

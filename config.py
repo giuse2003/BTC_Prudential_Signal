@@ -29,6 +29,7 @@ class Config:
     vol_avg_period: int = 20
     atr_period: int = 14
     weeks_52_days: int = 252  # ~252 giorni di trading = 52 settimane
+    momentum_days: int = 7    # Confronto prezzo con 7 giorni fa
 
     # Punteggio (0..100)
     # Nota: i pesi sono implementati direttamente nella strategia per chiarezza.
@@ -50,11 +51,9 @@ class Config:
             self,
             "exposure_map",
             {
-                "EVITARE": 0.0,
-                "ACCUMULO GRADUALE": 0.25,
-                "ACQUISTO": 0.50,
-                "ACQUISTO FORTE": 1.0,
-                "RIDURRE ESPOSIZIONE": 0.0,
+                "ACQUISTA": 1.0,
+                "MANTIENI": float("nan"),  # NaN indica di mantenere l'esposizione precedente
+                "VENDI / RIDUCI ESPOSIZIONE": 0.0,
             },
         )
 

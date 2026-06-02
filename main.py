@@ -30,6 +30,7 @@ import pandas as pd
 
 from data.fetch_yahoo import fetch_btc_daily_csv, load_daily_csv
 from indicators.technical_indicators import compute_all_indicators
+from live.coinbase import fetch_spot_price
 from reports.generate import plot_price_and_sma_with_signals, save_historical_csv, save_text_report
 from strategy.signals import compute_signals
 from backtest.backtest import run_backtest
@@ -80,12 +81,18 @@ def main() -> None:
     latest_csv = out_reports / "historical_signals.csv"
     save_historical_csv(df_signals, latest_csv)
 
+    try:
+        spot_eur = fetch_spot_price("BTC-EUR", timeout_s=5).price
+    except Exception:
+        spot_eur = None
+
     report_path = out_reports / "report.txt"
     save_text_report(
         df_signals,
         metrics_strategy=metrics_strategy,
         metrics_bh=metrics_bh,
         out_path=report_path,
+        price_eur=spot_eur,
     )
 
     chart_path = out_reports / "price_sma_signals.png"
@@ -98,8 +105,10 @@ def main() -> None:
     print("")
     print("Riepilogo ultimo giorno:")
     print(f"- Data: {day}")
-    print(f"- Prezzo: {float(latest['Close']):.2f} USD")
-    print(f"- Punteggio: {float(latest['Punteggio']):.0f}/100")
+    if spot_eur:
+        print(f"- Prezzo: {spot_eur:,.2f} EUR (live da Coinbase)")
+    else:
+        print(f"- Prezzo: {float(latest['Close']):.2f} USD")
     print(f"- Segnale: {latest['Segnale']}")
     print("")
     print(f"Report: {report_path}")

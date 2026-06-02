@@ -79,31 +79,12 @@ def score_rowwise(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def classify_by_score(df: pd.DataFrame) -> pd.DataFrame:
+def compute_strict_signal(df: pd.DataFrame) -> pd.DataFrame:
     """
-    Converte Punteggio 0..100 nel segnale di accumulo/acquisto.
-    """
-    df = df.copy()
-    score = df["Punteggio"].astype(float)
-
-    signal = np.full(len(df), "EVITARE", dtype=object)
-    signal[(score >= 40) & (score <= 69)] = "ACCUMULO GRADUALE"
-    signal[(score >= 70) & (score <= 84)] = "ACQUISTO"
-    signal[(score >= 85) & (score <= 100)] = "ACQUISTO FORTE"
-    df["Segnale"] = signal
-    return df
-
-
-def apply_sell_rules(df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Regole di vendita (priorità assoluta):
-    Se una delle condizioni è vera:
-    - Close < SMA200
-    - SMA50 < SMA200
-    - RSI > 80 e distanza dalla SMA200 > 30%
-
-    Allora:
-    Segnale = RIDURRE ESPOSIZIONE
+    Classificazione stretta:
+    ACQUISTA se TUTTE le condizioni rialziste sono vere.
+    VENDI / RIDUCI ESPOSIZIONE se TUTTE le condizioni ribassiste sono vere.
+    Altrimenti MANTIENI.
     """
     df = df.copy()
 
@@ -111,45 +92,45 @@ def apply_sell_rules(df: pd.DataFrame) -> pd.DataFrame:
     sma50 = df["SMA50"]
     sma200 = df["SMA200"]
     rsi = df["RSI"]
-    distance_pct = df["DistanceFromSMA200_Pct"]
+    volume = df["Volume"]
+    volume_avg20 = df["VolumeAvg20"]
+    days = CFG.momentum_days
+    close_momentum = df[f"Close_{days}d_ago"]
 
-    sell_cond1 = close < sma200
-    sell_cond2 = sma50 < sma200
-    sell_cond3 = (rsi > 80) & (distance_pct > 30)
+    buy_cond = (
+        (close > sma200) &
+        (sma50 > sma200) &
+        (rsi >= 40) & (rsi <= 65) &
+        (close > close_momentum) &
+        (volume > volume_avg20)
+    )
 
-    any_sell = sell_cond1 | sell_cond2 | sell_cond3
+    sell_cond = (
+        (close < sma200) &
+        (sma50 < sma200) &
+        (rsi < 35) &
+        (close < close_momentum) &
+        (volume > volume_avg20)
+    )
 
-    # Reason testuale per motivazione (opzionale ma utile per report).
-    reason = np.full(len(df), "", dtype=object)
-    reason[sell_cond1] = "Close < SMA200"
-    reason[~sell_cond1 & sell_cond2] = "SMA50 < SMA200"
-    reason[~(sell_cond1 | sell_cond2) & sell_cond3] = "RSI > 80 e distanza SMA200 > 30%"
-
-    df.loc[any_sell, "Segnale"] = "RIDURRE ESPOSIZIONE"
-    df.loc[any_sell, "SellReason"] = reason[any_sell]
+    signal = np.full(len(df), "MANTIENI", dtype=object)
+    signal[buy_cond] = "ACQUISTA"
+    signal[sell_cond] = "VENDI / RIDUCI ESPOSIZIONE"
+    
+    df["Segnale"] = signal
     return df
 
 
 def compute_signals(df_indicators: pd.DataFrame) -> pd.DataFrame:
     """
     Pipeline completa:
-    - calcola punteggio
-    - classifica
-    - applica vendita (override)
+    - calcola punteggio tecnico (solo per report log, non decide il segnale)
+    - classifica con regole strette
     """
     df = score_rowwise(df_indicators)
-    df = classify_by_score(df)
-    df = apply_sell_rules(df)
-
+    df = compute_strict_signal(df)
+    
     # Estensione futura (on-chain) - placeholder
-    # Se in futuro aggiungerai colonne on-chain (MVRV, NUPL, Puell Multiple, ecc.),
-    # qui puoi implementare un filtro extra "prudente".
-    #
-    # Esempio di comportamento prudente (solo idea):
-    # - se MVRV è in zona storicamente "eccesso", forzare RIDURRE ESPOSIZIONE
-    # - se NUPL indica "capitolazione/accumulo" e MVRV è favorevole, permettere BUY
-    #
-    # Per ora NON alteriamo la logica richiesta dalla specifica.
     df = apply_onchain_filters_placeholder(df)
 
     return df
@@ -158,65 +139,65 @@ def compute_signals(df_indicators: pd.DataFrame) -> pd.DataFrame:
 def apply_onchain_filters_placeholder(df_with_signals: pd.DataFrame) -> pd.DataFrame:
     """
     Stub per filtri on-chain.
-
-    In futuro:
-    - caricherai dati on-chain (probabilmente da provider/API o CSV locale)
-    - farai merge su date
-    - aggiornerai df_with_signals["Segnale"] in modo conservativo
-
-    Restituisce:
-        df_with_signals inalterato (comportamento attuale).
     """
-    # TODO: implementare quando disponibili i dati on-chain.
     return df_with_signals
 
 
-def explain_latest_row(df_with_signals: pd.DataFrame) -> str:
+def explain_latest_row(df_with_signals: pd.DataFrame, price_eur: float | None = None) -> str:
     """
-    Produce una motivazione testuale dettagliata per l'ultima riga.
+    Produce una sintesi testuale chiara (stile discorsivo) per Telegram.
+    Non espone dettagli tecnici superflui (se non indispensabili).
     """
     row = df_with_signals.iloc[-1]
-
-    punteggio = row.get("Punteggio", np.nan)
     segnale = row.get("Segnale", "N/A")
-
-    parts: list[str] = []
-    parts.append(f"Segnale finale: {segnale}")
-    parts.append(f"Punteggio: {punteggio:.0f}/100")
-
-    # Componenti punteggio (se disponibili)
-    parts.append(f"Trend principale (Close > SMA200): {'SI' if row['Close'] > row['SMA200'] else 'NO'} (+25 se SI)")
-    parts.append(f"Trend secondario (SMA50 > SMA200): {'SI' if row['SMA50'] > row['SMA200'] else 'NO'} (+25 se SI)")
-
+    close_usd = row["Close"]
+    
+    # Trend lungo/medio (rispetto a SMA200 e SMA50 vs SMA200)
+    trend_lungo = "positivo" if close_usd > row["SMA200"] else "negativo"
+    trend_medio = "positivo" if row["SMA50"] > row["SMA200"] else "negativo"
+    
+    # RSI check
     rsi = row["RSI"]
-    if 40 <= rsi <= 65:
-        parts.append(f"RSI: {rsi:.1f} => 40..65 => +15")
-    elif 30 <= rsi < 40:
-        parts.append(f"RSI: {rsi:.1f} => 30..40 => +10")
-    elif rsi > 75:
-        parts.append(f"RSI: {rsi:.1f} => >75 => 0 punti")
-    elif rsi < 30:
-        parts.append(f"RSI: {rsi:.1f} => <30 => 0 punti")
+    if rsi < 30:
+        rsi_desc = f"{rsi:.1f} — mercato ipervenduto"
+    elif rsi < 40:
+        rsi_desc = f"{rsi:.1f} — mercato debole"
+    elif rsi <= 65:
+        rsi_desc = f"{rsi:.1f} — zona neutrale/costruttiva"
     else:
-        parts.append(f"RSI: {rsi:.1f} => nessun range favorevole => 0 punti")
+        rsi_desc = f"{rsi:.1f} — mercato ipercomprato"
 
-    # Volume
-    vol_ok = row["Volume"] > row["VolumeAvg20"]
-    parts.append(f"Volume: {'odierno > media20' if vol_ok else 'odierno <= media20'} => {'+15' if vol_ok else '0'}")
+    # Volume check
+    vol_desc = "confermano la direzione (sopra media)" if row["Volume"] > row["VolumeAvg20"] else "non confermano (sotto media)"
+    
+    # Prezzo EUR string (se disponibile)
+    prezzo_str = f"{price_eur:,.2f} EUR".replace(",", "X").replace(".", ",").replace("X", ".") if price_eur else f"{close_usd:,.2f} USD"
 
-    # Distanza
-    dist = row["DistanceFromSMA200_Pct"]
-    if 0 <= dist <= 20:
-        parts.append(f"Distanza SMA200: {dist:.2f}% => 0..20 => +20")
-    elif dist > 40:
-        parts.append(f"Distanza SMA200: {dist:.2f}% => >40 => 0 punti")
+    lines = []
+    lines.append("BTC MONITOR")
+    lines.append("")
+    lines.append(f"Segnale: {segnale}")
+    lines.append("")
+    lines.append(f"Prezzo BTC: {prezzo_str}")
+    lines.append("")
+    lines.append("Situazione:")
+    lines.append(f"- Trend lungo periodo: {trend_lungo}")
+    lines.append(f"- Trend medio periodo: {trend_medio}")
+    lines.append(f"- RSI: {rsi_desc}")
+    lines.append(f"- Volumi: {vol_desc}")
+    lines.append("")
+    lines.append("Indicazione:")
+    
+    if segnale == "ACQUISTA":
+        lines.append("Tutte le conferme rialziste sono allineate.")
+        lines.append("Condizioni favorevoli per accumulare o comprare.")
+    elif segnale == "VENDI / RIDUCI ESPOSIZIONE":
+        lines.append("Il mercato mostra forte debolezza e i volumi confermano il trend ribassista.")
+        lines.append("Valutare la riduzione del rischio.")
     else:
-        parts.append(f"Distanza SMA200: {dist:.2f}% => fuori range favorevole => 0 punti")
+        lines.append("Non acquistare ora.")
+        lines.append("Se hai già BTC, valuta di mantenere o ridurre solo se arrivano ulteriori conferme ribassiste.")
+        lines.append("Nessun nuovo acquisto finché il trend non migliora.")
 
-    # Sell override
-    if segnale == "RIDURRE ESPOSIZIONE":
-        reason = row.get("SellReason", "")
-        parts.append(f"Override vendita: {reason or 'condizione di rischio attiva'}")
-
-    return "\n".join(parts)
+    return "\n".join(lines)
 

@@ -68,8 +68,8 @@ def exposure_from_signal(signals: pd.Series, exposure_map: dict[str, float]) -> 
     """
     Mappa stringhe di segnale -> esposizione frazione di capitale.
     """
-    # default prudente se troviamo segnali non previsti
-    default = 0.0
+    # default prudente se troviamo segnali non previsti = NaN (MANTIENI)
+    default = float("nan")
     return signals.map(lambda s: exposure_map.get(s, default)).astype(float)
 
 
@@ -92,6 +92,9 @@ def run_backtest(df: pd.DataFrame, initial_capital: float = 1.0) -> tuple[pd.Dat
     df = df.sort_index().copy()
 
     desired_exposure = exposure_from_signal(df["Segnale"], CFG.exposure_map)
+
+    # I NaN in desired_exposure indicano "MANTIENI" -> usiamo ffill() per propagare la posizione
+    desired_exposure = desired_exposure.ffill().fillna(0.0)
 
     # esposizione effettiva per il rendimento di oggi:
     # se segnale(t) è calcolato a chiusura t, lo applichiamo a rendimenti t->t+1,
