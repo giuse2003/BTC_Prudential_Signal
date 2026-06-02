@@ -1,0 +1,63 @@
+"""
+Configurazione centralizzata.
+
+Obiettivo:
+- rendere facile modificare finestre (SMA, RSI, ecc.)
+- rendere facile estendere la logica futura (on-chain, Fear & Greed, ecc.)
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+
+
+@dataclass(frozen=True)
+class Config:
+    # Intervallo dati
+    start_date: str = "2015-01-01"
+    end_date: str = "today"
+
+    # Serie usata per i segnali (Yahoo Finance)
+    # "BTC-USD" perché è l'indicatore standard di trading su Yahoo.
+    # Se vuoi cambiare quote a EUR/USD o altre, puoi farlo qui.
+    symbol: str = "BTC-USD"
+
+    # Indicatori tecnici
+    sma_fast: int = 50
+    sma_slow: int = 200
+    rsi_period: int = 14
+    vol_avg_period: int = 20
+    atr_period: int = 14
+    weeks_52_days: int = 252  # ~252 giorni di trading = 52 settimane
+
+    # Punteggio (0..100)
+    # Nota: i pesi sono implementati direttamente nella strategia per chiarezza.
+
+    # Esposizione prudente (mappatura segnale -> peso capitale)
+    # Questo è un punto di interpretazione "operativa":
+    # la richiesta specifica la classificazione del segnale,
+    # ma non specifica esplicitamente percentuali di esposizione.
+    # Per essere estremamente conservativi usiamo:
+    # - EVITARE e RIDURRE -> 0% (stare fuori dal mercato)
+    # - ACCUMULO GRADUALE -> 25%
+    # - ACQUISTO -> 50%
+    # - ACQUISTO FORTE -> 100%
+    exposure_map: dict[str, float] = None  # impostato in __post_init__
+
+    def __post_init__(self) -> None:
+        # dataclass frozen => usiamo object.__setattr__
+        object.__setattr__(
+            self,
+            "exposure_map",
+            {
+                "EVITARE": 0.0,
+                "ACCUMULO GRADUALE": 0.25,
+                "ACQUISTO": 0.50,
+                "ACQUISTO FORTE": 1.0,
+                "RIDURRE ESPOSIZIONE": 0.0,
+            },
+        )
+
+
+CFG = Config()
+

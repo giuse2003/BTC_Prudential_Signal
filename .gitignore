@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+ENV/
+.env
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Project outputs (generated)
+data/*.csv
+data/indicators_with_signals.csv
+reports/*.csv
+reports/*.png
+reports/*.txt
+reports/equity_timeseries.csv
+
+# GitHub Actions cached state (do not commit)
+.state/
+
