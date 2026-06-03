@@ -63,6 +63,26 @@ Output:
 
 ---
 
+## Dashboard online gratuita (GitHub Pages)
+
+La dashboard pubblicabile online vive nella cartella `docs/`.
+Non richiede servizi a pagamento, VPS o piattaforme esterne: usa solo GitHub Actions e GitHub Pages.
+
+Per attivarla:
+
+1. Vai nel repository GitHub.
+2. Apri **Settings** → **Pages**.
+3. In **Build and deployment**, scegli **Deploy from branch**.
+4. Imposta:
+   - **Branch**: `main`
+   - **Folder**: `/docs`
+5. Salva.
+
+Il workflow GitHub Actions genera `reports/status.json`, lo copia in `docs/status.json` e committa automaticamente solo quel file quando cambia.
+La dashboard online legge `docs/status.json`.
+
+---
+
 ## Monitor “cloud” (GitHub Actions) + notifiche Telegram (ogni ora)
 
 Senza VPS/PC sempre acceso: GitHub Actions esegue un job **ogni ora** e manda un messaggio Telegram **solo se cambia il segnale** o se viene superato un livello importante (SMA200 / 52w high / 52w low).
@@ -82,13 +102,7 @@ Repository → Settings → Secrets and variables → Actions → **Secrets**:
 - `TELEGRAM_BOT_TOKEN`
 - `TELEGRAM_CHAT_ID`
 
-### 3) (Opzionale) Cambia la coppia “live”
-Di default usa `BTC-USD` (coerente con gli indicatori giornalieri BTC-USD).
-Puoi impostare una variable:
-Repository → Settings → Secrets and variables → Actions → **Variables**
-- `LIVE_PAIR` = `BTC-EUR` oppure `BTC-USD`
-
-### 4) Avvio
+### 3) Avvio
 Vai su Actions → “Hourly BTC monitor (Telegram)” → Run workflow.
 Poi partirà automaticamente ogni ora.
 
