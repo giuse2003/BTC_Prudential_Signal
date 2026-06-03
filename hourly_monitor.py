@@ -6,6 +6,7 @@ Comportamento:
 - Calcola segnale "di regime" (prudente).
 - Legge prezzo spot "live" da Coinbase in EUR.
 - Invia notifica Telegram se cambia il segnale notificato o se il rischio diventa ALTO.
+- Se avviato manualmente da GitHub Actions, invia sempre un messaggio di attivazione.
 """
 
 from __future__ import annotations
@@ -25,6 +26,10 @@ from reports.generate import save_status_json
 
 
 def main() -> None:
+    github_event_name = os.environ.get("GITHUB_EVENT_NAME", "").strip()
+    is_manual_run = github_event_name == "workflow_dispatch"
+    print(f"Evento GitHub rilevato: {github_event_name or 'non disponibile'}")
+
     # Telegram secrets
     bot_token = os.environ.get("TELEGRAM_BOT_TOKEN", "").strip()
     chat_id = os.environ.get("TELEGRAM_CHAT_ID", "").strip()
@@ -62,6 +67,8 @@ def main() -> None:
     latest = df_sig.iloc[-1]
     signal = str(latest["Segnale"])
     risk_level = str(latest.get("Livello_Rischio", "MEDIO"))
+    print(f"Segnale calcolato: {signal}")
+    print(f"Rischio calcolato: {risk_level}")
 
     # 3) Prezzo spot live da Coinbase
     try:
@@ -80,13 +87,24 @@ def main() -> None:
     signal_changed = (state.last_signal is None) or (signal != state.last_signal)
     risk_became_high = (risk_level == "ALTO") and (state.last_risk_level != "ALTO")
     
-    must_notify = signal_changed or risk_became_high
+    must_notify = is_manual_run or signal_changed or risk_became_high
     notification_sent = False
+    notify_reason = "nessuna notifica necessaria"
+    if is_manual_run:
+        notify_reason = "avvio manuale workflow_dispatch"
+    elif signal_changed:
+        notify_reason = f"segnale cambiato: {state.last_signal or 'nessuno'} -> {signal}"
+    elif risk_became_high:
+        notify_reason = f"rischio diventato ALTO: {state.last_risk_level or 'nessuno'} -> {risk_level}"
+    print(f"Motivo decisione Telegram: {notify_reason}")
 
     # 5) Invio Telegram
     if must_notify:
         cfg = TelegramConfig(bot_token=bot_token, chat_id=chat_id)
-        msg = explain_latest_row(df_sig, price_eur=spot_eur, price_usd=spot_usd)
+        if is_manual_run:
+            msg = "BTC Monitor attivo e funzionante."
+        else:
+            msg = explain_latest_row(df_sig, price_eur=spot_eur, price_usd=spot_usd)
         try:
             send_telegram_message(cfg, msg)
             notification_sent = True
@@ -104,7 +122,7 @@ def main() -> None:
     # 7) Salvataggio stato
     state.last_computed_signal = signal
     state.last_computed_risk_level = risk_level
-    if notification_sent:
+    if notification_sent and not is_manual_run:
         state.last_signal = signal
         state.last_risk_level = risk_level
     if spot_eur is not None:
