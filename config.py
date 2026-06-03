@@ -38,7 +38,7 @@ class Config:
     # MANTIENI usa NaN per indicare: conserva l'esposizione precedente.
     # - ACQUISTA -> 100%
     # - MANTIENI -> esposizione precedente
-    # - VENDI / RIDUCI ESPOSIZIONE -> 0%
+    # - VENDI -> 0%
     exposure_map: dict[str, float] = None  # impostato in __post_init__
 
     def __post_init__(self) -> None:
@@ -49,7 +49,7 @@ class Config:
             {
                 "ACQUISTA": 1.0,
                 "MANTIENI": float("nan"),  # NaN indica di mantenere l'esposizione precedente
-                "VENDI / RIDUCI ESPOSIZIONE": 0.0,
+                "VENDI": 0.0,
             },
         )
 

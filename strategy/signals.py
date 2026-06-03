@@ -7,7 +7,7 @@ Strategia prudente basata su:
 
 Output:
 - punteggio 0..100
-- classificazione (ACQUISTA / MANTIENI / VENDI / RIDUCI ESPOSIZIONE)
+- classificazione (ACQUISTA / MANTIENI / VENDI)
 - livello di rischio informativo (BASSO / MEDIO / ALTO)
 """
 
@@ -83,7 +83,7 @@ def compute_strict_signal(df: pd.DataFrame) -> pd.DataFrame:
     """
     Classificazione stretta:
     ACQUISTA se TUTTE le condizioni rialziste sono vere.
-    VENDI / RIDUCI ESPOSIZIONE se TUTTE le condizioni ribassiste sono vere.
+    VENDI se TUTTE le condizioni ribassiste sono vere.
     Altrimenti MANTIENI.
     """
     df = df.copy()
@@ -115,7 +115,7 @@ def compute_strict_signal(df: pd.DataFrame) -> pd.DataFrame:
 
     signal = np.full(len(df), "MANTIENI", dtype=object)
     signal[buy_cond] = "ACQUISTA"
-    signal[sell_cond] = "VENDI / RIDUCI ESPOSIZIONE"
+    signal[sell_cond] = "VENDI"
     
     df["Segnale"] = signal
     return df
@@ -221,7 +221,7 @@ def explain_latest_row(
     sintesi_lines.append(f"RSI {rsi_zone}.")
     if segnale == "ACQUISTA":
         sintesi_lines.append("Tutte le conferme rialziste sono allineate.")
-    elif segnale == "VENDI / RIDUCI ESPOSIZIONE":
+    elif segnale == "VENDI":
         sintesi_lines.append("Forte debolezza confermata dai volumi.")
     else:
         sintesi_lines.append("Nessuna conferma sufficiente per acquistare.")
@@ -229,7 +229,7 @@ def explain_latest_row(
     # Indicazione
     if segnale == "ACQUISTA":
         indicazione = "Accumulare o acquistare posizioni."
-    elif segnale == "VENDI / RIDUCI ESPOSIZIONE":
+    elif segnale == "VENDI":
         indicazione = "Valutare la riduzione del rischio o vendita."
     else:
         indicazione = "Attendere. Nessuna nuova operazione consigliata."

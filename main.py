@@ -5,7 +5,7 @@ estremamente orientato alla conservazione del capitale.
 Pipeline:
 1) Scarica dati giornalieri BTC-USD da Yahoo Finance (yfinance)
 2) Calcola indicatori tecnici richiesti
-3) Calcola punteggio 0..100 e Segnale (ACQUISTA / MANTIENI / VENDI / RIDUCI ESPOSIZIONE)
+3) Calcola punteggio 0..100 e Segnale (ACQUISTA / MANTIENI / VENDI)
 4) Calcola il livello di rischio informativo
 5) Backtest 2015..oggi vs Buy & Hold
 6) Output:

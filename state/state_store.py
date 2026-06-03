@@ -14,7 +14,7 @@ from pathlib import Path
 
 @dataclass
 class MonitorState:
-    # ultimo segnale notificato con successo (es. "ACQUISTA", "MANTIENI", "VENDI / RIDUCI ESPOSIZIONE")
+    # ultimo segnale notificato con successo (es. "ACQUISTA", "MANTIENI", "VENDI")
     last_signal: str | None = None
     # ultima price osservata dal job (spot Coinbase)
     last_spot_price: float | None = None

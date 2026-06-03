@@ -81,7 +81,7 @@ function updateBotUI(data) {
   if (signal === "ACQUISTA") {
     els.signalCard.classList.add("signal-buy");
     els.signalHint.textContent = "Allineamento tecnico favorevole.";
-  } else if (signal === "VENDI / RIDUCI ESPOSIZIONE") {
+  } else if (signal === "VENDI") {
     els.signalCard.classList.add("signal-sell");
     els.signalHint.textContent = "Rilevata forte debolezza. Ridurre rischio.";
   } else {

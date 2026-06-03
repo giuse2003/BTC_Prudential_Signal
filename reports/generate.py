@@ -169,7 +169,7 @@ def plot_price_and_sma_with_signals(df: pd.DataFrame, out_path: str | Path) -> P
     ax.plot(df.index, df["SMA200"], color="#a78bfa", linewidth=1.0, label=f"SMA{CFG.sma_slow}")
 
     buy_labels = {"ACQUISTA"}
-    sell_label = "VENDI / RIDUCI ESPOSIZIONE"
+    sell_label = "VENDI"
 
     buy_df = df[df["Segnale"].isin(buy_labels)]
     sell_df = df[df["Segnale"] == sell_label]

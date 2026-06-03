@@ -4,7 +4,7 @@ Backtest per la strategia prudente.
 Interpretazione prudente di "Segnale" -> esposizione capitale:
 - ACQUISTA -> 100%
 - MANTIENI -> conserva l'esposizione precedente
-- VENDI / RIDUCI ESPOSIZIONE -> 0%
+- VENDI -> 0%
 
 Nota importante (per evitare bias):
 - I segnali sono calcolati usando i dati "di oggi" (Close di oggi).
