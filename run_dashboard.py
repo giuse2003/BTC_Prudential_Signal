@@ -9,13 +9,14 @@ import sys
 sys.stdout.reconfigure(encoding='utf-8', errors='replace')
 
 PORT = 8000
+HOST = "127.0.0.1"
 Handler = http.server.SimpleHTTPRequestHandler
 
 def start_server():
     socketserver.TCPServer.allow_reuse_address = True
     try:
-        with socketserver.TCPServer(("", PORT), Handler) as httpd:
-            print(f"Server della dashboard attivo all'indirizzo: http://localhost:{PORT}")
+        with socketserver.TCPServer((HOST, PORT), Handler) as httpd:
+            print(f"Server della dashboard attivo all'indirizzo: http://{HOST}:{PORT}")
             print("Premi CTRL+C per arrestare il server.")
             httpd.serve_forever()
     except Exception as e:
@@ -29,7 +30,7 @@ if __name__ == "__main__":
     # Aspetta che il server parta
     time.sleep(1)
     
-    url = f"http://localhost:{PORT}/index.html"
+    url = f"http://{HOST}:{PORT}/index.html"
     print(f"Apertura del browser su: {url}...")
     webbrowser.open(url)
     

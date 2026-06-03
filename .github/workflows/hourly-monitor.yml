@@ -37,8 +37,6 @@ jobs:
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-          # Coppia spot Coinbase. Default "BTC-USD". Puoi sovrascriverla nei repository variables.
-          LIVE_PAIR: ${{ vars.LIVE_PAIR }}
         run: |
           python hourly_monitor.py
 

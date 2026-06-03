@@ -5,7 +5,7 @@ Comportamento:
 - Scarica/aggiorna dati giornalieri BTC-USD (Yahoo Finance) e calcola indicatori giornalieri.
 - Calcola segnale "di regime" (prudente).
 - Legge prezzo spot "live" da Coinbase in EUR.
-- Invia notifica Telegram SOLO se cambia il segnale rispetto al run precedente.
+- Invia notifica Telegram se cambia il segnale notificato o se il rischio diventa ALTO.
 """
 
 from __future__ import annotations
@@ -76,11 +76,12 @@ def main() -> None:
         print("ATTENZIONE: Impossibile recuperare il prezzo spot BTC-USD live.")
         spot_usd = None
 
-    # 4) Eventi: notifica se cambia il segnale o il rischio diventa ALTO
+    # 4) Eventi: notifica se cambia il segnale notificato o il rischio diventa ALTO
     signal_changed = (state.last_signal is None) or (signal != state.last_signal)
     risk_became_high = (risk_level == "ALTO") and (state.last_risk_level != "ALTO")
     
     must_notify = signal_changed or risk_became_high
+    notification_sent = False
 
     # 5) Invio Telegram
     if must_notify:
@@ -88,17 +89,24 @@ def main() -> None:
         msg = explain_latest_row(df_sig, price_eur=spot_eur, price_usd=spot_usd)
         try:
             send_telegram_message(cfg, msg)
+            notification_sent = True
             print("Notifica Telegram inviata con successo.")
         except Exception as e:
             print(f"Errore nell'invio della notifica Telegram: {e}")
+            print("Lo stato notificato non verra aggiornato; il prossimo run riprovera.")
+    else:
+        print("Nessuna notifica necessaria.")
 
     # 6) Salva status.json per la dashboard
     status_json_path = project_root / "reports" / "status.json"
     save_status_json(df_sig, price_eur=spot_eur, price_usd=spot_usd, out_path=status_json_path)
 
     # 7) Salvataggio stato
-    state.last_signal = signal
-    state.last_risk_level = risk_level
+    state.last_computed_signal = signal
+    state.last_computed_risk_level = risk_level
+    if notification_sent:
+        state.last_signal = signal
+        state.last_risk_level = risk_level
     if spot_eur is not None:
         state.last_spot_price = float(spot_eur)
     save_state(state_path, state)

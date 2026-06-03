@@ -14,14 +14,18 @@ from pathlib import Path
 
 @dataclass
 class MonitorState:
-    # ultimo segnale operativo (es. "ACQUISTA", "MANTIENI", "VENDI / RIDUCI ESPOSIZIONE")
+    # ultimo segnale notificato con successo (es. "ACQUISTA", "MANTIENI", "VENDI / RIDUCI ESPOSIZIONE")
     last_signal: str | None = None
     # ultima price osservata dal job (spot Coinbase)
     last_spot_price: float | None = None
     # ultimo "livello" attraversato/triggerato, per ridurre spam (opzionale)
     last_level_event: str | None = None
-    # ultimo livello di rischio registrato
+    # ultimo livello di rischio notificato con successo
     last_risk_level: str | None = None
+    # ultimo segnale calcolato, anche se la notifica Telegram fallisce
+    last_computed_signal: str | None = None
+    # ultimo livello di rischio calcolato, anche se la notifica Telegram fallisce
+    last_computed_risk_level: str | None = None
 
 
 def load_state(path: str | Path) -> MonitorState:
@@ -35,6 +39,8 @@ def load_state(path: str | Path) -> MonitorState:
             last_spot_price=raw.get("last_spot_price"),
             last_level_event=raw.get("last_level_event"),
             last_risk_level=raw.get("last_risk_level"),
+            last_computed_signal=raw.get("last_computed_signal"),
+            last_computed_risk_level=raw.get("last_computed_risk_level"),
         )
     except Exception:
         return MonitorState()
@@ -48,6 +54,8 @@ def save_state(path: str | Path, state: MonitorState) -> None:
         "last_spot_price": state.last_spot_price,
         "last_level_event": state.last_level_event,
         "last_risk_level": state.last_risk_level,
+        "last_computed_signal": state.last_computed_signal,
+        "last_computed_risk_level": state.last_computed_risk_level,
     }
     path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
 
