@@ -1,39 +1,47 @@
-const PRICE_ENDPOINT = "https://api.coinbase.com/v2/prices/BTC-EUR/spot";
+const STATUS_ENDPOINT = "./reports/status.json";
+const COINBASE_EUR_ENDPOINT = "https://api.coinbase.com/v2/prices/BTC-EUR/spot";
+const COINBASE_USD_ENDPOINT = "https://api.coinbase.com/v2/prices/BTC-USD/spot";
 
 const els = {
-  price: document.getElementById("price"),
-  time: document.getElementById("time"),
+  signalVal: document.getElementById("signalVal"),
+  signalHint: document.getElementById("signalHint"),
+  signalCard: document.getElementById("signalCard"),
+  riskVal: document.getElementById("riskVal"),
+  riskHint: document.getElementById("riskHint"),
+  riskCard: document.getElementById("riskCard"),
+  priceUSD: document.getElementById("priceUSD"),
+  priceUSDHint: document.getElementById("priceUSDHint"),
+  priceEUR: document.getElementById("priceEUR"),
+  priceEURHint: document.getElementById("priceEURHint"),
+  lastUpdate: document.getElementById("lastUpdate"),
+  monitorStatus: document.getElementById("monitorStatus"),
   refreshSelect: document.getElementById("refreshSelect"),
-  historyBody: document.getElementById("historyBody"),
-  clearHistory: document.getElementById("clearHistory"),
   statusText: document.getElementById("statusText"),
   statusDot: document.querySelector("#status .dot"),
+  corsHelper: document.getElementById("corsHelper"),
+  
+  // Technical details
+  rsiVal: document.getElementById("rsiVal"),
+  sma50Val: document.getElementById("sma50Val"),
+  sma200Val: document.getElementById("sma200Val"),
+  atrVal: document.getElementById("atrVal"),
 };
 
-const HISTORY_KEY = "btc_eur_history_v1";
-const HISTORY_MAX = 50;
+let botData = null;
+let intervalId = null;
+let inFlight = false;
 
-function formatEUR(value) {
+// Custom currency formatting for Italian locale
+function formatCurrency(value, currency) {
   try {
     return new Intl.NumberFormat("it-IT", {
       style: "currency",
-      currency: "EUR",
+      currency: currency,
       maximumFractionDigits: 2,
     }).format(value);
   } catch {
-    return `${value.toFixed(2)} €`;
+    return `${value.toFixed(2)} ${currency}`;
   }
-}
-
-function formatTime(d) {
-  return new Intl.DateTimeFormat("it-IT", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-  }).format(d);
 }
 
 function setStatus(state, text) {
@@ -42,101 +50,120 @@ function setStatus(state, text) {
   els.statusText.textContent = text;
 }
 
-function loadHistory() {
+// Check if running on local file:// protocol
+const isLocalFile = window.location.protocol === "file:";
+
+async function loadBotStatus() {
   try {
-    const raw = localStorage.getItem(HISTORY_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return [];
-    return parsed
-      .filter((x) => x && typeof x.t === "number" && typeof x.p === "number")
-      .slice(0, HISTORY_MAX);
-  } catch {
-    return [];
+    const res = await fetch(STATUS_ENDPOINT, { cache: "no-store" });
+    if (!res.ok) throw new Error("File di stato non configurato");
+    
+    botData = await res.ok ? await res.json() : null;
+    if (botData) {
+      updateBotUI(botData);
+      if (els.corsHelper) els.corsHelper.style.display = "none";
+    }
+  } catch (err) {
+    console.warn("Impossibile caricare lo status.json del bot:", err.message);
+    if (isLocalFile && els.corsHelper) {
+      els.corsHelper.style.display = "block";
+    }
+    setStatus("err", "Dati bot non collegati. Esegui run_dashboard.py");
   }
 }
 
-function saveHistory(items) {
-  try {
-    localStorage.setItem(HISTORY_KEY, JSON.stringify(items.slice(0, HISTORY_MAX)));
-  } catch {
-    // ignore quota / privacy mode
+function updateBotUI(data) {
+  // Update operational signal card
+  const signal = data.signal || "MANTIENI";
+  els.signalVal.textContent = signal;
+  els.signalCard.className = "metric highlight-card"; // reset classes
+  
+  if (signal === "ACQUISTA") {
+    els.signalCard.classList.add("signal-buy");
+    els.signalHint.textContent = "Allineamento tecnico favorevole.";
+  } else if (signal === "VENDI / RIDUCI ESPOSIZIONE") {
+    els.signalCard.classList.add("signal-sell");
+    els.signalHint.textContent = "Rilevata forte debolezza. Ridurre rischio.";
+  } else {
+    els.signalCard.classList.add("signal-hold");
+    els.signalHint.textContent = "Nessuna operazione. Mantieni posizioni.";
   }
+
+  // Update risk level card
+  const risk = data.risk_level || "MEDIO";
+  els.riskVal.textContent = risk;
+  els.riskCard.className = "metric highlight-card"; // reset classes
+  
+  if (risk === "BASSO") {
+    els.riskCard.classList.add("risk-low");
+    els.riskHint.textContent = "Mercato solido, bassa volatilità.";
+  } else if (risk === "ALTO") {
+    els.riskCard.classList.add("risk-high");
+    els.riskHint.textContent = "Trend negativo o mercato surriscaldato.";
+  } else {
+    els.riskCard.classList.add("risk-medium");
+    els.riskHint.textContent = "Zona neutrale di consolidamento.";
+  }
+
+  // Update technical details
+  els.rsiVal.textContent = data.rsi ? data.rsi.toFixed(2) : "N/D";
+  els.sma50Val.textContent = data.sma50 ? formatCurrency(data.sma50, "USD") : "N/D";
+  els.sma200Val.textContent = data.sma200 ? formatCurrency(data.sma200, "USD") : "N/D";
+  els.atrVal.textContent = data.atr ? data.atr.toFixed(2) : "N/D";
+
+  // Last update time
+  els.lastUpdate.textContent = data.last_update || "N/D";
+  els.monitorStatus.textContent = data.status || "Attivo";
+  els.monitorStatus.className = "info-val monitor-active";
 }
 
-function renderHistory(items) {
-  els.historyBody.innerHTML = "";
-  if (items.length === 0) {
-    const tr = document.createElement("tr");
-    const td = document.createElement("td");
-    td.colSpan = 2;
-    td.textContent = "Nessun dato ancora. Attendi un aggiornamento.";
-    td.style.color = "rgba(255,255,255,.7)";
-    tr.appendChild(td);
-    els.historyBody.appendChild(tr);
-    return;
-  }
-
-  for (const it of items) {
-    const tr = document.createElement("tr");
-
-    const tdT = document.createElement("td");
-    tdT.className = "mono";
-    tdT.textContent = formatTime(new Date(it.t));
-
-    const tdP = document.createElement("td");
-    tdP.className = "right";
-    tdP.textContent = formatEUR(it.p);
-
-    tr.appendChild(tdT);
-    tr.appendChild(tdP);
-    els.historyBody.appendChild(tr);
-  }
+async function fetchLiveCoinbasePrice(url) {
+  const res = await fetch(url, { cache: "no-store" });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const payload = await res.json();
+  return Number(payload?.data?.amount);
 }
-
-async function fetchSpotPriceEUR() {
-  const res = await fetch(PRICE_ENDPOINT, {
-    method: "GET",
-    headers: {
-      Accept: "application/json",
-    },
-    cache: "no-store",
-  });
-
-  if (!res.ok) {
-    throw new Error(`HTTP ${res.status}`);
-  }
-
-  const data = await res.json();
-  const amount = Number(data?.data?.amount);
-  if (!Number.isFinite(amount)) {
-    throw new Error("Risposta non valida");
-  }
-  return amount;
-}
-
-let intervalId = null;
-let inFlight = false;
 
 async function tick() {
   if (inFlight) return;
   inFlight = true;
-  setStatus("loading", "Aggiornamento in corso…");
+  setStatus("loading", "Aggiornamento in corso...");
 
   try {
-    const price = await fetchSpotPriceEUR();
-    const now = new Date();
-    els.price.textContent = formatEUR(price);
-    els.time.textContent = formatTime(now);
+    // 1. Carica prima lo stato del bot locale
+    await loadBotStatus();
 
-    const history = loadHistory();
-    history.unshift({ t: now.getTime(), p: price });
-    saveHistory(history);
-    renderHistory(history);
+    // 2. Recupera i prezzi live in tempo reale da Coinbase
+    const priceEUR = await fetchLiveCoinbasePrice(COINBASE_EUR_ENDPOINT);
+    const priceUSD = await fetchLiveCoinbasePrice(COINBASE_USD_ENDPOINT);
 
-    setStatus("ok", "Online");
+    // Aggiorna prezzi in USD
+    els.priceUSD.textContent = formatCurrency(priceUSD, "USD");
+    if (botData && botData.price_usd) {
+      els.priceUSDHint.innerHTML = `Live Spot (Bot run: <b>${formatCurrency(botData.price_usd, "USD")}</b>)`;
+    } else {
+      els.priceUSDHint.textContent = "Prezzo live spot Coinbase";
+    }
+
+    // Aggiorna prezzi in EUR
+    els.priceEUR.textContent = formatCurrency(priceEUR, "EUR");
+    if (botData && botData.price_eur) {
+      els.priceEURHint.innerHTML = `Live Spot (Bot run: <b>${formatCurrency(botData.price_eur, "EUR")}</b>)`;
+    } else {
+      els.priceEURHint.textContent = "Prezzo live spot Coinbase";
+    }
+
+    setStatus("ok", "Connesso live");
   } catch (e) {
-    setStatus("err", `Errore: ${e?.message ?? "impossibile aggiornare"}`);
+    console.error(e);
+    setStatus("err", `Errore connessione: ${e.message}`);
+    
+    // Fallback: se coinbase fallisce ma abbiamo i dati del bot, mostriamo quelli del bot
+    if (botData) {
+      if (botData.price_usd) els.priceUSD.textContent = formatCurrency(botData.price_usd, "USD");
+      if (botData.price_eur) els.priceEUR.textContent = formatCurrency(botData.price_eur, "EUR");
+      setStatus("ok", "Visualizzazione dati salvati");
+    }
   } finally {
     inFlight = false;
   }
@@ -153,12 +180,6 @@ els.refreshSelect.addEventListener("change", () => {
   tick();
 });
 
-els.clearHistory.addEventListener("click", () => {
-  saveHistory([]);
-  renderHistory([]);
-});
-
-renderHistory(loadHistory());
+// Avvio
 start();
 tick();
-

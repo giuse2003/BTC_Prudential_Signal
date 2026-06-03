@@ -34,15 +34,11 @@ class Config:
     # Punteggio (0..100)
     # Nota: i pesi sono implementati direttamente nella strategia per chiarezza.
 
-    # Esposizione prudente (mappatura segnale -> peso capitale)
-    # Questo è un punto di interpretazione "operativa":
-    # la richiesta specifica la classificazione del segnale,
-    # ma non specifica esplicitamente percentuali di esposizione.
-    # Per essere estremamente conservativi usiamo:
-    # - EVITARE e RIDURRE -> 0% (stare fuori dal mercato)
-    # - ACCUMULO GRADUALE -> 25%
-    # - ACQUISTO -> 50%
-    # - ACQUISTO FORTE -> 100%
+    # Esposizione prudente (mappatura segnale -> peso capitale).
+    # MANTIENI usa NaN per indicare: conserva l'esposizione precedente.
+    # - ACQUISTA -> 100%
+    # - MANTIENI -> esposizione precedente
+    # - VENDI / RIDUCI ESPOSIZIONE -> 0%
     exposure_map: dict[str, float] = None  # impostato in __post_init__
 
     def __post_init__(self) -> None:

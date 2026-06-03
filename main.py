@@ -5,8 +5,8 @@ estremamente orientato alla conservazione del capitale.
 Pipeline:
 1) Scarica dati giornalieri BTC-USD da Yahoo Finance (yfinance)
 2) Calcola indicatori tecnici richiesti
-3) Calcola punteggio 0..100 e Segnale (EVITARE / ACCUMULO GRADUALE / ACQUISTO / ACQUISTO FORTE)
-4) Applica override di rischio: RIDURRE ESPOSIZIONE
+3) Calcola punteggio 0..100 e Segnale (ACQUISTA / MANTIENI / VENDI / RIDUCI ESPOSIZIONE)
+4) Calcola il livello di rischio informativo
 5) Backtest 2015..oggi vs Buy & Hold
 6) Output:
    - report testuale
@@ -31,9 +31,15 @@ import pandas as pd
 from data.fetch_yahoo import fetch_btc_daily_csv, load_daily_csv
 from indicators.technical_indicators import compute_all_indicators
 from live.coinbase import fetch_spot_price
-from reports.generate import plot_price_and_sma_with_signals, save_historical_csv, save_text_report
+from reports.generate import (
+    plot_price_and_sma_with_signals,
+    save_historical_csv,
+    save_text_report,
+    save_status_json,
+)
 from strategy.signals import compute_signals
 from backtest.backtest import run_backtest
+from notifications.telegram import TelegramConfig, send_telegram_message
 
 
 def parse_args() -> argparse.Namespace:
@@ -60,13 +66,28 @@ def main() -> None:
     out_data.mkdir(parents=True, exist_ok=True)
 
     # 1) Download / load dati
-    csv_path = fetch_btc_daily_csv(symbol=args.symbol, force_download=args.force_download)
-    df = load_daily_csv(csv_path)
+    csv_path_usd = fetch_btc_daily_csv(symbol="BTC-USD", force_download=args.force_download, is_optional=False)
+    df_usd = load_daily_csv(csv_path_usd)
+    
+    csv_path_eur = fetch_btc_daily_csv(symbol="BTC-EUR", force_download=args.force_download, is_optional=True)
+    if csv_path_eur is not None:
+        try:
+            df_eur = load_daily_csv(csv_path_eur)
+            df_eur_close = df_eur["Close"].rename("Close_EUR")
+            df = df_usd.join(df_eur_close, how="left")
+            df["Close_EUR"] = df["Close_EUR"].ffill().bfill()
+        except Exception as e:
+            print(f"ATTENZIONE: Errore nel caricamento del file BTC-EUR: {e}. Continuo senza dati EUR storici.")
+            df = df_usd.copy()
+            df["Close_EUR"] = float("nan")
+    else:
+        df = df_usd.copy()
+        df["Close_EUR"] = float("nan")
 
     # 2) Indicatori
     df_ind = compute_all_indicators(df)
 
-    # 3) Segnali (score + classificazione + override di vendita)
+    # 3) Segnali (score + classificazione + override di vendita + livello di rischio)
     df_signals = compute_signals(df_ind)
 
     # 4) Salvataggi dei dataset intermedi (utile per debug e modifiche future)
@@ -81,10 +102,18 @@ def main() -> None:
     latest_csv = out_reports / "historical_signals.csv"
     save_historical_csv(df_signals, latest_csv)
 
+    # Coinbase spot prices
     try:
         spot_eur = fetch_spot_price("BTC-EUR", timeout_s=5).price
     except Exception:
+        print("ATTENZIONE: Impossibile recuperare il prezzo spot BTC-EUR live.")
         spot_eur = None
+
+    try:
+        spot_usd = fetch_spot_price("BTC-USD", timeout_s=5).price
+    except Exception:
+        print("ATTENZIONE: Impossibile recuperare il prezzo spot BTC-USD live.")
+        spot_usd = None
 
     report_path = out_reports / "report.txt"
     save_text_report(
@@ -93,7 +122,12 @@ def main() -> None:
         metrics_bh=metrics_bh,
         out_path=report_path,
         price_eur=spot_eur,
+        price_usd=spot_usd,
     )
+
+    # Salva status.json per la dashboard
+    status_json_path = out_reports / "status.json"
+    save_status_json(df_signals, price_eur=spot_eur, price_usd=spot_usd, out_path=status_json_path)
 
     chart_path = out_reports / "price_sma_signals.png"
     plot_price_and_sma_with_signals(df_signals, chart_path)
@@ -101,15 +135,33 @@ def main() -> None:
     latest = df_signals.iloc[-1]
     day = df_signals.index[-1].strftime("%Y-%m-%d")
 
+    # Invia notifica Telegram se avviato manualmente ed esistono credenziali
+    bot_token = os.environ.get("TELEGRAM_BOT_TOKEN", "").strip()
+    chat_id = os.environ.get("TELEGRAM_CHAT_ID", "").strip()
+    if bot_token and chat_id:
+        try:
+            cfg = TelegramConfig(bot_token=bot_token, chat_id=chat_id)
+            send_telegram_message(cfg, "BTC Monitor attivo e funzionante.")
+            print("Notifica Telegram inviata con successo (avvio manuale).")
+        except Exception as e:
+            print(f"ATTENZIONE: Impossibile inviare la notifica Telegram: {e}")
+
     print("Operazione completata.")
     print("")
     print("Riepilogo ultimo giorno:")
     print(f"- Data: {day}")
-    if spot_eur:
-        print(f"- Prezzo: {spot_eur:,.2f} EUR (live da Coinbase)")
+    if spot_usd:
+        print(f"- Prezzo USD: {spot_usd:,.2f} USD (live da Coinbase)")
     else:
-        print(f"- Prezzo: {float(latest['Close']):.2f} USD")
+        print(f"- Prezzo USD: {float(latest['Close']):.2f} USD")
+    if spot_eur:
+        print(f"- Prezzo EUR: {spot_eur:,.2f} EUR (live da Coinbase)")
+    elif "Close_EUR" in latest and not pd.isna(latest["Close_EUR"]):
+        print(f"- Prezzo EUR: {float(latest['Close_EUR']):.2f} EUR")
+    else:
+        print("- Prezzo EUR: non disponibile")
     print(f"- Segnale: {latest['Segnale']}")
+    print(f"- Livello di rischio: {latest.get('Livello_Rischio', 'MEDIO')}")
     print("")
     print(f"Report: {report_path}")
     print(f"CSV storico: {latest_csv}")

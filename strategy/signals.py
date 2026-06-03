@@ -7,8 +7,8 @@ Strategia prudente basata su:
 
 Output:
 - punteggio 0..100
-- classificazione (EVITARE / ACCUMULO GRADUALE / ACQUISTO / ACQUISTO FORTE)
-- regole di vendita (RIDURRE ESPOSIZIONE) con priorità assoluta
+- classificazione (ACQUISTA / MANTIENI / VENDI / RIDUCI ESPOSIZIONE)
+- livello di rischio informativo (BASSO / MEDIO / ALTO)
 """
 
 from __future__ import annotations
@@ -121,83 +121,135 @@ def compute_strict_signal(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
+def compute_risk_level(df: pd.DataFrame) -> pd.Series:
+    """
+    Calcola il livello di rischio (BASSO, MEDIO, ALTO) come informazione ausiliaria.
+    """
+    close = df["Close"]
+    sma50 = df["SMA50"]
+    sma200 = df["SMA200"]
+    rsi = df["RSI"]
+    distance_pct = df["DistanceFromSMA200_Pct"]
+    
+    # Inizializza a MEDIO
+    risk = pd.Series("MEDIO", index=df.index, dtype=object)
+    
+    # Condizioni per ALTO
+    alto_cond = (
+        ((close < sma200) & (sma50 < sma200)) |
+        (rsi > 70) |
+        (distance_pct > 40.0)
+    )
+    
+    # Condizioni per BASSO
+    basso_cond = (
+        (close > sma200) &
+        (sma50 > sma200) &
+        (rsi <= 60) &
+        (distance_pct <= 20.0)
+    )
+    
+    risk[alto_cond] = "ALTO"
+    risk[basso_cond] = "BASSO"
+    
+    # Gestione valori mancanti
+    nan_mask = close.isna() | sma50.isna() | sma200.isna() | rsi.isna()
+    risk[nan_mask] = "MEDIO"
+    
+    return risk
+
+
 def compute_signals(df_indicators: pd.DataFrame) -> pd.DataFrame:
     """
     Pipeline completa:
     - calcola punteggio tecnico (solo per report log, non decide il segnale)
     - classifica con regole strette
+    - calcola il livello di rischio informativo
     """
     df = score_rowwise(df_indicators)
     df = compute_strict_signal(df)
-    
-    # Estensione futura (on-chain) - placeholder
-    df = apply_onchain_filters_placeholder(df)
-
+    df["Livello_Rischio"] = compute_risk_level(df)
     return df
 
 
-def apply_onchain_filters_placeholder(df_with_signals: pd.DataFrame) -> pd.DataFrame:
+def explain_latest_row(
+    df_with_signals: pd.DataFrame,
+    price_eur: float | None = None,
+    price_usd: float | None = None,
+) -> str:
     """
-    Stub per filtri on-chain.
-    """
-    return df_with_signals
-
-
-def explain_latest_row(df_with_signals: pd.DataFrame, price_eur: float | None = None) -> str:
-    """
-    Produce una sintesi testuale chiara (stile discorsivo) per Telegram.
-    Non espone dettagli tecnici superflui (se non indispensabili).
+    Produce una sintesi testuale semplificata per Telegram in lingua naturale.
     """
     row = df_with_signals.iloc[-1]
     segnale = row.get("Segnale", "N/A")
+    rischio = row.get("Livello_Rischio", "MEDIO")
     close_usd = row["Close"]
     
-    # Trend lungo/medio (rispetto a SMA200 e SMA50 vs SMA200)
-    trend_lungo = "positivo" if close_usd > row["SMA200"] else "negativo"
-    trend_medio = "positivo" if row["SMA50"] > row["SMA200"] else "negativo"
+    # Gestione dei prezzi (con fallback robusto)
+    usd_val = price_usd if price_usd is not None else float(close_usd)
     
-    # RSI check
+    eur_val = price_eur
+    if eur_val is None:
+        eur_val = row.get("Close_EUR")
+        if pd.isna(eur_val):
+            eur_val = None
+            
+    def fmt_curr(val: float | None) -> str:
+        if val is None or np.isnan(val):
+            return "non disponibile"
+        return f"{int(val):,}".replace(",", ".")
+
+    usd_str = f"{fmt_curr(usd_val)} USD"
+    eur_str = f"{fmt_curr(eur_val)} EUR" if eur_val is not None else "BTC-EUR non disponibile"
+
+    # Trend lungo/medio
+    trend_lungo_txt = "positivo" if usd_val > row["SMA200"] else "negativo"
+    trend_medio_txt = "positivo" if row["SMA50"] > row["SMA200"] else "negativo"
+    
+    # RSI description
     rsi = row["RSI"]
-    if rsi < 30:
-        rsi_desc = f"{rsi:.1f} — mercato ipervenduto"
-    elif rsi < 40:
-        rsi_desc = f"{rsi:.1f} — mercato debole"
-    elif rsi <= 65:
-        rsi_desc = f"{rsi:.1f} — zona neutrale/costruttiva"
+    if rsi >= 70:
+        rsi_zone = "in zona ipercomprato"
+    elif rsi < 30:
+        rsi_zone = "in zona ipervenduto"
     else:
-        rsi_desc = f"{rsi:.1f} — mercato ipercomprato"
+        rsi_zone = "in zona neutrale"
 
-    # Volume check
-    vol_desc = "confermano la direzione (sopra media)" if row["Volume"] > row["VolumeAvg20"] else "non confermano (sotto media)"
-    
-    # Prezzo EUR string (se disponibile)
-    prezzo_str = f"{price_eur:,.2f} EUR".replace(",", "X").replace(".", ",").replace("X", ".") if price_eur else f"{close_usd:,.2f} USD"
-
-    lines = []
-    lines.append("BTC MONITOR")
-    lines.append("")
-    lines.append(f"Segnale: {segnale}")
-    lines.append("")
-    lines.append(f"Prezzo BTC: {prezzo_str}")
-    lines.append("")
-    lines.append("Situazione:")
-    lines.append(f"- Trend lungo periodo: {trend_lungo}")
-    lines.append(f"- Trend medio periodo: {trend_medio}")
-    lines.append(f"- RSI: {rsi_desc}")
-    lines.append(f"- Volumi: {vol_desc}")
-    lines.append("")
-    lines.append("Indicazione:")
-    
+    # Sintesi
+    sintesi_lines = []
+    sintesi_lines.append(f"Trend lungo periodo {trend_lungo_txt}.")
+    sintesi_lines.append(f"RSI {rsi_zone}.")
     if segnale == "ACQUISTA":
-        lines.append("Tutte le conferme rialziste sono allineate.")
-        lines.append("Condizioni favorevoli per accumulare o comprare.")
+        sintesi_lines.append("Tutte le conferme rialziste sono allineate.")
     elif segnale == "VENDI / RIDUCI ESPOSIZIONE":
-        lines.append("Il mercato mostra forte debolezza e i volumi confermano il trend ribassista.")
-        lines.append("Valutare la riduzione del rischio.")
+        sintesi_lines.append("Forte debolezza confermata dai volumi.")
     else:
-        lines.append("Non acquistare ora.")
-        lines.append("Se hai già BTC, valuta di mantenere o ridurre solo se arrivano ulteriori conferme ribassiste.")
-        lines.append("Nessun nuovo acquisto finché il trend non migliora.")
+        sintesi_lines.append("Nessuna conferma sufficiente per acquistare.")
+
+    # Indicazione
+    if segnale == "ACQUISTA":
+        indicazione = "Accumulare o acquistare posizioni."
+    elif segnale == "VENDI / RIDUCI ESPOSIZIONE":
+        indicazione = "Valutare la riduzione del rischio o vendita."
+    else:
+        indicazione = "Attendere. Nessuna nuova operazione consigliata."
+
+    lines = [
+        "BTC MONITOR",
+        "",
+        f"Segnale: {segnale}",
+        f"Rischio: {rischio}",
+        "",
+        "Prezzo:",
+        usd_str,
+        eur_str,
+        "",
+        "Sintesi:",
+        "\n".join(sintesi_lines),
+        "",
+        "Indicazione:",
+        indicazione
+    ]
 
     return "\n".join(lines)
 

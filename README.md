@@ -33,7 +33,7 @@ Poi apri `http://localhost:5173`.
 Questa cartella include anche uno script Python completamente commentato per:
 - scaricare dati giornalieri BTC da Yahoo Finance (yfinance)
 - calcolare SMA50/SMA200, RSI(14), ATR(14), volume medio (20gg), massimo/minimo 52 settimane
-- assegnare un punteggio 0..100 e generare un segnale prudente
+- assegnare un punteggio 0..100 e generare un segnale prudente: ACQUISTA, MANTIENI oppure VENDI / RIDUCI ESPOSIZIONE
 - fare backtest vs Buy & Hold
 - generare: report testuale, CSV storico, grafico
 

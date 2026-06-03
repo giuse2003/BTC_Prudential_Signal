@@ -19,32 +19,51 @@ from strategy.signals import explain_latest_row
 
 def save_historical_csv(df: pd.DataFrame, out_path: str | Path) -> Path:
     """
-    Salva CSV con le colonne richieste dalla specifica.
+    Salva CSV con le colonne richieste per la Versione 1.0.
 
-    Colonne richieste:
+    Colonne esportate:
     - Data
-    - Prezzo
+    - Close (BTC-USD Close)
+    - BTC-USD
+    - BTC-EUR (Close EUR)
     - SMA50
     - SMA200
     - RSI
-    - Punteggio
+    - ATR
+    - Volume
     - Segnale
+    - Livello_Rischio
     """
     out_path = Path(out_path)
     out_path.parent.mkdir(parents=True, exist_ok=True)
 
     df_out = df.copy()
-    df_out = df_out.rename(
-        columns={
-            "Close": "Prezzo",
-        }
-    )
     df_out["Data"] = df_out.index.strftime("%Y-%m-%d")
+    df_out["BTC-USD"] = df_out["Close"]
+    
+    if "Close_EUR" in df_out.columns:
+        df_out["BTC-EUR"] = df_out["Close_EUR"]
+    else:
+        df_out["BTC-EUR"] = float("nan")
 
-    cols = ["Data", "Prezzo", "SMA50", "SMA200", "RSI", "Punteggio", "Segnale"]
-    missing = [c for c in cols if c not in df_out.columns]
-    if missing:
-        raise ValueError(f"Colonne mancanti per CSV: {missing}")
+    cols = [
+        "Data",
+        "Close",
+        "BTC-USD",
+        "BTC-EUR",
+        "SMA50",
+        "SMA200",
+        "RSI",
+        "ATR",
+        "Volume",
+        "Segnale",
+        "Livello_Rischio",
+    ]
+    
+    # In caso di colonne mancanti per vecchi dataset o altro, creale come NaN
+    for c in cols:
+        if c not in df_out.columns:
+            df_out[c] = float("nan")
 
     df_out[cols].to_csv(out_path, index=False)
     return out_path
@@ -56,6 +75,7 @@ def save_text_report(
     metrics_bh,
     out_path: str | Path,
     price_eur: float | None = None,
+    price_usd: float | None = None,
 ) -> Path:
     """
     Crea il report testuale completo.
@@ -66,18 +86,26 @@ def save_text_report(
     latest = df.iloc[-1]
     day = df.index[-1].strftime("%Y-%m-%d")
 
-    motivazione = explain_latest_row(df, price_eur=price_eur)
+    motivazione = explain_latest_row(df, price_eur=price_eur, price_usd=price_usd)
 
     # Informazioni su indicatori (richiesti / utili dal report testuale).
     atr = float(latest.get("ATR", float("nan")))
     high52w = float(latest.get("High52w", float("nan")))
     low52w = float(latest.get("Low52w", float("nan")))
+    rischio = latest.get("Livello_Rischio", "MEDIO")
 
     lines: list[str] = []
     lines.append("BITCOIN ANALYSIS")
     lines.append(f"Data: {day}")
     lines.append("")
-    lines.append(f"Prezzo: {float(latest['Close']):.4f} USD")
+    lines.append(f"Prezzo USD: {float(latest['Close']):.4f} USD")
+    if price_eur:
+        lines.append(f"Prezzo EUR: {price_eur:.2f} EUR")
+    elif "Close_EUR" in latest and not pd.isna(latest["Close_EUR"]):
+        lines.append(f"Prezzo EUR: {float(latest['Close_EUR']):.2f} EUR")
+    else:
+        lines.append("Prezzo EUR: non disponibile")
+        
     lines.append(f"SMA50: {float(latest['SMA50']):.4f}")
     lines.append(f"SMA200: {float(latest['SMA200']):.4f}")
     lines.append(f"RSI: {float(latest['RSI']):.2f}")
@@ -87,6 +115,7 @@ def save_text_report(
     lines.append("")
     lines.append(f"Punteggio: {float(latest['Punteggio']):.0f}/100")
     lines.append(f"Segnale: {latest['Segnale']}")
+    lines.append(f"Livello di rischio: {rischio}")
     lines.append("")
     lines.append("Motivazione dettagliata:")
     lines.append(motivazione)
@@ -163,4 +192,54 @@ def plot_price_and_sma_with_signals(df: pd.DataFrame, out_path: str | Path) -> P
     fig.savefig(out_path, dpi=150)
     plt.close(fig)
     return out_path
+
+
+def save_status_json(
+    df: pd.DataFrame,
+    price_eur: float | None,
+    price_usd: float | None,
+    out_path: str | Path,
+) -> None:
+    """
+    Salva lo stato corrente in formato JSON per la dashboard.
+    """
+    import json
+    from datetime import datetime
+    import numpy as np
+
+    out_path = Path(out_path)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    
+    latest = df.iloc[-1]
+    
+    # Prezzi (con robustezza se mancano)
+    usd_val = price_usd if price_usd is not None else float(latest["Close"])
+    
+    eur_val = price_eur
+    if eur_val is None:
+        eur_val = latest.get("Close_EUR")
+        if pd.isna(eur_val):
+            eur_val = None
+            
+    # Gestione NaN per il JSON (non supportato nativamente)
+    if eur_val is not None and (np.isnan(eur_val) or eur_val != eur_val):
+        eur_val = None
+    if usd_val is not None and (np.isnan(usd_val) or usd_val != usd_val):
+        usd_val = None
+
+    status_data = {
+        "price_usd": usd_val,
+        "price_eur": eur_val,
+        "signal": str(latest["Segnale"]),
+        "risk_level": str(latest.get("Livello_Rischio", "MEDIO")),
+        "last_update": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "status": "Attivo",
+        "rsi": float(latest.get("RSI")) if not pd.isna(latest.get("RSI")) else None,
+        "sma50": float(latest.get("SMA50")) if not pd.isna(latest.get("SMA50")) else None,
+        "sma200": float(latest.get("SMA200")) if not pd.isna(latest.get("SMA200")) else None,
+        "atr": float(latest.get("ATR")) if not pd.isna(latest.get("ATR")) else None,
+    }
+    
+    out_path.write_text(json.dumps(status_data, indent=2), encoding="utf-8")
+
 

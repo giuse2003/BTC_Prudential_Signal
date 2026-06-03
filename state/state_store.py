@@ -14,12 +14,14 @@ from pathlib import Path
 
 @dataclass
 class MonitorState:
-    # ultimo segnale operativo (es. "ACQUISTO", "RIDURRE ESPOSIZIONE", ...)
+    # ultimo segnale operativo (es. "ACQUISTA", "MANTIENI", "VENDI / RIDUCI ESPOSIZIONE")
     last_signal: str | None = None
     # ultima price osservata dal job (spot Coinbase)
     last_spot_price: float | None = None
     # ultimo "livello" attraversato/triggerato, per ridurre spam (opzionale)
     last_level_event: str | None = None
+    # ultimo livello di rischio registrato
+    last_risk_level: str | None = None
 
 
 def load_state(path: str | Path) -> MonitorState:
@@ -32,6 +34,7 @@ def load_state(path: str | Path) -> MonitorState:
             last_signal=raw.get("last_signal"),
             last_spot_price=raw.get("last_spot_price"),
             last_level_event=raw.get("last_level_event"),
+            last_risk_level=raw.get("last_risk_level"),
         )
     except Exception:
         return MonitorState()
@@ -44,6 +47,7 @@ def save_state(path: str | Path, state: MonitorState) -> None:
         "last_signal": state.last_signal,
         "last_spot_price": state.last_spot_price,
         "last_level_event": state.last_level_event,
+        "last_risk_level": state.last_risk_level,
     }
     path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
 
