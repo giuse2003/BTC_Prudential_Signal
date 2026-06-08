@@ -17,6 +17,7 @@ from pathlib import Path
 import pandas as pd
 
 from data.fetch_yahoo import fetch_btc_daily_csv, load_daily_csv
+from data.daily_candles import keep_closed_daily_candles
 from indicators.technical_indicators import compute_all_indicators
 from live.coinbase import fetch_spot_price
 from notifications.telegram import TelegramConfig, send_telegram_message
@@ -44,12 +45,12 @@ def main() -> None:
 
     # 2) Dati giornalieri + indicatori (con doppia valuta USD/EUR)
     csv_path_usd = fetch_btc_daily_csv(symbol="BTC-USD", force_download=True, is_optional=False)
-    df_usd = load_daily_csv(csv_path_usd)
+    df_usd = keep_closed_daily_candles(load_daily_csv(csv_path_usd))
     
     csv_path_eur = fetch_btc_daily_csv(symbol="BTC-EUR", force_download=True, is_optional=True)
     if csv_path_eur is not None:
         try:
-            df_eur = load_daily_csv(csv_path_eur)
+            df_eur = keep_closed_daily_candles(load_daily_csv(csv_path_eur))
             df_eur_close = df_eur["Close"].rename("Close_EUR")
             df = df_usd.join(df_eur_close, how="left")
             df["Close_EUR"] = df["Close_EUR"].ffill().bfill()
@@ -67,6 +68,7 @@ def main() -> None:
     latest = df_sig.iloc[-1]
     signal = str(latest["Segnale"])
     risk_level = str(latest.get("Livello_Rischio", "MEDIO"))
+    print(f"Ultima candela giornaliera chiusa: {df_sig.index[-1]:%Y-%m-%d}")
     print(f"Segnale calcolato: {signal}")
     print(f"Rischio calcolato: {risk_level}")
 

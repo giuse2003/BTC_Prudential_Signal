@@ -28,7 +28,8 @@ class Config:
     rsi_period: int = 14
     vol_avg_period: int = 20
     atr_period: int = 14
-    weeks_52_days: int = 252  # ~252 giorni di trading = 52 settimane
+    periods_per_year: int = 365  # Bitcoin scambia 7 giorni su 7
+    weeks_52_days: int = 365
     momentum_days: int = 7    # Confronto prezzo con 7 giorni fa
 
     # Punteggio (0..100)

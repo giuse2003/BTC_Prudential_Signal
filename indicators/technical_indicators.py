@@ -7,7 +7,7 @@ Indicatori:
 - RSI(14)
 - Volume medio 20 giorni
 - ATR(14)
-- Massimo e minimo ultimi 52 settimane (approssimati con 252 giorni di trading)
+- Massimo e minimo ultimi 52 settimane (365 giorni per il mercato crypto)
 """
 
 from __future__ import annotations
@@ -89,7 +89,7 @@ def add_volume_features(df: pd.DataFrame) -> pd.DataFrame:
 
 def add_52w_high_low(df: pd.DataFrame) -> pd.DataFrame:
     """
-    Massimo/minimo ultimi 52 settimane (252 giorni di trading).
+    Massimo/minimo ultimi 52 settimane (365 giorni di calendario).
     """
     df = df.copy()
     w = CFG.weeks_52_days

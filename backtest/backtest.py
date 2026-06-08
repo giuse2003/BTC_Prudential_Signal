@@ -40,7 +40,7 @@ def _max_drawdown(equity: pd.Series) -> float:
 
 def _sharpe_ratio(daily_returns: pd.Series, risk_free_rate: float = 0.0) -> float:
     """
-    Sharpe ratio annualizzato (252 giorni).
+    Sharpe ratio annualizzato sul calendario crypto (365 giorni).
 
     risk_free_rate:
     - per semplicità e per coerenza con un'app locale prudente, default 0.
@@ -51,7 +51,7 @@ def _sharpe_ratio(daily_returns: pd.Series, risk_free_rate: float = 0.0) -> floa
 
     # Excess returns: per risk_free_rate annuo convertiamo in giornaliero.
     # In pratica qui è 0 di default.
-    rf_daily = risk_free_rate / 252.0
+    rf_daily = risk_free_rate / CFG.periods_per_year
     excess = r - rf_daily
 
     mean_excess = excess.mean()
@@ -59,7 +59,33 @@ def _sharpe_ratio(daily_returns: pd.Series, risk_free_rate: float = 0.0) -> floa
     if std == 0:
         return float("nan")
 
-    return float(np.sqrt(252) * mean_excess / std)
+    return float(np.sqrt(CFG.periods_per_year) * mean_excess / std)
+
+
+def _completed_trade_returns(
+    effective_exposure: pd.Series,
+    daily_strategy_returns: pd.Series,
+) -> list[float]:
+    """
+    Restituisce i rendimenti dei soli trade long completati.
+
+    Un trade inizia quando l'esposizione passa da 0 a un valore positivo e si
+    conclude quando torna a 0. Una posizione ancora aperta a fine serie non
+    entra nel numero operazioni ne' nel win rate.
+    """
+    active = effective_exposure.gt(0.0)
+    trade_returns: list[float] = []
+    start_pos: int | None = None
+
+    for pos, is_active in enumerate(active.to_numpy()):
+        if is_active and start_pos is None:
+            start_pos = pos
+        elif not is_active and start_pos is not None:
+            returns = daily_strategy_returns.iloc[start_pos:pos].fillna(0.0)
+            trade_returns.append(float((1.0 + returns).prod() - 1.0))
+            start_pos = None
+
+    return trade_returns
 
 
 def exposure_from_signal(signals: pd.Series, exposure_map: dict[str, float]) -> pd.Series:
@@ -123,57 +149,21 @@ def run_backtest(df: pd.DataFrame, initial_capital: float = 1.0) -> tuple[pd.Dat
     # Metriche
     n_days = max(len(df) - 1, 1)
     total_return = float(equity_strategy.iloc[-1] / equity_strategy.iloc[0] - 1.0)
-    annualized_return = float((equity_strategy.iloc[-1] / equity_strategy.iloc[0]) ** (252.0 / n_days) - 1.0)
+    annualized_return = float(
+        (equity_strategy.iloc[-1] / equity_strategy.iloc[0])
+        ** (CFG.periods_per_year / n_days)
+        - 1.0
+    )
     max_dd = _max_drawdown(equity_strategy)
 
     # Operazioni e win rate
-    # "Operazione" = giorno in cui cambia l'esposizione effettiva (BTC fraction detenuta).
-    prev_exposure = effective_exposure.shift(1).fillna(effective_exposure.iloc[0])
-    change_mask = effective_exposure.ne(prev_exposure)
-
-    # Non contiamo il primo giorno (già impostato a 0 o comunque baseline).
-    change_dates = df.index[change_mask].tolist()
-    if len(change_dates) > 0:
-        change_dates = change_dates[1:]
-
-    num_operations = len(change_dates)
-
-    # Se num_operations=0 => win rate e Sharpe possono essere NaN/0; scegliamo 0 per win_rate.
-    win_rate = 0.0
-    if num_operations > 0:
-        wins = 0
-        # Costruiamo segmenti tra date di cambio esposizione.
-        # Per ciascuna operazione, guardiamo il rendimento della strategia
-        # fino al prossimo cambio (inclusivo del giorno di inizio segmento).
-        all_change_dates = [df.index[0]] + df.index[change_mask].tolist()  # include start
-        all_change_dates = sorted(set(all_change_dates))
-
-        # Segmenti: da change i a change i+1 - 1 giorno.
-        for i, start_date in enumerate(all_change_dates[:-1]):
-            end_date = all_change_dates[i + 1]
-            # Segment end: giorno prima dell'end_date, se end_date non è il primo.
-            # Se start_date == end_date, skip.
-            if start_date == end_date:
-                continue
-
-            # posizione
-            start_pos = df.index.get_loc(start_date)
-            end_pos = df.index.get_loc(end_date) - 1
-            if end_pos < start_pos:
-                continue
-
-            seg_return = float(equity_strategy.iloc[end_pos] / equity_strategy.iloc[start_pos] - 1.0)
-
-            # Segmento conta come "post-operazione" solo se all'istante di inizio
-            # l'esposizione è > 0 (quindi non stiamo solo restando fuori dal mercato).
-            seg_exposure = float(effective_exposure.iloc[start_pos])
-            if seg_exposure > 0 and seg_return > 0:
-                wins += 1
-
-        # win_rate basato sugli ultimi cambi che corrispondono a decisioni operative.
-        # In pratica stimiamo win sui segmenti "attivi" contati nel ciclo sopra.
-        # Per coerenza, il denominatore scelto è num_operations.
-        win_rate = wins / float(num_operations)
+    completed_trade_returns = _completed_trade_returns(
+        effective_exposure,
+        daily_strategy_returns,
+    )
+    num_operations = len(completed_trade_returns)
+    wins = sum(trade_return > 0.0 for trade_return in completed_trade_returns)
+    win_rate = wins / float(num_operations) if num_operations else 0.0
 
     sharpe_strategy = _sharpe_ratio(equity_df["DailyReturnStrategy"])
 
@@ -188,7 +178,11 @@ def run_backtest(df: pd.DataFrame, initial_capital: float = 1.0) -> tuple[pd.Dat
 
     # Metriche Buy & Hold (nessuna "operazione" significativa per questa metrica)
     bh_total_return = float(equity_bh.iloc[-1] / equity_bh.iloc[0] - 1.0)
-    bh_annualized_return = float((equity_bh.iloc[-1] / equity_bh.iloc[0]) ** (252.0 / n_days) - 1.0)
+    bh_annualized_return = float(
+        (equity_bh.iloc[-1] / equity_bh.iloc[0])
+        ** (CFG.periods_per_year / n_days)
+        - 1.0
+    )
     bh_max_dd = _max_drawdown(equity_bh)
     bh_sharpe = _sharpe_ratio(equity_df["DailyReturnBuyHold"])
 

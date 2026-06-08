@@ -29,6 +29,7 @@ from pathlib import Path
 import pandas as pd
 
 from data.fetch_yahoo import fetch_btc_daily_csv, load_daily_csv
+from data.daily_candles import keep_closed_daily_candles
 from indicators.technical_indicators import compute_all_indicators
 from live.coinbase import fetch_spot_price
 from reports.generate import (
@@ -67,12 +68,12 @@ def main() -> None:
 
     # 1) Download / load dati
     csv_path_usd = fetch_btc_daily_csv(symbol="BTC-USD", force_download=args.force_download, is_optional=False)
-    df_usd = load_daily_csv(csv_path_usd)
+    df_usd = keep_closed_daily_candles(load_daily_csv(csv_path_usd))
     
     csv_path_eur = fetch_btc_daily_csv(symbol="BTC-EUR", force_download=args.force_download, is_optional=True)
     if csv_path_eur is not None:
         try:
-            df_eur = load_daily_csv(csv_path_eur)
+            df_eur = keep_closed_daily_candles(load_daily_csv(csv_path_eur))
             df_eur_close = df_eur["Close"].rename("Close_EUR")
             df = df_usd.join(df_eur_close, how="left")
             df["Close_EUR"] = df["Close_EUR"].ffill().bfill()
