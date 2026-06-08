@@ -1,108 +1,161 @@
-# Quotazione BTC/EUR
+# BTC Prudential Signal
 
-Piccola dashboard locale per monitorare la quotazione **Bitcoin (BTC)** rispetto all'**Euro (EUR)** usando l'endpoint pubblico di Coinbase:
+Sistema Python per il monitoraggio prudenziale di Bitcoin tramite indicatori
+tecnici giornalieri, dashboard web e notifiche Telegram.
 
-- `https://api.coinbase.com/v2/prices/BTC-EUR/spot`
+Il progetto genera tre possibili segnali:
 
-## Avvio
+- `ACQUISTA`: tutte le condizioni rialziste richieste sono confermate.
+- `MANTIENI`: non ci sono conferme sufficienti per una nuova operazione.
+- `VENDI`: le condizioni di debolezza previste dalla strategia sono confermate.
 
-### Opzione A (più semplice)
+Il segnale e il livello di rischio sono strumenti informativi e non
+costituiscono consulenza finanziaria.
 
-Apri `index.html` con il browser.
+## Funzionalita
 
-### Opzione B (consigliata: mini server locale)
+- Download dei dati giornalieri `BTC-USD` e `BTC-EUR` tramite Yahoo Finance.
+- Prezzi spot USD ed EUR tramite endpoint pubblico Coinbase.
+- Calcolo di SMA50, SMA200, RSI(14), ATR(14), volume medio e massimo/minimo
+  delle ultime 52 settimane.
+- Generazione di segnale, punteggio tecnico e livello di rischio.
+- Backtest della strategia rispetto al Buy & Hold.
+- Report testuale, CSV storico, serie equity e grafico.
+- Dashboard locale e dashboard pubblicabile con GitHub Pages.
+- Monitor schedulato con GitHub Actions e notifiche Telegram.
 
-Se hai Python installato:
+## Regole temporali
 
-```powershell
-cd "C:\Users\giuse\Quotazione EUR-BTC"
-python -m http.server 5173
-```
+Bitcoin viene trattato come un mercato attivo 7 giorni su 7:
 
-Poi apri `http://localhost:5173`.
+- l'anno statistico contiene `365` periodi giornalieri;
+- massimo e minimo a 52 settimane usano una finestra di `365` giorni;
+- rendimento annualizzato e Sharpe Ratio usano `365` periodi;
+- i segnali usano esclusivamente candele giornaliere concluse;
+- la candela UTC del giorno corrente viene esclusa per evitare segnali basati
+  su prezzo e volume ancora parziali.
 
-## Note
+## Logica del backtest
 
-- Mostra lo **spot price** (1 BTC in EUR) e mantiene uno **storico** (massimo 50 righe) in `localStorage`.
-- Refresh automatico configurabile (di default **10s**).
+Il segnale calcolato alla chiusura del giorno viene applicato al rendimento del
+giorno successivo, evitando l'uso anticipato di informazioni.
 
----
+La mappatura del segnale e:
 
-## App Python: segnali prudenziali (BUY/SELL + backtest)
+- `ACQUISTA`: esposizione 100%;
+- `MANTIENI`: conserva l'esposizione precedente;
+- `VENDI`: esposizione 0%.
 
-Questa cartella include anche uno script Python completamente commentato per:
-- scaricare dati giornalieri BTC da Yahoo Finance (yfinance)
-- calcolare SMA50/SMA200, RSI(14), ATR(14), volume medio (20gg), massimo/minimo 52 settimane
-- assegnare un punteggio 0..100 e generare un segnale prudente: ACQUISTA, MANTIENI oppure VENDI
-- fare backtest vs Buy & Hold
-- generare: report testuale, CSV storico, grafico
+Una operazione e definita come un trade long completato, dall'entrata
+all'uscita. Il numero operazioni e il win rate considerano soltanto trade
+chiusi; una posizione ancora aperta alla fine del periodo non viene inclusa.
 
-### Prerequisiti
-- Windows 11
+Il backtest attuale non considera commissioni, spread o slippage.
+
+## Requisiti
+
 - Python 3.13
+- Dipendenze elencate in `requirements.txt`
 
-### Installazione dipendenze
-Apri PowerShell nella cartella e installa:
+Installazione:
 
 ```powershell
-cd "C:\Users\giuse\Quotazione EUR-BTC"
-pip install -r requirements.txt
+git clone https://github.com/giuse2003/BTC_Prudential_Signal.git
+cd BTC_Prudential_Signal
+python -m pip install -r requirements.txt
 ```
 
-### Esecuzione
+## Esecuzione analisi
+
 ```powershell
-cd "C:\Users\giuse\Quotazione EUR-BTC"
-python main.py
+python main.py --force-download
 ```
 
-Output:
+Output principali:
+
 - `reports/report.txt`
 - `reports/historical_signals.csv`
 - `reports/price_sma_signals.png`
 - `reports/equity_timeseries.csv`
+- `reports/status.json`
 
----
+## Dashboard locale
 
-## Dashboard online gratuita (GitHub Pages)
+Prima genera i dati:
 
-La dashboard pubblicabile online vive nella cartella `docs/`.
-Non richiede servizi a pagamento, VPS o piattaforme esterne: usa solo GitHub Actions e GitHub Pages.
+```powershell
+python main.py --force-download
+```
 
-Per attivarla:
+Poi avvia il server:
 
-1. Vai nel repository GitHub.
-2. Apri **Settings** → **Pages**.
-3. In **Build and deployment**, scegli **Deploy from branch**.
-4. Imposta:
-   - **Branch**: `main`
-   - **Folder**: `/docs`
-5. Salva.
+```powershell
+python run_dashboard.py
+```
 
-Il workflow GitHub Actions genera `reports/status.json`, lo copia in `docs/status.json` e committa automaticamente solo quel file quando cambia.
-La dashboard online legge `docs/status.json`.
+Apri `http://localhost:8000`.
 
----
+## Dashboard GitHub Pages
 
-## Monitor “cloud” (GitHub Actions) + notifiche Telegram (ogni ora)
+La dashboard online si trova in `docs/` e legge `docs/status.json`.
 
-Senza VPS/PC sempre acceso: GitHub Actions esegue un job **ogni ora** e manda un messaggio Telegram **solo se cambia il segnale** o se viene superato un livello importante (SMA200 / 52w high / 52w low).
+Configurazione:
 
-### 1) Crea bot Telegram e ottieni token
-Con `@BotFather`:
-- crea il bot
-- copia il `TELEGRAM_BOT_TOKEN`
+1. Apri **Settings > Pages** nel repository.
+2. Seleziona **Deploy from branch**.
+3. Imposta il branch `main` e la cartella `/docs`.
 
-Per ottenere `TELEGRAM_CHAT_ID`:
-- scrivi un messaggio al bot
-- poi apri nel browser: `https://api.telegram.org/bot<TELEGRAM_BOT_TOKEN>/getUpdates`
-- trova `chat.id`
+Il workflow aggiorna `reports/status.json`, lo copia in `docs/status.json` e
+pubblica il nuovo stato.
 
-### 2) Configura Secrets su GitHub
-Repository → Settings → Secrets and variables → Actions → **Secrets**:
+## Telegram e GitHub Actions
+
+Configura questi GitHub Actions Secrets:
+
 - `TELEGRAM_BOT_TOKEN`
 - `TELEGRAM_CHAT_ID`
 
-### 3) Avvio
-Vai su Actions → “Hourly BTC monitor (Telegram)” → Run workflow.
-Poi partirà automaticamente ogni ora.
+Il workflow `.github/workflows/hourly-monitor.yml`:
 
+1. scarica i dati aggiornati;
+2. rimuove la candela giornaliera UTC ancora aperta;
+3. calcola segnale e rischio sull'ultima candela chiusa;
+4. aggiorna la dashboard;
+5. invia Telegram quando cambia il segnale o il rischio diventa `ALTO`.
+
+Un avvio manuale tramite `workflow_dispatch` invia un messaggio di conferma.
+La pianificazione GitHub Actions e best effort e puo subire ritardi.
+
+## Test
+
+```powershell
+python -m unittest discover -s tests -v
+```
+
+I test verificano:
+
+- esclusione della candela giornaliera corrente;
+- gestione di indici con e senza timezone;
+- annualizzazione su 365 giorni;
+- conteggio dei soli trade completati;
+- esclusione delle posizioni ancora aperte dal win rate.
+
+## Struttura
+
+```text
+backtest/       motore e metriche del backtest
+data/           download, caricamento e filtro candele chiuse
+indicators/     indicatori tecnici
+live/           prezzi spot Coinbase
+notifications/  invio Telegram
+reports/        generazione degli output
+state/          stato persistente del monitor
+strategy/       punteggio, segnale e rischio
+tests/          test automatici
+docs/           dashboard GitHub Pages
+```
+
+Per lo stato corrente e le decisioni progettuali:
+
+- [PROJECT_STATUS.md](PROJECT_STATUS.md)
+- [DECISION_LOG.md](DECISION_LOG.md)
