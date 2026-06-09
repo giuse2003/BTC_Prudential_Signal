@@ -19,6 +19,8 @@ dashboard e notificare variazioni rilevanti tramite Telegram.
   riepilogativa.
 - Avvio manuale GitHub Actions configurato per inviare un'anteprima reale
   della notifica operativa.
+- Comando Telegram `/segnale` disponibile tramite listener GitHub Actions
+  schedulato ogni 5 minuti.
 
 ## Correzioni completate
 
@@ -51,7 +53,7 @@ python -m unittest discover -s tests -v
 Risultato al momento dell'ultimo aggiornamento:
 
 ```text
-Ran 5 tests
+Ran 11 tests
 OK
 ```
 
@@ -62,6 +64,7 @@ OK
 - `strategy/signals.py`: segnale, punteggio e rischio.
 - `backtest/backtest.py`: esposizione e metriche.
 - `hourly_monitor.py`: esecuzione cloud e Telegram.
+- `telegram_command.py`: risposta ai comandi ricevuti dal bot.
 - `reports/generate.py`: report e stato dashboard.
 
 ## Ambito rinviato

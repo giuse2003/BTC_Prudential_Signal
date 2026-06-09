@@ -17,6 +17,7 @@ import numpy as np
 import pandas as pd
 
 from config import CFG
+from notifications.telegram import format_monitor_message
 
 
 def _distance_from_sma200_pct(close: pd.Series, sma200: pd.Series) -> pd.Series:
@@ -189,35 +190,11 @@ def format_telegram_message(
         if pd.isna(eur_val):
             eur_val = None
 
-    def fmt_curr(val: float | None) -> str:
-        if val is None or np.isnan(val):
-            return "non disponibile"
-        return f"{int(val):,}".replace(",", ".")
-
-    eur_str = f"{fmt_curr(eur_val)} EUR" if eur_val is not None else "BTC-EUR non disponibile"
-
-    # Indicazione
-    if segnale == "ACQUISTA":
-        indicazione = "Accumulare o acquistare posizioni."
-    elif segnale == "VENDI":
-        indicazione = "Valutare la riduzione del rischio o vendita."
-    else:
-        indicazione = "Attendere. Nessuna nuova operazione consigliata."
-
-    lines = [
-        "BTC MONITOR",
-        "",
-        f"Segnale: {segnale}",
-        f"Rischio: {rischio}",
-        "",
-        "Prezzo:",
-        eur_str,
-        "",
-        "Indicazione:",
-        indicazione
-    ]
-
-    return "\n".join(lines)
+    return format_monitor_message(
+        signal=str(segnale),
+        risk_level=str(rischio),
+        price_eur=float(eur_val) if eur_val is not None else None,
+    )
 
 
 def explain_latest_row(

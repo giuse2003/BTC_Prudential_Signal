@@ -127,6 +127,21 @@ Un avvio manuale tramite `workflow_dispatch` invia il messaggio operativo
 completo, utile per verificare direttamente il layout su Telegram.
 La pianificazione GitHub Actions e best effort e puo subire ritardi.
 
+### Comando Telegram
+
+Scrivi al bot:
+
+```text
+/segnale
+```
+
+Il workflow `telegram-command.yml` controlla i nuovi messaggi ogni 5 minuti e
+risponde con segnale, rischio, prezzo EUR live e indicazione. Sono disponibili
+anche `/start` e `/help`.
+
+La risposta non e istantanea: GitHub Actions non e un server sempre attivo e
+lo scheduler puo introdurre ritardi superiori a 5 minuti.
+
 ## Test
 
 ```powershell

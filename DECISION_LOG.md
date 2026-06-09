@@ -2,6 +2,22 @@
 
 Registro sintetico delle decisioni che influenzano segnali e metriche.
 
+## 2026-06-09 - Comando Telegram `/segnale`
+
+**Decisione:** aggiungere un listener GitHub Actions separato che controlla
+Telegram ogni 5 minuti.
+
+**Motivazione:** permettere la richiesta manuale del segnale direttamente
+dalla chat senza avviare il workflow dal sito GitHub.
+
+**Impatto:**
+
+- `/segnale` restituisce segnale, rischio, prezzo EUR live e indicazione;
+- `/start` e `/help` mostrano il comando disponibile;
+- rispondono soltanto i messaggi provenienti da `TELEGRAM_CHAT_ID`;
+- la risposta puo essere ritardata dallo scheduler GitHub Actions;
+- non e richiesto un server esterno sempre attivo.
+
 ## 2026-06-09 - Notifica Telegram essenziale
 
 **Decisione:** mostrare nella notifica soltanto il prezzo BTC in euro ed
