@@ -2,6 +2,20 @@
 
 Registro sintetico delle decisioni che influenzano segnali e metriche.
 
+## 2026-06-09 - Notifica Telegram essenziale
+
+**Decisione:** mostrare nella notifica soltanto il prezzo BTC in euro ed
+eliminare la sezione `Sintesi`.
+
+**Motivazione:** il doppio prezzo e il riepilogo tecnico rendevano il messaggio
+meno immediato.
+
+**Impatto:**
+
+- nessun prezzo USD nel messaggio Telegram;
+- restano segnale, rischio, prezzo EUR e indicazione;
+- il prezzo storico `BTC-EUR` viene usato se Coinbase non e disponibile.
+
 ## 2026-06-08 - Calendario crypto a 365 giorni
 
 **Decisione:** usare `365` periodi annui per Bitcoin.

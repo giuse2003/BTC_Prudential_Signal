@@ -1,6 +1,6 @@
 # Project Status
 
-Ultimo aggiornamento: 8 giugno 2026
+Ultimo aggiornamento: 9 giugno 2026
 
 ## Obiettivo
 
@@ -15,6 +15,8 @@ dashboard e notificare variazioni rilevanti tramite Telegram.
 - Monitor GitHub Actions e notifiche Telegram operativi.
 - GitHub Pages alimentata da `docs/status.json`.
 - Test automatici presenti per calendario, candele chiuse e metriche trade.
+- Notifica Telegram semplificata con il solo prezzo EUR e senza sezione
+  riepilogativa.
 
 ## Correzioni completate
 

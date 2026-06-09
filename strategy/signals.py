@@ -172,28 +172,75 @@ def compute_signals(df_indicators: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
+def format_telegram_message(
+    df_with_signals: pd.DataFrame,
+    price_eur: float | None = None,
+) -> str:
+    """
+    Produce il messaggio operativo semplificato per Telegram.
+    """
+    row = df_with_signals.iloc[-1]
+    segnale = row.get("Segnale", "N/A")
+    rischio = row.get("Livello_Rischio", "MEDIO")
+
+    eur_val = price_eur
+    if eur_val is None:
+        eur_val = row.get("Close_EUR")
+        if pd.isna(eur_val):
+            eur_val = None
+
+    def fmt_curr(val: float | None) -> str:
+        if val is None or np.isnan(val):
+            return "non disponibile"
+        return f"{int(val):,}".replace(",", ".")
+
+    eur_str = f"{fmt_curr(eur_val)} EUR" if eur_val is not None else "BTC-EUR non disponibile"
+
+    # Indicazione
+    if segnale == "ACQUISTA":
+        indicazione = "Accumulare o acquistare posizioni."
+    elif segnale == "VENDI":
+        indicazione = "Valutare la riduzione del rischio o vendita."
+    else:
+        indicazione = "Attendere. Nessuna nuova operazione consigliata."
+
+    lines = [
+        "BTC MONITOR",
+        "",
+        f"Segnale: {segnale}",
+        f"Rischio: {rischio}",
+        "",
+        "Prezzo:",
+        eur_str,
+        "",
+        "Indicazione:",
+        indicazione
+    ]
+
+    return "\n".join(lines)
+
+
 def explain_latest_row(
     df_with_signals: pd.DataFrame,
     price_eur: float | None = None,
     price_usd: float | None = None,
 ) -> str:
     """
-    Produce una sintesi testuale semplificata per Telegram in lingua naturale.
+    Produce una sintesi testuale estesa per il report locale.
     """
     row = df_with_signals.iloc[-1]
     segnale = row.get("Segnale", "N/A")
     rischio = row.get("Livello_Rischio", "MEDIO")
     close_usd = row["Close"]
-    
-    # Gestione dei prezzi (con fallback robusto)
+
     usd_val = price_usd if price_usd is not None else float(close_usd)
-    
+
     eur_val = price_eur
     if eur_val is None:
         eur_val = row.get("Close_EUR")
         if pd.isna(eur_val):
             eur_val = None
-            
+
     def fmt_curr(val: float | None) -> str:
         if val is None or np.isnan(val):
             return "non disponibile"
@@ -202,11 +249,8 @@ def explain_latest_row(
     usd_str = f"{fmt_curr(usd_val)} USD"
     eur_str = f"{fmt_curr(eur_val)} EUR" if eur_val is not None else "BTC-EUR non disponibile"
 
-    # Trend lungo/medio
     trend_lungo_txt = "positivo" if usd_val > row["SMA200"] else "negativo"
-    trend_medio_txt = "positivo" if row["SMA50"] > row["SMA200"] else "negativo"
-    
-    # RSI description
+
     rsi = row["RSI"]
     if rsi >= 70:
         rsi_zone = "in zona ipercomprato"
@@ -215,10 +259,10 @@ def explain_latest_row(
     else:
         rsi_zone = "in zona neutrale"
 
-    # Sintesi
-    sintesi_lines = []
-    sintesi_lines.append(f"Trend lungo periodo {trend_lungo_txt}.")
-    sintesi_lines.append(f"RSI {rsi_zone}.")
+    sintesi_lines = [
+        f"Trend lungo periodo {trend_lungo_txt}.",
+        f"RSI {rsi_zone}.",
+    ]
     if segnale == "ACQUISTA":
         sintesi_lines.append("Tutte le conferme rialziste sono allineate.")
     elif segnale == "VENDI":
@@ -226,7 +270,6 @@ def explain_latest_row(
     else:
         sintesi_lines.append("Nessuna conferma sufficiente per acquistare.")
 
-    # Indicazione
     if segnale == "ACQUISTA":
         indicazione = "Accumulare o acquistare posizioni."
     elif segnale == "VENDI":
@@ -248,7 +291,7 @@ def explain_latest_row(
         "\n".join(sintesi_lines),
         "",
         "Indicazione:",
-        indicazione
+        indicazione,
     ]
 
     return "\n".join(lines)

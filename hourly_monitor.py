@@ -21,7 +21,7 @@ from data.daily_candles import keep_closed_daily_candles
 from indicators.technical_indicators import compute_all_indicators
 from live.coinbase import fetch_spot_price
 from notifications.telegram import TelegramConfig, send_telegram_message
-from strategy.signals import compute_signals, explain_latest_row
+from strategy.signals import compute_signals, format_telegram_message
 from state.state_store import MonitorState, load_state, save_state
 from reports.generate import save_status_json
 
@@ -106,7 +106,7 @@ def main() -> None:
         if is_manual_run:
             msg = "BTC Monitor attivo e funzionante."
         else:
-            msg = explain_latest_row(df_sig, price_eur=spot_eur, price_usd=spot_usd)
+            msg = format_telegram_message(df_sig, price_eur=spot_eur)
         try:
             send_telegram_message(cfg, msg)
             notification_sent = True
