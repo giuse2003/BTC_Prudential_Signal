@@ -21,6 +21,8 @@ dashboard e notificare variazioni rilevanti tramite Telegram.
   della notifica operativa.
 - Comando Telegram `/segnale` disponibile tramite listener GitHub Actions
   schedulato ogni 5 minuti.
+- Webhook FastAPI aggiunto per risposte Telegram quasi in tempo reale tramite
+  Render e lettura diretta di `docs/status.json` da GitHub Raw.
 
 ## Correzioni completate
 
@@ -53,7 +55,7 @@ python -m unittest discover -s tests -v
 Risultato al momento dell'ultimo aggiornamento:
 
 ```text
-Ran 11 tests
+Ran 16 tests
 OK
 ```
 
@@ -65,6 +67,8 @@ OK
 - `backtest/backtest.py`: esposizione e metriche.
 - `hourly_monitor.py`: esecuzione cloud e Telegram.
 - `telegram_command.py`: risposta ai comandi ricevuti dal bot.
+- `telegram_webhook.py`: endpoint FastAPI per i comandi Telegram.
+- `render.yaml`: configurazione di deploy Render.
 - `reports/generate.py`: report e stato dashboard.
 
 ## Ambito rinviato

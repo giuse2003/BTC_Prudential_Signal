@@ -2,6 +2,24 @@
 
 Registro sintetico delle decisioni che influenzano segnali e metriche.
 
+## 2026-06-09 - Webhook Telegram FastAPI
+
+**Decisione:** aggiungere un servizio FastAPI separato, distribuibile su
+Render, per ricevere direttamente gli update Telegram.
+
+**Motivazione:** eliminare la latenza dello scheduler GitHub Actions senza
+spostare o modificare il calcolo dei segnali.
+
+**Impatto:**
+
+- `POST /webhook` gestisce `/segnale`, `/start` e `/help`;
+- ogni `/segnale` scarica il JSON dal GitHub Raw URL pubblico;
+- nessun database, copia locale o autenticazione GitHub;
+- accesso limitato a `TELEGRAM_CHAT_ID`;
+- supporto opzionale a `TELEGRAM_WEBHOOK_SECRET`;
+- il listener `getUpdates` resta come fallback, ma deve essere disabilitato
+  mentre il webhook e registrato.
+
 ## 2026-06-09 - Comando Telegram `/segnale`
 
 **Decisione:** aggiungere un listener GitHub Actions separato che controlla

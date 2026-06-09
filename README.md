@@ -142,6 +142,24 @@ anche `/start` e `/help`.
 La risposta non e istantanea: GitHub Actions non e un server sempre attivo e
 lo scheduler puo introdurre ritardi superiori a 5 minuti.
 
+### Webhook Telegram FastAPI
+
+Per ottenere risposte quasi immediate e disponibile il servizio
+`telegram_webhook.py`.
+
+Il servizio:
+
+- riceve `POST /webhook` da Telegram;
+- accetta comandi soltanto da `TELEGRAM_CHAT_ID`;
+- scarica sempre `docs/status.json` dal GitHub Raw URL pubblico;
+- non salva copie locali e non modifica il monitor;
+- usa il formatter Telegram gia esistente.
+
+Guida completa: [RENDER_DEPLOYMENT.md](RENDER_DEPLOYMENT.md).
+
+Quando il webhook e registrato, il workflow basato su `getUpdates` deve essere
+disabilitato perche Telegram non permette polling e webhook simultanei.
+
 ## Test
 
 ```powershell
@@ -169,6 +187,8 @@ state/          stato persistente del monitor
 strategy/       punteggio, segnale e rischio
 tests/          test automatici
 docs/           dashboard GitHub Pages
+telegram_webhook.py  servizio FastAPI per i comandi Telegram
+render.yaml          configurazione Blueprint Render
 ```
 
 Per lo stato corrente e le decisioni progettuali:
