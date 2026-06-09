@@ -103,10 +103,7 @@ def main() -> None:
     # 5) Invio Telegram
     if must_notify:
         cfg = TelegramConfig(bot_token=bot_token, chat_id=chat_id)
-        if is_manual_run:
-            msg = "BTC Monitor attivo e funzionante."
-        else:
-            msg = format_telegram_message(df_sig, price_eur=spot_eur)
+        msg = format_telegram_message(df_sig, price_eur=spot_eur)
         try:
             send_telegram_message(cfg, msg)
             notification_sent = True

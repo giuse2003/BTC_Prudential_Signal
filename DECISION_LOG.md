@@ -15,6 +15,8 @@ meno immediato.
 - nessun prezzo USD nel messaggio Telegram;
 - restano segnale, rischio, prezzo EUR e indicazione;
 - il prezzo storico `BTC-EUR` viene usato se Coinbase non e disponibile.
+- l'avvio manuale del workflow invia lo stesso formato dei cambi di segnale,
+  senza aggiornare lo stato delle notifiche automatiche.
 
 ## 2026-06-08 - Calendario crypto a 365 giorni
 

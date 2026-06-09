@@ -17,6 +17,8 @@ dashboard e notificare variazioni rilevanti tramite Telegram.
 - Test automatici presenti per calendario, candele chiuse e metriche trade.
 - Notifica Telegram semplificata con il solo prezzo EUR e senza sezione
   riepilogativa.
+- Avvio manuale GitHub Actions configurato per inviare un'anteprima reale
+  della notifica operativa.
 
 ## Correzioni completate
 

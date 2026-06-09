@@ -123,7 +123,8 @@ Il workflow `.github/workflows/hourly-monitor.yml`:
 4. aggiorna la dashboard;
 5. invia Telegram quando cambia il segnale o il rischio diventa `ALTO`.
 
-Un avvio manuale tramite `workflow_dispatch` invia un messaggio di conferma.
+Un avvio manuale tramite `workflow_dispatch` invia il messaggio operativo
+completo, utile per verificare direttamente il layout su Telegram.
 La pianificazione GitHub Actions e best effort e puo subire ritardi.
 
 ## Test

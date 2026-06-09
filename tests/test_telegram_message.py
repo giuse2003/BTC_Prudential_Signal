@@ -52,6 +52,22 @@ class TelegramMessageTests(unittest.TestCase):
 
         self.assertIn("50.000 EUR", message)
 
+    def test_manual_preview_uses_same_formatter_as_signal_change(self) -> None:
+        source = (
+            __import__("pathlib")
+            .Path(__file__)
+            .resolve()
+            .parents[1]
+            .joinpath("hourly_monitor.py")
+            .read_text(encoding="utf-8")
+        )
+
+        self.assertNotIn("BTC Monitor attivo e funzionante.", source)
+        self.assertIn(
+            "msg = format_telegram_message(df_sig, price_eur=spot_eur)",
+            source,
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
