@@ -3,6 +3,13 @@
 Sistema Python per il monitoraggio prudenziale di Bitcoin tramite indicatori
 tecnici giornalieri, dashboard web e notifiche Telegram.
 
+## Monitor online
+
+**[Apri la dashboard BTC Prudential Signal](https://giuse2003.github.io/BTC_Prudential_Signal/)**
+
+La pagina mostra il segnale corrente, il livello di rischio, i prezzi BTC e
+gli ultimi indicatori pubblicati dal monitor.
+
 Il progetto genera tre possibili segnali:
 
 - `ACQUISTA`: tutte le condizioni rialziste richieste sono confermate.
@@ -99,7 +106,11 @@ Apri `http://localhost:8000`.
 
 ## Dashboard GitHub Pages
 
-La dashboard online si trova in `docs/` e legge `docs/status.json`.
+La dashboard pubblica e disponibile qui:
+
+**[https://giuse2003.github.io/BTC_Prudential_Signal/](https://giuse2003.github.io/BTC_Prudential_Signal/)**
+
+I file della dashboard si trovano in `docs/` e leggono `docs/status.json`.
 
 Configurazione:
 
