@@ -3,6 +3,22 @@
 Questa guida attiva risposte quasi immediate al comando Telegram `/segnale`
 usando il servizio FastAPI definito in `telegram_webhook.py`.
 
+## Stato del deploy
+
+Configurazione completata e verificata il 9 giugno 2026.
+
+```text
+Servizio: https://btc-prudential-signal.onrender.com
+Webhook:  https://btc-prudential-signal.onrender.com/webhook
+Stato:    Live
+```
+
+Verifiche completate:
+
+- health check con risposta `{"status":"ok"}`;
+- `getWebhookInfo` con URL corretto e nessun update pendente;
+- comando `/segnale` con risposta immediata.
+
 ## Prima del deploy
 
 Servono:

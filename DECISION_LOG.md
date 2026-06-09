@@ -2,6 +2,27 @@
 
 Registro sintetico delle decisioni che influenzano segnali e metriche.
 
+## 2026-06-09 - Webhook Render attivato
+
+**Stato:** operativo e verificato.
+
+**Configurazione:**
+
+- servizio pubblico:
+  `https://btc-prudential-signal.onrender.com`;
+- endpoint Telegram:
+  `https://btc-prudential-signal.onrender.com/webhook`;
+- health check verificato con `{"status":"ok"}`;
+- registrazione Telegram verificata tramite `getWebhookInfo`;
+- `/segnale` verificato con risposta immediata.
+
+**Decisione operativa:**
+
+- mantenere attivo `Hourly BTC monitor (Telegram)`;
+- mantenere disabilitato `Telegram command listener`;
+- usare il listener `getUpdates` soltanto come fallback dopo aver eseguito
+  `deleteWebhook`.
+
 ## 2026-06-09 - Webhook Telegram FastAPI
 
 **Decisione:** aggiungere un servizio FastAPI separato, distribuibile su

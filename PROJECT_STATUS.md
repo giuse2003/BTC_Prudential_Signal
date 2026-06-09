@@ -19,10 +19,15 @@ dashboard e notificare variazioni rilevanti tramite Telegram.
   riepilogativa.
 - Avvio manuale GitHub Actions configurato per inviare un'anteprima reale
   della notifica operativa.
-- Comando Telegram `/segnale` disponibile tramite listener GitHub Actions
-  schedulato ogni 5 minuti.
-- Webhook FastAPI aggiunto per risposte Telegram quasi in tempo reale tramite
-  Render e lettura diretta di `docs/status.json` da GitHub Raw.
+- Webhook FastAPI pubblicato e operativo su Render:
+  `https://btc-prudential-signal.onrender.com`.
+- Webhook Telegram registrato su
+  `https://btc-prudential-signal.onrender.com/webhook`.
+- Comando `/segnale` verificato con risposta immediata nella chat autorizzata.
+- Lettura diretta di `docs/status.json` da GitHub Raw, senza copie locali.
+- Workflow `Telegram command listener` mantenuto soltanto come fallback e
+  disabilitato durante l'uso del webhook.
+- Workflow `Hourly BTC monitor (Telegram)` mantenuto attivo.
 
 ## Correzioni completate
 
@@ -43,6 +48,15 @@ dashboard e notificare variazioni rilevanti tramite Telegram.
 - Una operazione corrisponde a un trade long completato.
 - Il win rate usa come denominatore soltanto i trade chiusi.
 - Le posizioni ancora aperte non vengono considerate concluse.
+
+### Webhook Telegram
+
+- Servizio Render in stato `Live`.
+- Health check pubblico verificato con risposta `{"status":"ok"}`.
+- Registrazione Telegram verificata tramite `getWebhookInfo`.
+- Accesso limitato a `TELEGRAM_CHAT_ID`.
+- Richieste autenticate con `TELEGRAM_WEBHOOK_SECRET`.
+- `/segnale`, `/start` e `/help` gestiti da FastAPI.
 
 ## Verifica
 
@@ -66,7 +80,7 @@ OK
 - `strategy/signals.py`: segnale, punteggio e rischio.
 - `backtest/backtest.py`: esposizione e metriche.
 - `hourly_monitor.py`: esecuzione cloud e Telegram.
-- `telegram_command.py`: risposta ai comandi ricevuti dal bot.
+- `telegram_command.py`: listener polling mantenuto come fallback.
 - `telegram_webhook.py`: endpoint FastAPI per i comandi Telegram.
 - `render.yaml`: configurazione di deploy Render.
 - `reports/generate.py`: report e stato dashboard.

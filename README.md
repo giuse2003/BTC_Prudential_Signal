@@ -23,6 +23,8 @@ costituiscono consulenza finanziaria.
 - Report testuale, CSV storico, serie equity e grafico.
 - Dashboard locale e dashboard pubblicabile con GitHub Pages.
 - Monitor schedulato con GitHub Actions e notifiche Telegram.
+- Comando Telegram `/segnale` servito in tempo reale da un webhook FastAPI
+  pubblicato su Render.
 
 ## Regole temporali
 
@@ -127,7 +129,7 @@ Un avvio manuale tramite `workflow_dispatch` invia il messaggio operativo
 completo, utile per verificare direttamente il layout su Telegram.
 La pianificazione GitHub Actions e best effort e puo subire ritardi.
 
-### Comando Telegram
+### Comando Telegram in tempo reale
 
 Scrivi al bot:
 
@@ -135,30 +137,41 @@ Scrivi al bot:
 /segnale
 ```
 
-Il workflow `telegram-command.yml` controlla i nuovi messaggi ogni 5 minuti e
-risponde con segnale, rischio, prezzo EUR live e indicazione. Sono disponibili
-anche `/start` e `/help`.
+Il comando viene gestito dal servizio FastAPI `telegram_webhook.py`, operativo
+su Render:
 
-La risposta non e istantanea: GitHub Actions non e un server sempre attivo e
-lo scheduler puo introdurre ritardi superiori a 5 minuti.
+```text
+https://btc-prudential-signal.onrender.com
+```
 
-### Webhook Telegram FastAPI
-
-Per ottenere risposte quasi immediate e disponibile il servizio
-`telegram_webhook.py`.
-
-Il servizio:
+Il webhook:
 
 - riceve `POST /webhook` da Telegram;
 - accetta comandi soltanto da `TELEGRAM_CHAT_ID`;
 - scarica sempre `docs/status.json` dal GitHub Raw URL pubblico;
 - non salva copie locali e non modifica il monitor;
 - usa il formatter Telegram gia esistente.
+- risponde con segnale, rischio, prezzo EUR e indicazione.
+
+Sono disponibili anche `/start` e `/help`.
+
+Il deploy e il collegamento Telegram sono stati verificati il 9 giugno 2026:
+
+- servizio Render in stato `Live`;
+- health check `GET /` con risposta `{"status":"ok"}`;
+- webhook Telegram registrato su `/webhook`;
+- comando `/segnale` verificato con risposta immediata.
 
 Guida completa: [RENDER_DEPLOYMENT.md](RENDER_DEPLOYMENT.md).
 
-Quando il webhook e registrato, il workflow basato su `getUpdates` deve essere
-disabilitato perche Telegram non permette polling e webhook simultanei.
+Il workflow `Telegram command listener`, basato su `getUpdates`, resta nel
+repository soltanto come fallback e deve rimanere disabilitato mentre il
+webhook e registrato. Il workflow `Hourly BTC monitor (Telegram)` deve restare
+attivo per aggiornare `docs/status.json` e inviare i cambi automatici.
+
+Sul piano gratuito Render il servizio puo sospendersi dopo un periodo di
+inattivita. In quel caso soltanto la prima richiesta puo richiedere piu tempo;
+quando il servizio e attivo, la risposta e normalmente immediata.
 
 ## Test
 
