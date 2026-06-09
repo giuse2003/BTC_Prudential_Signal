@@ -219,3 +219,4 @@ Per lo stato corrente e le decisioni progettuali:
 
 - [PROJECT_STATUS.md](PROJECT_STATUS.md)
 - [DECISION_LOG.md](DECISION_LOG.md)
+- [TELEGRAM_SUBSCRIBERS_ROADMAP.md](TELEGRAM_SUBSCRIBERS_ROADMAP.md)
