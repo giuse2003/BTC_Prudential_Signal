@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import logging
 import os
+from dataclasses import dataclass
 from typing import Any
 
 import requests
@@ -19,6 +20,7 @@ from notifications.telegram import (
     format_monitor_message,
     send_telegram_message,
 )
+from telegram_subscribers import SupabaseSubscriberStore, TelegramSubscriber
 
 
 STATUS_JSON_URL = (
@@ -28,29 +30,90 @@ STATUS_JSON_URL = (
 STATUS_ERROR_MESSAGE = (
     "Impossibile recuperare il segnale BTC aggiornato. Riprova tra poco."
 )
-HELP_MESSAGE = "Comando disponibile:\n/segnale - mostra il segnale BTC corrente"
+HELP_MESSAGE = "\n".join(
+    [
+        "BTC PRUDENTIAL SIGNAL",
+        "",
+        "/segnale - mostra il segnale BTC corrente",
+        "/iscrivimi - ricevi notifiche quando cambia segnale o rischio",
+        "/disiscrivimi - interrompi le notifiche automatiche",
+        "/privacy - informazioni sui dati memorizzati",
+    ]
+)
+PRIVACY_MESSAGE = "\n".join(
+    [
+        "PRIVACY",
+        "",
+        "Per gestire le notifiche vengono memorizzati il tuo identificativo "
+        "Telegram, il nome pubblico e lo stato dell'iscrizione.",
+        "Il numero di cellulare non viene richiesto o memorizzato.",
+        "Puoi revocare il consenso in qualsiasi momento con /disiscrivimi.",
+    ]
+)
+SUBSCRIBED_MESSAGE = "\n".join(
+    [
+        "Iscrizione attiva.",
+        "",
+        "Riceverai un messaggio soltanto quando cambia il segnale BTC o il "
+        "livello di rischio.",
+        "Puoi annullare l'iscrizione con /disiscrivimi.",
+    ]
+)
+UNSUBSCRIBED_MESSAGE = "Iscrizione disattivata. Non riceverai nuovi segnali."
+NOT_SUBSCRIBED_MESSAGE = "Non risulta alcuna iscrizione da disattivare."
+SUBSCRIPTION_ERROR_MESSAGE = (
+    "Non riesco ad aggiornare l'iscrizione in questo momento. Riprova tra poco."
+)
 
 logger = logging.getLogger(__name__)
 app = FastAPI(title="BTC Prudential Signal Telegram Webhook")
 
 
-def extract_command(update: dict[str, Any], authorized_chat_id: str) -> str | None:
-    """
-    Estrae un comando solo dalla chat Telegram autorizzata.
-    """
+@dataclass(frozen=True)
+class TelegramCommand:
+    command: str
+    chat_id: int
+    user_id: int | None
+    username: str | None
+    first_name: str | None
+    language_code: str | None
+
+
+def extract_command(update: dict[str, Any]) -> TelegramCommand | None:
+    """Estrae un comando ricevuto in una chat privata Telegram."""
     message = update.get("message")
     if not isinstance(message, dict):
         return None
 
     chat = message.get("chat")
-    if not isinstance(chat, dict) or str(chat.get("id")) != str(authorized_chat_id):
+    if not isinstance(chat, dict) or chat.get("type") not in {None, "private"}:
+        return None
+
+    chat_id = chat.get("id")
+    if not isinstance(chat_id, int):
         return None
 
     text = message.get("text")
     if not isinstance(text, str) or not text.strip().startswith("/"):
         return None
 
-    return text.strip().split(maxsplit=1)[0].split("@", maxsplit=1)[0].lower()
+    sender = message.get("from")
+    if not isinstance(sender, dict):
+        sender = {}
+
+    user_id = sender.get("id")
+    return TelegramCommand(
+        command=text.strip().split(maxsplit=1)[0].split("@", maxsplit=1)[0].lower(),
+        chat_id=chat_id,
+        user_id=user_id if isinstance(user_id, int) else None,
+        username=_optional_text(sender.get("username")),
+        first_name=_optional_text(sender.get("first_name")),
+        language_code=_optional_text(sender.get("language_code")),
+    )
+
+
+def _optional_text(value: Any) -> str | None:
+    return value if isinstance(value, str) and value else None
 
 
 def fetch_github_status(timeout_s: int = 8) -> dict[str, Any]:
@@ -84,20 +147,54 @@ def build_signal_message(status: dict[str, Any]) -> str:
     )
 
 
-def process_command(command: str, cfg: TelegramConfig) -> None:
+def process_command(
+    request: TelegramCommand,
+    cfg: TelegramConfig,
+    subscriber_store: SupabaseSubscriberStore | None,
+) -> None:
     """
     Elabora il comando dopo che il webhook ha gia restituito HTTP 200.
     """
-    if command == "/segnale":
+    if request.command == "/segnale":
         try:
             message = build_signal_message(fetch_github_status())
         except Exception:
             logger.exception("Impossibile recuperare docs/status.json da GitHub.")
             message = STATUS_ERROR_MESSAGE
-    elif command in {"/start", "/help"}:
+    elif request.command in {"/start", "/help"}:
         message = HELP_MESSAGE
+    elif request.command == "/privacy":
+        message = PRIVACY_MESSAGE
+    elif request.command == "/iscrivimi":
+        if subscriber_store is None:
+            message = SUBSCRIPTION_ERROR_MESSAGE
+        else:
+            try:
+                subscriber_store.subscribe(
+                    TelegramSubscriber(
+                        telegram_chat_id=request.chat_id,
+                        telegram_user_id=request.user_id,
+                        telegram_username=request.username,
+                        telegram_first_name=request.first_name,
+                        telegram_language_code=request.language_code,
+                    )
+                )
+                message = SUBSCRIBED_MESSAGE
+            except Exception:
+                logger.exception("Registrazione dell'iscrizione non riuscita.")
+                message = SUBSCRIPTION_ERROR_MESSAGE
+    elif request.command == "/disiscrivimi":
+        if subscriber_store is None:
+            message = SUBSCRIPTION_ERROR_MESSAGE
+        else:
+            try:
+                removed = subscriber_store.unsubscribe(request.chat_id)
+                message = UNSUBSCRIBED_MESSAGE if removed else NOT_SUBSCRIBED_MESSAGE
+            except Exception:
+                logger.exception("Disattivazione dell'iscrizione non riuscita.")
+                message = SUBSCRIPTION_ERROR_MESSAGE
     else:
-        message = "Comando non riconosciuto.\nUsa /segnale"
+        message = "Comando non riconosciuto.\nUsa /help"
 
     try:
         send_telegram_message(cfg, message)
@@ -123,18 +220,24 @@ def telegram_webhook(
     Riceve gli update Telegram e accoda rapidamente la risposta.
     """
     bot_token = os.environ.get("TELEGRAM_BOT_TOKEN", "").strip()
-    chat_id = os.environ.get("TELEGRAM_CHAT_ID", "").strip()
     webhook_secret = os.environ.get("TELEGRAM_WEBHOOK_SECRET", "").strip()
+    supabase_url = os.environ.get("SUPABASE_URL", "").strip()
+    supabase_key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "").strip()
 
-    if not bot_token or not chat_id:
+    if not bot_token:
         raise HTTPException(status_code=503, detail="Configurazione Telegram mancante.")
 
     if webhook_secret and x_telegram_bot_api_secret_token != webhook_secret:
         raise HTTPException(status_code=403, detail="Webhook secret non valido.")
 
-    command = extract_command(update, chat_id)
+    command = extract_command(update)
     if command is not None:
-        cfg = TelegramConfig(bot_token=bot_token, chat_id=chat_id)
-        background_tasks.add_task(process_command, command, cfg)
+        cfg = TelegramConfig(bot_token=bot_token, chat_id=str(command.chat_id))
+        subscriber_store = (
+            SupabaseSubscriberStore(supabase_url, supabase_key)
+            if supabase_url and supabase_key
+            else None
+        )
+        background_tasks.add_task(process_command, command, cfg, subscriber_store)
 
     return {"ok": True}

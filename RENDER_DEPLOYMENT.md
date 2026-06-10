@@ -27,6 +27,8 @@ Servono:
 - un account gratuito su Render;
 - `TELEGRAM_BOT_TOKEN`;
 - `TELEGRAM_CHAT_ID`;
+- `SUPABASE_URL`;
+- `SUPABASE_SERVICE_ROLE_KEY`;
 - una stringa segreta scelta dall'utente, ad esempio
   `btc_signal_webhook_2026`.
 
@@ -56,6 +58,8 @@ Blueprint.
 TELEGRAM_BOT_TOKEN=<token BotFather>
 TELEGRAM_CHAT_ID=<id numerico della chat>
 TELEGRAM_WEBHOOK_SECRET=btc_signal_webhook_2026
+SUPABASE_URL=<project URL Supabase>
+SUPABASE_SERVICE_ROLE_KEY=<service role secret Supabase>
 ```
 
 8. Avvia il deploy.
@@ -129,6 +133,17 @@ Il webhook:
 4. risponde con segnale, rischio, prezzo EUR e indicazione.
 
 Sono supportati anche `/start` e `/help`.
+
+Con Supabase configurato sono supportati anche:
+
+```text
+/iscrivimi
+/disiscrivimi
+/privacy
+```
+
+Non inserire mai `SUPABASE_SERVICE_ROLE_KEY` nel repository o nella dashboard
+pubblica. Deve esistere soltanto tra le variabili protette di Render.
 
 ## Listener GitHub Actions
 

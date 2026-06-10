@@ -1,6 +1,6 @@
 # Project Status
 
-Ultimo aggiornamento: 9 giugno 2026
+Ultimo aggiornamento: 10 giugno 2026
 
 ## Obiettivo
 
@@ -23,7 +23,9 @@ dashboard e notificare variazioni rilevanti tramite Telegram.
   `https://btc-prudential-signal.onrender.com`.
 - Webhook Telegram registrato su
   `https://btc-prudential-signal.onrender.com/webhook`.
-- Comando `/segnale` verificato con risposta immediata nella chat autorizzata.
+- Comando `/segnale` disponibile in ogni chat privata con il bot.
+- Database Supabase degli iscritti creato e verificato con RLS forzata.
+- Comandi `/iscrivimi`, `/disiscrivimi` e `/privacy` implementati.
 - Lettura diretta di `docs/status.json` da GitHub Raw, senza copie locali.
 - Workflow `Telegram command listener` mantenuto soltanto come fallback e
   disabilitato durante l'uso del webhook.
@@ -54,9 +56,11 @@ dashboard e notificare variazioni rilevanti tramite Telegram.
 - Servizio Render in stato `Live`.
 - Health check pubblico verificato con risposta `{"status":"ok"}`.
 - Registrazione Telegram verificata tramite `getWebhookInfo`.
-- Accesso limitato a `TELEGRAM_CHAT_ID`.
+- Comandi disponibili nelle chat private; i gruppi vengono ignorati.
 - Richieste autenticate con `TELEGRAM_WEBHOOK_SECRET`.
-- `/segnale`, `/start` e `/help` gestiti da FastAPI.
+- `/segnale`, `/start`, `/help`, `/privacy`, `/iscrivimi` e
+  `/disiscrivimi` gestiti da FastAPI.
+- Iscrizioni persistenti su Supabase senza duplicati.
 
 ## Verifica
 
@@ -69,7 +73,7 @@ python -m unittest discover -s tests -v
 Risultato al momento dell'ultimo aggiornamento:
 
 ```text
-Ran 16 tests
+Ran 23 tests
 OK
 ```
 
@@ -82,6 +86,7 @@ OK
 - `hourly_monitor.py`: esecuzione cloud e Telegram.
 - `telegram_command.py`: listener polling mantenuto come fallback.
 - `telegram_webhook.py`: endpoint FastAPI per i comandi Telegram.
+- `telegram_subscribers.py`: accesso server-side agli iscritti Supabase.
 - `render.yaml`: configurazione di deploy Render.
 - `reports/generate.py`: report e stato dashboard.
 

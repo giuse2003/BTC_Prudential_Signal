@@ -32,6 +32,8 @@ costituiscono consulenza finanziaria.
 - Monitor schedulato con GitHub Actions e notifiche Telegram.
 - Comando Telegram `/segnale` servito in tempo reale da un webhook FastAPI
   pubblicato su Render.
+- Iscrizioni Telegram persistenti su Supabase tramite `/iscrivimi` e
+  `/disiscrivimi`.
 
 ## Regole temporali
 
@@ -165,6 +167,16 @@ Il webhook:
 - risponde con segnale, rischio, prezzo EUR e indicazione.
 
 Sono disponibili anche `/start` e `/help`.
+
+Il webhook supporta inoltre:
+
+```text
+/iscrivimi
+/disiscrivimi
+/privacy
+```
+
+I comandi funzionano nelle chat private con il bot. I gruppi vengono ignorati.
 
 Il deploy e il collegamento Telegram sono stati verificati il 9 giugno 2026:
 

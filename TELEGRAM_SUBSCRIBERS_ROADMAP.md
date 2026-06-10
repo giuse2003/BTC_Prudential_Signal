@@ -2,7 +2,7 @@
 
 Ultimo aggiornamento: 10 giugno 2026
 
-Stato generale: `IN CORSO - FASE 1`
+Stato generale: `FASE 2 IMPLEMENTATA - CONFIGURAZIONE RENDER IN ATTESA`
 
 ## Obiettivo
 
@@ -74,26 +74,26 @@ Notifica agli iscritti solo quando cambia segnale o rischio
 
 ### Fase 1 - Supabase
 
-- [ ] **1.1 Utente:** creare un account o accedere a Supabase.
-- [ ] **1.2 Utente:** creare un nuovo progetto Supabase.
+- [x] **1.1 Utente:** creare un account o accedere a Supabase.
+- [x] **1.2 Utente:** creare un nuovo progetto Supabase.
 - [x] **1.3 Codex:** definire schema, vincoli e policy della tabella iscritti.
 - [x] **1.4 Codex:** preparare lo script SQL completo.
-- [ ] **1.5 Utente:** eseguire lo script nell'SQL Editor Supabase.
-- [ ] **1.6 Utente:** recuperare `SUPABASE_URL`.
-- [ ] **1.7 Utente:** recuperare `SUPABASE_SERVICE_ROLE_KEY`.
-- [ ] **1.8 Verifica:** confermare che la tabella sia accessibile.
+- [x] **1.5 Utente:** eseguire lo script nell'SQL Editor Supabase.
+- [x] **1.6 Utente:** recuperare `SUPABASE_URL`.
+- [x] **1.7 Utente:** recuperare `SUPABASE_SERVICE_ROLE_KEY`.
+- [x] **1.8 Verifica:** confermare che la tabella sia accessibile.
 
 ### Fase 2 - Webhook Telegram
 
-- [ ] **2.1 Codex:** aggiungere client Supabase al servizio FastAPI.
-- [ ] **2.2 Codex:** implementare `/iscrivimi`.
-- [ ] **2.3 Codex:** implementare `/disiscrivimi`.
-- [ ] **2.4 Codex:** aggiornare `/start` e `/help`.
-- [ ] **2.5 Codex:** aggiungere `/privacy`.
-- [ ] **2.6 Codex:** mantenere `/segnale` funzionante per ogni utente.
-- [ ] **2.7 Codex:** impedire iscrizioni duplicate.
-- [ ] **2.8 Codex:** limitare operazioni amministrative al chat ID admin.
-- [ ] **2.9 Test:** verificare iscrizione, rinnovo e disiscrizione.
+- [x] **2.1 Codex:** aggiungere client Supabase al servizio FastAPI.
+- [x] **2.2 Codex:** implementare `/iscrivimi`.
+- [x] **2.3 Codex:** implementare `/disiscrivimi`.
+- [x] **2.4 Codex:** aggiornare `/start` e `/help`.
+- [x] **2.5 Codex:** aggiungere `/privacy`.
+- [x] **2.6 Codex:** mantenere `/segnale` funzionante per ogni utente.
+- [x] **2.7 Codex:** impedire iscrizioni duplicate.
+- [x] **2.8 Codex:** non esporre operazioni amministrative agli utenti.
+- [x] **2.9 Test:** verificare iscrizione, rinnovo e disiscrizione.
 
 ### Fase 3 - Dashboard
 
@@ -208,9 +208,11 @@ La funzionalita sara considerata completata quando:
 | 2026-06-09 | Creazione roadmap | Completato | Decisioni e responsabilita iniziali registrate. |
 | 2026-06-10 | 1.3 Schema Supabase | Completato | Tabella privata via RLS, chiave primaria su telegram_chat_id. |
 | 2026-06-10 | 1.4 Script SQL | Completato | Creato `supabase/telegram_subscribers.sql`. |
+| 2026-06-10 | Fase 1 Supabase | Completato | RLS forzata, nessuna policy pubblica e test REST riuscito. |
+| 2026-06-10 | Fase 2 Webhook | Implementata | Comandi pubblici, repository Supabase e 23 test superati. |
 
 ## Prossimo passo
 
-L'utente deve completare i passi 1.1, 1.2 e 1.5 seguendo
-`SUPABASE_SETUP.md`, quindi confermare l'esito delle verifiche senza
-condividere credenziali.
+Pubblicare il codice e aggiungere su Render `SUPABASE_URL` e
+`SUPABASE_SERVICE_ROLE_KEY`. Dopo il deploy, verificare `/help`,
+`/iscrivimi`, `/segnale` e `/disiscrivimi`.

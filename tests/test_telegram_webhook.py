@@ -7,25 +7,52 @@ from unittest.mock import Mock, patch
 from fastapi import BackgroundTasks, HTTPException
 
 from telegram_webhook import (
+    HELP_MESSAGE,
+    SUBSCRIBED_MESSAGE,
+    UNSUBSCRIBED_MESSAGE,
     STATUS_JSON_URL,
+    TelegramCommand,
     build_signal_message,
     extract_command,
     fetch_github_status,
+    process_command,
     telegram_webhook,
 )
+from notifications.telegram import TelegramConfig
 
 
 class TelegramWebhookTests(unittest.TestCase):
-    def test_extracts_command_only_from_authorized_chat(self) -> None:
+    def test_extracts_command_and_sender_from_private_chat(self) -> None:
         update = {
             "message": {
-                "chat": {"id": 123},
+                "chat": {"id": 123, "type": "private"},
+                "from": {
+                    "id": 456,
+                    "username": "utente",
+                    "first_name": "Mario",
+                    "language_code": "it",
+                },
                 "text": "/segnale@BTC_Prudential_Signal_bot",
             }
         }
 
-        self.assertEqual(extract_command(update, "123"), "/segnale")
-        self.assertIsNone(extract_command(update, "999"))
+        command = extract_command(update)
+
+        self.assertIsNotNone(command)
+        self.assertEqual(command.command, "/segnale")
+        self.assertEqual(command.chat_id, 123)
+        self.assertEqual(command.user_id, 456)
+        self.assertEqual(command.username, "utente")
+
+    def test_ignores_commands_from_groups(self) -> None:
+        update = {
+            "message": {
+                "chat": {"id": -123, "type": "group"},
+                "text": "/iscrivimi",
+            }
+        }
+
+        self.assertIsNone(extract_command(update))
 
     def test_builds_existing_monitor_layout_from_status_json(self) -> None:
         message = build_signal_message(
@@ -60,15 +87,19 @@ class TelegramWebhookTests(unittest.TestCase):
         )
         response.raise_for_status.assert_called_once_with()
 
-    def test_webhook_queues_authorized_command(self) -> None:
+    def test_webhook_queues_command_from_any_private_chat(self) -> None:
         background_tasks = BackgroundTasks()
-        update = {"message": {"chat": {"id": 123}, "text": "/segnale"}}
+        update = {
+            "message": {
+                "chat": {"id": 987, "type": "private"},
+                "text": "/segnale",
+            }
+        }
 
         with patch.dict(
             environ,
             {
                 "TELEGRAM_BOT_TOKEN": "test-token",
-                "TELEGRAM_CHAT_ID": "123",
                 "TELEGRAM_WEBHOOK_SECRET": "test-secret",
             },
             clear=False,
@@ -81,13 +112,13 @@ class TelegramWebhookTests(unittest.TestCase):
 
         self.assertEqual(result, {"ok": True})
         self.assertEqual(len(background_tasks.tasks), 1)
+        self.assertEqual(background_tasks.tasks[0].args[1].chat_id, "987")
 
     def test_webhook_rejects_invalid_secret(self) -> None:
         with patch.dict(
             environ,
             {
                 "TELEGRAM_BOT_TOKEN": "test-token",
-                "TELEGRAM_CHAT_ID": "123",
                 "TELEGRAM_WEBHOOK_SECRET": "expected-secret",
             },
             clear=False,
@@ -100,6 +131,63 @@ class TelegramWebhookTests(unittest.TestCase):
                 )
 
         self.assertEqual(error.exception.status_code, 403)
+
+    @patch("telegram_webhook.send_telegram_message")
+    def test_subscribe_command_stores_user_and_confirms(self, mock_send: Mock) -> None:
+        store = Mock()
+        command = TelegramCommand(
+            command="/iscrivimi",
+            chat_id=123,
+            user_id=456,
+            username="utente",
+            first_name="Mario",
+            language_code="it",
+        )
+        cfg = TelegramConfig(bot_token="token", chat_id="123")
+
+        process_command(command, cfg, store)
+
+        subscriber = store.subscribe.call_args.args[0]
+        self.assertEqual(subscriber.telegram_chat_id, 123)
+        self.assertEqual(subscriber.telegram_user_id, 456)
+        mock_send.assert_called_once_with(cfg, SUBSCRIBED_MESSAGE)
+
+    @patch("telegram_webhook.send_telegram_message")
+    def test_unsubscribe_command_disables_existing_user(self, mock_send: Mock) -> None:
+        store = Mock()
+        store.unsubscribe.return_value = True
+        command = TelegramCommand(
+            command="/disiscrivimi",
+            chat_id=123,
+            user_id=456,
+            username=None,
+            first_name=None,
+            language_code=None,
+        )
+        cfg = TelegramConfig(bot_token="token", chat_id="123")
+
+        process_command(command, cfg, store)
+
+        store.unsubscribe.assert_called_once_with(123)
+        mock_send.assert_called_once_with(cfg, UNSUBSCRIBED_MESSAGE)
+
+    @patch("telegram_webhook.send_telegram_message")
+    def test_help_lists_subscription_commands(self, mock_send: Mock) -> None:
+        command = TelegramCommand(
+            command="/help",
+            chat_id=123,
+            user_id=None,
+            username=None,
+            first_name=None,
+            language_code=None,
+        )
+        cfg = TelegramConfig(bot_token="token", chat_id="123")
+
+        process_command(command, cfg, None)
+
+        self.assertIn("/iscrivimi", HELP_MESSAGE)
+        self.assertIn("/disiscrivimi", HELP_MESSAGE)
+        mock_send.assert_called_once_with(cfg, HELP_MESSAGE)
 
 
 if __name__ == "__main__":

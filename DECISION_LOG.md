@@ -2,6 +2,21 @@
 
 Registro sintetico delle decisioni che influenzano segnali e metriche.
 
+## 2026-06-10 - Iscrizioni Telegram persistenti
+
+**Decisione:** consentire l'uso del bot in ogni chat privata e memorizzare le
+iscrizioni in Supabase.
+
+**Impatto:**
+
+- `/iscrivimi` crea o riattiva l'iscrizione senza duplicati;
+- `/disiscrivimi` disattiva gli invii senza cancellare la registrazione;
+- `/privacy` descrive i dati conservati;
+- gruppi e supergruppi vengono ignorati;
+- il numero di cellulare non viene richiesto;
+- la service role resta nelle variabili protette del backend;
+- la notifica collettiva al cambio segnale o rischio resta nella Fase 4.
+
 ## 2026-06-09 - Webhook Render attivato
 
 **Stato:** operativo e verificato.
