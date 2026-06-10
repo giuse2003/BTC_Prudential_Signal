@@ -1,8 +1,8 @@
 # Telegram Subscribers Roadmap
 
-Ultimo aggiornamento: 9 giugno 2026
+Ultimo aggiornamento: 10 giugno 2026
 
-Stato generale: `DA INIZIARE`
+Stato generale: `IN CORSO - FASE 1`
 
 ## Obiettivo
 
@@ -76,8 +76,8 @@ Notifica agli iscritti solo quando cambia segnale o rischio
 
 - [ ] **1.1 Utente:** creare un account o accedere a Supabase.
 - [ ] **1.2 Utente:** creare un nuovo progetto Supabase.
-- [ ] **1.3 Codex:** definire schema, vincoli e policy della tabella iscritti.
-- [ ] **1.4 Codex:** preparare lo script SQL completo.
+- [x] **1.3 Codex:** definire schema, vincoli e policy della tabella iscritti.
+- [x] **1.4 Codex:** preparare lo script SQL completo.
 - [ ] **1.5 Utente:** eseguire lo script nell'SQL Editor Supabase.
 - [ ] **1.6 Utente:** recuperare `SUPABASE_URL`.
 - [ ] **1.7 Utente:** recuperare `SUPABASE_SERVICE_ROLE_KEY`.
@@ -164,17 +164,24 @@ SUPABASE_SERVICE_ROLE_KEY
 
 ## Dati minimi previsti per ogni iscritto
 
-Schema indicativo, ancora da approvare:
+Schema approvato per la Fase 1:
 
 ```text
 telegram_chat_id
 telegram_user_id
 telegram_username
+telegram_first_name
+telegram_language_code
 active
 subscribed_at
 unsubscribed_at
 consent_version
+consent_source
+last_delivered_at
+delivery_failures
 last_delivery_error
+last_delivery_error_at
+created_at
 updated_at
 ```
 
@@ -199,7 +206,11 @@ La funzionalita sara considerata completata quando:
 | Data | Passo | Stato | Note |
 |---|---|---|---|
 | 2026-06-09 | Creazione roadmap | Completato | Decisioni e responsabilita iniziali registrate. |
+| 2026-06-10 | 1.3 Schema Supabase | Completato | Tabella privata via RLS, chiave primaria su telegram_chat_id. |
+| 2026-06-10 | 1.4 Script SQL | Completato | Creato `supabase/telegram_subscribers.sql`. |
 
 ## Prossimo passo
 
-Creare il progetto Supabase e preparare lo schema SQL della tabella iscritti.
+L'utente deve completare i passi 1.1, 1.2 e 1.5 seguendo
+`SUPABASE_SETUP.md`, quindi confermare l'esito delle verifiche senza
+condividere credenziali.
