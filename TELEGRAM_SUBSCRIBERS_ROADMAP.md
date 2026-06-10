@@ -2,7 +2,7 @@
 
 Ultimo aggiornamento: 10 giugno 2026
 
-Stato generale: `FASE 2 PUBBLICATA - CONFIGURAZIONE RENDER IN ATTESA`
+Stato generale: `FASE 2 OPERATIVA - FASE 3 DA IMPLEMENTARE`
 
 ## Obiettivo
 
@@ -101,7 +101,146 @@ Notifica agli iscritti solo quando cambia segnale o rischio
 - [ ] **3.2 Codex:** aggiungere pulsante "Ricevi segnali su Telegram".
 - [ ] **3.3 Codex:** collegare il pulsante al deep link del bot.
 - [ ] **3.4 Codex:** aggiungere breve testo su consenso e disiscrizione.
-- [ ] **3.5 Test:** verificare dashboard desktop e mobile.
+- [ ] **3.5 Codex:** aggiungere `GET /subscribers/count` al servizio FastAPI.
+- [ ] **3.6 Codex:** mostrare nella dashboard il numero di iscritti attivi.
+- [ ] **3.7 Codex:** configurare CORS per l'origine GitHub Pages.
+- [ ] **3.8 Test:** verificare endpoint, fallback, dashboard desktop e mobile.
+
+#### Specifiche operative Fase 3 - Dashboard Telegram Subscription UI
+
+##### Situazione di partenza
+
+Il sistema di iscrizione Telegram e operativo:
+
+- `/help` funziona;
+- `/iscrivimi` funziona;
+- `/disiscrivimi` funziona;
+- gli iscritti vengono memorizzati correttamente in Supabase;
+- `telegram_subscribers.active` cambia correttamente.
+
+La dashboard pubblica non mostra ancora la possibilita di iscriversi. La
+funzionalita deve quindi essere resa visibile e facilmente utilizzabile.
+
+##### Card Telegram nella dashboard
+
+Aggiungere una sezione visibile, compatta e coerente con il tema scuro
+esistente. La posizione raccomandata e sotto le card principali di segnale e
+rischio, vicino allo stato della connessione oppure sopra la nota finale.
+
+La card deve contenere:
+
+```text
+NOTIFICHE TELEGRAM
+
+Ricevi un avviso solo quando cambia il segnale BTC o il livello di rischio.
+
+Iscritti attivi: <numero>
+
+[Iscriviti su Telegram]
+
+Dopo l'apertura del bot, invia /iscrivimi.
+```
+
+Il pulsante deve aprire il bot tramite:
+
+```text
+https://t.me/<BOT_USERNAME>
+```
+
+Preferire il deep link seguente solo se il webhook gestisce correttamente
+`/start iscrivimi`:
+
+```text
+https://t.me/<BOT_USERNAME>?start=iscrivimi
+```
+
+Se lo username del bot non e gia disponibile nel progetto, definirlo tramite
+una costante JavaScript o una configurazione pubblica priva di secret.
+
+##### Contatore pubblico degli iscritti
+
+Implementare sul servizio FastAPI esistente:
+
+```text
+GET /subscribers/count
+```
+
+L'endpoint deve:
+
+- interrogare Supabase esclusivamente dal backend con
+  `SUPABASE_SERVICE_ROLE_KEY`;
+- contare soltanto le righe con `active = true`;
+- restituire esclusivamente:
+
+```json
+{
+  "active_subscribers": 1
+}
+```
+
+- non restituire chat ID, username, nomi, date o altri dati personali;
+- restituire un errore controllato se Supabase non e disponibile.
+
+Il JavaScript della dashboard deve interrogare:
+
+```text
+https://btc-prudential-signal.onrender.com/subscribers/count
+```
+
+Se il servizio non e disponibile, mostrare:
+
+```text
+Iscritti attivi: non disponibile
+```
+
+Il mancato caricamento del contatore non deve interrompere le altre funzioni
+della dashboard.
+
+##### CORS
+
+Configurare FastAPI, se necessario, per consentire l'origine:
+
+```text
+https://giuse2003.github.io
+```
+
+Limitare CORS alle origini effettivamente necessarie, senza abilitare accessi
+piu ampi del richiesto.
+
+##### Regole di sicurezza
+
+Il frontend pubblico non deve contenere:
+
+- `SUPABASE_SERVICE_ROLE_KEY`;
+- chiavi segrete Supabase;
+- token del bot Telegram;
+- altri secret del backend.
+
+La dashboard non deve interrogare direttamente Supabase con chiavi
+privilegiate. Tutte le operazioni sul database devono passare dal backend
+FastAPI.
+
+##### Vincoli
+
+Non modificare:
+
+- calcolo del segnale BTC;
+- calcolo del rischio;
+- struttura di `docs/status.json`;
+- comportamento esistente di `/segnale`;
+- comportamento di `/iscrivimi` e `/disiscrivimi`, salvo il supporto
+  strettamente necessario a un deep link sicuro;
+- schema Supabase, salvo necessita tecnica documentata.
+
+##### Deliverable Fase 3
+
+- endpoint FastAPI per il conteggio degli iscritti attivi;
+- card Telegram nella dashboard;
+- integrazione JavaScript del contatore;
+- configurazione CORS minima;
+- test automatici dell'endpoint;
+- aggiornamento della documentazione;
+- verifica esplicita dell'assenza di secret nel frontend pubblico.
 
 ### Fase 4 - Invio collettivo
 
@@ -115,8 +254,8 @@ Notifica agli iscritti solo quando cambia segnale o rischio
 
 ### Fase 5 - Configurazione protetta
 
-- [ ] **5.1 Utente:** aggiungere su Render `SUPABASE_URL`.
-- [ ] **5.2 Utente:** aggiungere su Render `SUPABASE_SERVICE_ROLE_KEY`.
+- [x] **5.1 Utente:** aggiungere su Render `SUPABASE_URL`.
+- [x] **5.2 Utente:** aggiungere su Render `SUPABASE_SERVICE_ROLE_KEY`.
 - [ ] **5.3 Utente:** aggiungere su Render `TELEGRAM_ADMIN_CHAT_ID`.
 - [ ] **5.4 Utente:** aggiungere su GitHub Actions i secret necessari.
 - [x] **5.5 Codex:** mantenere compatibilita temporanea con
@@ -133,10 +272,10 @@ Notifica agli iscritti solo quando cambia segnale o rischio
 - [ ] **6.5 Codex:** aggiornare menu comandi Telegram.
 - [x] **6.6 Codex:** aggiornare README e documenti di contesto.
 - [ ] **6.7 Test finale:** `/start`.
-- [ ] **6.8 Test finale:** `/iscrivimi`.
+- [x] **6.8 Test finale:** `/iscrivimi`.
 - [ ] **6.9 Test finale:** `/segnale`.
 - [ ] **6.10 Test finale:** notifica collettiva controllata.
-- [ ] **6.11 Test finale:** `/disiscrivimi`.
+- [x] **6.11 Test finale:** `/disiscrivimi`.
 
 ## Variabili previste
 
@@ -212,19 +351,17 @@ La funzionalita sara considerata completata quando:
 | 2026-06-10 | Fase 2 Webhook | Implementata | Comandi pubblici, repository Supabase e 23 test superati. |
 | 2026-06-10 | Pubblicazione Fase 2 | Completato | Commit `a19df0a` pubblicato su `main`; health check Render HTTP 200. |
 | 2026-06-10 | Controllo secret | Completato | `.env` ignorato e nessuna credenziale presente nei file versionati. |
+| 2026-06-10 | Configurazione Render Supabase | Completato | Variabili Supabase configurate sul servizio Render. |
+| 2026-06-10 | Collaudo iscrizioni Telegram | Completato | `/help`, `/iscrivimi` e `/disiscrivimi` funzionanti; campo `active` verificato. |
+| 2026-06-10 | Specifiche dashboard Telegram | Pianificato | Definiti card pubblica, contatore, endpoint FastAPI, CORS e requisiti di sicurezza. |
 
 ## Prossimo passo
 
-L'utente deve aggiungere su Render `SUPABASE_URL` e
-`SUPABASE_SERVICE_ROLE_KEY`, salvare le modifiche e attendere il nuovo deploy.
+Implementare la Fase 3 secondo le specifiche della sezione
+`Dashboard Telegram Subscription UI`:
 
-Dopo che Render torna `Live`, verificare in Telegram:
-
-```text
-/help
-/iscrivimi
-/segnale
-/disiscrivimi
-```
-
-La Fase 3 e la Fase 4 inizieranno soltanto dopo questo collaudo reale.
+1. identificare lo username pubblico del bot;
+2. creare l'endpoint pubblico sicuro `GET /subscribers/count`;
+3. aggiungere la card Telegram e il contatore alla dashboard;
+4. configurare CORS;
+5. verificare desktop, mobile, fallback e assenza di secret.
