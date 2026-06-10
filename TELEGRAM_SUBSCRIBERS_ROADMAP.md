@@ -2,7 +2,7 @@
 
 Ultimo aggiornamento: 10 giugno 2026
 
-Stato generale: `FASE 2 IMPLEMENTATA - CONFIGURAZIONE RENDER IN ATTESA`
+Stato generale: `FASE 2 PUBBLICATA - CONFIGURAZIONE RENDER IN ATTESA`
 
 ## Obiettivo
 
@@ -119,19 +119,19 @@ Notifica agli iscritti solo quando cambia segnale o rischio
 - [ ] **5.2 Utente:** aggiungere su Render `SUPABASE_SERVICE_ROLE_KEY`.
 - [ ] **5.3 Utente:** aggiungere su Render `TELEGRAM_ADMIN_CHAT_ID`.
 - [ ] **5.4 Utente:** aggiungere su GitHub Actions i secret necessari.
-- [ ] **5.5 Codex:** mantenere compatibilita temporanea con
+- [x] **5.5 Codex:** mantenere compatibilita temporanea con
   `TELEGRAM_CHAT_ID`, se necessaria.
-- [ ] **5.6 Verifica:** confermare che nessun secret sia presente nei log o
+- [x] **5.6 Verifica:** confermare che nessun secret sia presente nei log o
   nei file versionati.
 
 ### Fase 6 - Privacy e rilascio
 
-- [ ] **6.1 Codex:** preparare informativa privacy minima.
-- [ ] **6.2 Codex:** registrare data e origine del consenso.
-- [ ] **6.3 Codex:** documentare cancellazione e disiscrizione.
+- [x] **6.1 Codex:** preparare informativa privacy minima.
+- [x] **6.2 Codex:** registrare data e origine del consenso.
+- [x] **6.3 Codex:** documentare cancellazione e disiscrizione.
 - [ ] **6.4 Utente:** approvare testo privacy e comportamento notifiche.
 - [ ] **6.5 Codex:** aggiornare menu comandi Telegram.
-- [ ] **6.6 Codex:** aggiornare README e documenti di contesto.
+- [x] **6.6 Codex:** aggiornare README e documenti di contesto.
 - [ ] **6.7 Test finale:** `/start`.
 - [ ] **6.8 Test finale:** `/iscrivimi`.
 - [ ] **6.9 Test finale:** `/segnale`.
@@ -210,9 +210,21 @@ La funzionalita sara considerata completata quando:
 | 2026-06-10 | 1.4 Script SQL | Completato | Creato `supabase/telegram_subscribers.sql`. |
 | 2026-06-10 | Fase 1 Supabase | Completato | RLS forzata, nessuna policy pubblica e test REST riuscito. |
 | 2026-06-10 | Fase 2 Webhook | Implementata | Comandi pubblici, repository Supabase e 23 test superati. |
+| 2026-06-10 | Pubblicazione Fase 2 | Completato | Commit `a19df0a` pubblicato su `main`; health check Render HTTP 200. |
+| 2026-06-10 | Controllo secret | Completato | `.env` ignorato e nessuna credenziale presente nei file versionati. |
 
 ## Prossimo passo
 
-Pubblicare il codice e aggiungere su Render `SUPABASE_URL` e
-`SUPABASE_SERVICE_ROLE_KEY`. Dopo il deploy, verificare `/help`,
-`/iscrivimi`, `/segnale` e `/disiscrivimi`.
+L'utente deve aggiungere su Render `SUPABASE_URL` e
+`SUPABASE_SERVICE_ROLE_KEY`, salvare le modifiche e attendere il nuovo deploy.
+
+Dopo che Render torna `Live`, verificare in Telegram:
+
+```text
+/help
+/iscrivimi
+/segnale
+/disiscrivimi
+```
+
+La Fase 3 e la Fase 4 inizieranno soltanto dopo questo collaudo reale.
