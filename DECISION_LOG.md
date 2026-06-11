@@ -2,6 +2,21 @@
 
 Registro sintetico delle decisioni che influenzano segnali e metriche.
 
+## 2026-06-11 - Iscrizione visibile nella dashboard
+
+**Decisione:** aggiungere alla dashboard pubblica una card Telegram con deep
+link e numero aggregato degli iscritti attivi.
+
+**Impatto:**
+
+- il link pubblico usa `@BTC_Prudential_Signal_bot`;
+- `/start iscrivimi` viene trattato come `/iscrivimi`;
+- `GET /subscribers/count` conta server-side soltanto le righe attive;
+- nessun dato personale viene restituito dal nuovo endpoint;
+- la dashboard mostra un fallback neutro se Render non risponde;
+- CORS accetta soltanto GitHub Pages e gli indirizzi locali di sviluppo;
+- nessun secret Supabase o Telegram e presente nel frontend.
+
 ## 2026-06-10 - Iscrizioni Telegram persistenti
 
 **Decisione:** consentire l'uso del bot in ogni chat privata e memorizzare le

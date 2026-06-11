@@ -16,12 +16,32 @@ from telegram_webhook import (
     extract_command,
     fetch_github_status,
     process_command,
+    subscriber_count,
     telegram_webhook,
+    app,
 )
 from notifications.telegram import TelegramConfig
 
 
 class TelegramWebhookTests(unittest.TestCase):
+    def test_cors_is_limited_to_dashboard_origins(self) -> None:
+        cors = next(
+            middleware
+            for middleware in app.user_middleware
+            if middleware.cls.__name__ == "CORSMiddleware"
+        )
+
+        self.assertEqual(
+            cors.kwargs["allow_origins"],
+            [
+                "https://giuse2003.github.io",
+                "http://localhost:8000",
+                "http://127.0.0.1:8000",
+            ],
+        )
+        self.assertEqual(cors.kwargs["allow_methods"], ["GET"])
+        self.assertEqual(cors.kwargs["allow_headers"], ["Accept"])
+
     def test_extracts_command_and_sender_from_private_chat(self) -> None:
         update = {
             "message": {
@@ -53,6 +73,19 @@ class TelegramWebhookTests(unittest.TestCase):
         }
 
         self.assertIsNone(extract_command(update))
+
+    def test_start_deep_link_maps_to_subscribe(self) -> None:
+        update = {
+            "message": {
+                "chat": {"id": 123, "type": "private"},
+                "text": "/start iscrivimi",
+            }
+        }
+
+        command = extract_command(update)
+
+        self.assertIsNotNone(command)
+        self.assertEqual(command.command, "/iscrivimi")
 
     def test_builds_existing_monitor_layout_from_status_json(self) -> None:
         message = build_signal_message(
@@ -188,6 +221,37 @@ class TelegramWebhookTests(unittest.TestCase):
         self.assertIn("/iscrivimi", HELP_MESSAGE)
         self.assertIn("/disiscrivimi", HELP_MESSAGE)
         mock_send.assert_called_once_with(cfg, HELP_MESSAGE)
+
+    @patch("telegram_webhook.SupabaseSubscriberStore")
+    def test_subscriber_count_returns_only_aggregate(self, mock_store: Mock) -> None:
+        mock_store.return_value.count_active.return_value = 7
+
+        with patch.dict(
+            environ,
+            {
+                "SUPABASE_URL": "https://project.supabase.co",
+                "SUPABASE_SERVICE_ROLE_KEY": "secret-test-key",
+            },
+            clear=False,
+        ):
+            result = subscriber_count()
+
+        self.assertEqual(result, {"active_subscribers": 7})
+        self.assertEqual(list(result), ["active_subscribers"])
+
+    def test_subscriber_count_requires_server_configuration(self) -> None:
+        with patch.dict(
+            environ,
+            {
+                "SUPABASE_URL": "",
+                "SUPABASE_SERVICE_ROLE_KEY": "",
+            },
+            clear=False,
+        ):
+            with self.assertRaises(HTTPException) as error:
+                subscriber_count()
+
+        self.assertEqual(error.exception.status_code, 503)
 
 
 if __name__ == "__main__":

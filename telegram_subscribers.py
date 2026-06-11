@@ -77,6 +77,31 @@ class SupabaseSubscriberStore:
         result = response.json()
         return isinstance(result, list) and bool(result)
 
+    def count_active(self) -> int:
+        """Conta gli iscritti attivi senza scaricare dati personali."""
+        response = requests.get(
+            self.table_url,
+            params={
+                "active": "eq.true",
+                "select": "telegram_chat_id",
+            },
+            headers={
+                **self.headers,
+                "Prefer": "count=exact",
+                "Range": "0-0",
+            },
+            timeout=self.timeout_s,
+        )
+        response.raise_for_status()
+        content_range = response.headers.get("Content-Range", "")
+        if "/" not in content_range:
+            raise ValueError("Supabase non ha restituito il conteggio richiesto.")
+
+        total = content_range.rsplit("/", maxsplit=1)[1]
+        if not total.isdigit():
+            raise ValueError("Conteggio Supabase non valido.")
+        return int(total)
+
 
 def _utc_now() -> str:
     return datetime.now(timezone.utc).isoformat()

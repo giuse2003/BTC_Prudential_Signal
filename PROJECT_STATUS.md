@@ -26,6 +26,7 @@ dashboard e notificare variazioni rilevanti tramite Telegram.
 - Comando `/segnale` disponibile in ogni chat privata con il bot.
 - Database Supabase degli iscritti creato e verificato con RLS forzata.
 - Comandi `/iscrivimi`, `/disiscrivimi` e `/privacy` implementati.
+- Dashboard Telegram con deep link e contatore aggregato implementata.
 - Lettura diretta di `docs/status.json` da GitHub Raw, senza copie locali.
 - Workflow `Telegram command listener` mantenuto soltanto come fallback e
   disabilitato durante l'uso del webhook.
@@ -61,6 +62,8 @@ dashboard e notificare variazioni rilevanti tramite Telegram.
 - `/segnale`, `/start`, `/help`, `/privacy`, `/iscrivimi` e
   `/disiscrivimi` gestiti da FastAPI.
 - Iscrizioni persistenti su Supabase senza duplicati.
+- Endpoint pubblico `GET /subscribers/count` senza dati personali.
+- CORS limitato all'origine GitHub Pages e agli indirizzi locali di test.
 
 ## Verifica
 
@@ -73,7 +76,7 @@ python -m unittest discover -s tests -v
 Risultato al momento dell'ultimo aggiornamento:
 
 ```text
-Ran 23 tests
+Ran 32 tests
 OK
 ```
 

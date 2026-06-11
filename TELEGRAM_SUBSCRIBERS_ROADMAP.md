@@ -2,7 +2,7 @@
 
 Ultimo aggiornamento: 10 giugno 2026
 
-Stato generale: `FASE 2 OPERATIVA - FASE 3 DA IMPLEMENTARE`
+Stato generale: `FASE 3 IMPLEMENTATA - DEPLOY E COLLAUDO PUBBLICO IN CORSO`
 
 ## Obiettivo
 
@@ -97,14 +97,14 @@ Notifica agli iscritti solo quando cambia segnale o rischio
 
 ### Fase 3 - Dashboard
 
-- [ ] **3.1 Utente/Codex:** recuperare username pubblico del bot Telegram.
-- [ ] **3.2 Codex:** aggiungere pulsante "Ricevi segnali su Telegram".
-- [ ] **3.3 Codex:** collegare il pulsante al deep link del bot.
-- [ ] **3.4 Codex:** aggiungere breve testo su consenso e disiscrizione.
-- [ ] **3.5 Codex:** aggiungere `GET /subscribers/count` al servizio FastAPI.
-- [ ] **3.6 Codex:** mostrare nella dashboard il numero di iscritti attivi.
-- [ ] **3.7 Codex:** configurare CORS per l'origine GitHub Pages.
-- [ ] **3.8 Test:** verificare endpoint, fallback, dashboard desktop e mobile.
+- [x] **3.1 Utente/Codex:** recuperare username pubblico del bot Telegram.
+- [x] **3.2 Codex:** aggiungere pulsante "Ricevi segnali su Telegram".
+- [x] **3.3 Codex:** collegare il pulsante al deep link del bot.
+- [x] **3.4 Codex:** aggiungere breve testo su consenso e disiscrizione.
+- [x] **3.5 Codex:** aggiungere `GET /subscribers/count` al servizio FastAPI.
+- [x] **3.6 Codex:** mostrare nella dashboard il numero di iscritti attivi.
+- [x] **3.7 Codex:** configurare CORS per l'origine GitHub Pages.
+- [x] **3.8 Test:** verificare endpoint, fallback, dashboard desktop e mobile.
 
 #### Specifiche operative Fase 3 - Dashboard Telegram Subscription UI
 
@@ -354,14 +354,22 @@ La funzionalita sara considerata completata quando:
 | 2026-06-10 | Configurazione Render Supabase | Completato | Variabili Supabase configurate sul servizio Render. |
 | 2026-06-10 | Collaudo iscrizioni Telegram | Completato | `/help`, `/iscrivimi` e `/disiscrivimi` funzionanti; campo `active` verificato. |
 | 2026-06-10 | Specifiche dashboard Telegram | Pianificato | Definiti card pubblica, contatore, endpoint FastAPI, CORS e requisiti di sicurezza. |
+| 2026-06-11 | Username bot | Completato | Verificato pubblicamente `@BTC_Prudential_Signal_bot`. |
+| 2026-06-11 | Endpoint contatore | Implementato | Conteggio server-side dei soli record attivi; risposta aggregata senza dati personali. |
+| 2026-06-11 | Card Telegram dashboard | Implementata | Deep link `/start iscrivimi`, contatore e fallback neutro. |
+| 2026-06-11 | Verifica responsive | Completato | Layout verificato a 1280x720 e 390x844 senza overflow orizzontale. |
+| 2026-06-11 | Test Fase 3 | Completato | 32 test automatici e conteggio reale Supabase pari a 1. |
 
 ## Prossimo passo
 
-Implementare la Fase 3 secondo le specifiche della sezione
-`Dashboard Telegram Subscription UI`:
+Pubblicare la Fase 3 e attendere i deploy automatici di Render e GitHub Pages.
+Verificare quindi:
 
-1. identificare lo username pubblico del bot;
-2. creare l'endpoint pubblico sicuro `GET /subscribers/count`;
-3. aggiungere la card Telegram e il contatore alla dashboard;
-4. configurare CORS;
-5. verificare desktop, mobile, fallback e assenza di secret.
+1. `GET /subscribers/count` sul servizio Render;
+2. intestazione CORS per `https://giuse2003.github.io`;
+3. card, contatore e pulsante sulla dashboard pubblica;
+4. apertura del bot tramite il deep link;
+5. iscrizione automatica tramite `/start iscrivimi`.
+
+Al termine del collaudo pubblico, avviare la Fase 4 per l'invio collettivo ai
+soli iscritti attivi quando cambia segnale o rischio.

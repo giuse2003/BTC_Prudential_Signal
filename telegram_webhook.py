@@ -14,6 +14,7 @@ from typing import Any
 
 import requests
 from fastapi import BackgroundTasks, FastAPI, Header, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 
 from notifications.telegram import (
     TelegramConfig,
@@ -67,6 +68,16 @@ SUBSCRIPTION_ERROR_MESSAGE = (
 
 logger = logging.getLogger(__name__)
 app = FastAPI(title="BTC Prudential Signal Telegram Webhook")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "https://giuse2003.github.io",
+        "http://localhost:8000",
+        "http://127.0.0.1:8000",
+    ],
+    allow_methods=["GET"],
+    allow_headers=["Accept"],
+)
 
 
 @dataclass(frozen=True)
@@ -102,8 +113,13 @@ def extract_command(update: dict[str, Any]) -> TelegramCommand | None:
         sender = {}
 
     user_id = sender.get("id")
+    parts = text.strip().split(maxsplit=1)
+    command = parts[0].split("@", maxsplit=1)[0].lower()
+    if command == "/start" and len(parts) > 1 and parts[1].strip() == "iscrivimi":
+        command = "/iscrivimi"
+
     return TelegramCommand(
-        command=text.strip().split(maxsplit=1)[0].split("@", maxsplit=1)[0].lower(),
+        command=command,
         chat_id=chat_id,
         user_id=user_id if isinstance(user_id, int) else None,
         username=_optional_text(sender.get("username")),
@@ -208,6 +224,29 @@ def health_check() -> dict[str, str]:
     Endpoint di controllo per Render.
     """
     return {"status": "ok"}
+
+
+@app.get("/subscribers/count")
+def subscriber_count() -> dict[str, int]:
+    """Restituisce soltanto il numero aggregato degli iscritti attivi."""
+    supabase_url = os.environ.get("SUPABASE_URL", "").strip()
+    supabase_key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "").strip()
+    if not supabase_url or not supabase_key:
+        raise HTTPException(status_code=503, detail="Servizio iscritti non configurato.")
+
+    try:
+        active_subscribers = SupabaseSubscriberStore(
+            supabase_url,
+            supabase_key,
+        ).count_active()
+    except Exception as exc:
+        logger.exception("Conteggio degli iscritti Supabase non riuscito.")
+        raise HTTPException(
+            status_code=502,
+            detail="Conteggio iscritti temporaneamente non disponibile.",
+        ) from exc
+
+    return {"active_subscribers": active_subscribers}
 
 
 @app.post("/webhook")

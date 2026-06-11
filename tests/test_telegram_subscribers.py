@@ -62,6 +62,29 @@ class SupabaseSubscriberStoreTests(unittest.TestCase):
 
         self.assertFalse(self.store.unsubscribe(999))
 
+    @patch("telegram_subscribers.requests.get")
+    def test_count_active_uses_server_side_exact_count(self, mock_get: Mock) -> None:
+        response = Mock()
+        response.headers = {"Content-Range": "0-0/12"}
+        mock_get.return_value = response
+
+        count = self.store.count_active()
+
+        self.assertEqual(count, 12)
+        _, kwargs = mock_get.call_args
+        self.assertEqual(kwargs["params"]["active"], "eq.true")
+        self.assertEqual(kwargs["headers"]["Prefer"], "count=exact")
+        self.assertEqual(kwargs["headers"]["Range"], "0-0")
+        response.raise_for_status.assert_called_once_with()
+
+    @patch("telegram_subscribers.requests.get")
+    def test_count_active_supports_empty_table(self, mock_get: Mock) -> None:
+        response = Mock()
+        response.headers = {"Content-Range": "*/0"}
+        mock_get.return_value = response
+
+        self.assertEqual(self.store.count_active(), 0)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -34,6 +34,8 @@ costituiscono consulenza finanziaria.
   pubblicato su Render.
 - Iscrizioni Telegram persistenti su Supabase tramite `/iscrivimi` e
   `/disiscrivimi`.
+- Card pubblica per aprire il bot e visualizzare il numero aggregato degli
+  iscritti attivi.
 
 ## Regole temporali
 
@@ -177,6 +179,16 @@ Il webhook supporta inoltre:
 ```
 
 I comandi funzionano nelle chat private con il bot. I gruppi vengono ignorati.
+
+La dashboard pubblica contiene il pulsante **Iscriviti su Telegram**, collegato
+a `@BTC_Prudential_Signal_bot`, e mostra il conteggio aggregato ottenuto da:
+
+```text
+GET https://btc-prudential-signal.onrender.com/subscribers/count
+```
+
+L'endpoint restituisce soltanto `active_subscribers`. Il frontend non contiene
+chiavi Supabase, token Telegram o altri secret.
 
 Il deploy e il collegamento Telegram sono stati verificati il 9 giugno 2026:
 

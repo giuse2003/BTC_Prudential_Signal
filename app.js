@@ -1,6 +1,8 @@
 const STATUS_ENDPOINT = "./reports/status.json";
 const COINBASE_EUR_ENDPOINT = "https://api.coinbase.com/v2/prices/BTC-EUR/spot";
 const COINBASE_USD_ENDPOINT = "https://api.coinbase.com/v2/prices/BTC-USD/spot";
+const SUBSCRIBER_COUNT_ENDPOINT =
+  "https://btc-prudential-signal.onrender.com/subscribers/count";
 
 const els = {
   signalVal: document.getElementById("signalVal"),
@@ -19,6 +21,7 @@ const els = {
   statusText: document.getElementById("statusText"),
   statusDot: document.querySelector("#status .dot"),
   corsHelper: document.getElementById("corsHelper"),
+  subscriberCount: document.getElementById("subscriberCount"),
   
   // Technical details
   rsiVal: document.getElementById("rsiVal"),
@@ -52,6 +55,27 @@ function setStatus(state, text) {
 
 // Check if running on local file:// protocol
 const isLocalFile = window.location.protocol === "file:";
+
+async function loadSubscriberCount() {
+  if (!els.subscriberCount) return;
+
+  try {
+    const response = await fetch(SUBSCRIBER_COUNT_ENDPOINT, {
+      cache: "no-store",
+    });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+    const payload = await response.json();
+    if (!Number.isInteger(payload.active_subscribers)) {
+      throw new Error("Risposta non valida");
+    }
+    els.subscriberCount.textContent =
+      `Iscritti attivi: ${payload.active_subscribers}`;
+  } catch (error) {
+    console.warn("Conteggio iscritti non disponibile:", error.message);
+    els.subscriberCount.textContent = "Iscritti attivi: non disponibile";
+  }
+}
 
 async function loadBotStatus() {
   try {
@@ -185,3 +209,4 @@ els.refreshSelect.addEventListener("change", () => {
 // Avvio
 start();
 tick();
+loadSubscriberCount();
