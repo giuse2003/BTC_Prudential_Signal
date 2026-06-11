@@ -27,6 +27,7 @@ dashboard e notificare variazioni rilevanti tramite Telegram.
 - Database Supabase degli iscritti creato e verificato con RLS forzata.
 - Comandi `/iscrivimi`, `/disiscrivimi` e `/privacy` implementati.
 - Dashboard Telegram con deep link e contatore aggregato implementata.
+- Dashboard e contatore verificati pubblicamente su GitHub Pages e Render.
 - Lettura diretta di `docs/status.json` da GitHub Raw, senza copie locali.
 - Workflow `Telegram command listener` mantenuto soltanto come fallback e
   disabilitato durante l'uso del webhook.

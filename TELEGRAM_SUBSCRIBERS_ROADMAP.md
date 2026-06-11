@@ -1,8 +1,8 @@
 # Telegram Subscribers Roadmap
 
-Ultimo aggiornamento: 10 giugno 2026
+Ultimo aggiornamento: 11 giugno 2026
 
-Stato generale: `FASE 3 IMPLEMENTATA - DEPLOY E COLLAUDO PUBBLICO IN CORSO`
+Stato generale: `FASE 3 COMPLETATA - FASE 4 DA IMPLEMENTARE`
 
 ## Obiettivo
 
@@ -359,17 +359,19 @@ La funzionalita sara considerata completata quando:
 | 2026-06-11 | Card Telegram dashboard | Implementata | Deep link `/start iscrivimi`, contatore e fallback neutro. |
 | 2026-06-11 | Verifica responsive | Completato | Layout verificato a 1280x720 e 390x844 senza overflow orizzontale. |
 | 2026-06-11 | Test Fase 3 | Completato | 32 test automatici e conteggio reale Supabase pari a 1. |
+| 2026-06-11 | Deploy pubblico Fase 3 | Completato | Render e GitHub Pages aggiornati; endpoint e card restituiscono il conteggio 1. |
+| 2026-06-11 | Verifica CORS e privacy | Completato | Origine GitHub Pages autorizzata; risposta limitata a `active_subscribers`. |
 
 ## Prossimo passo
 
-Pubblicare la Fase 3 e attendere i deploy automatici di Render e GitHub Pages.
-Verificare quindi:
+Avviare la Fase 4 per l'invio collettivo ai soli iscritti attivi quando cambia
+il segnale o il rischio.
 
-1. `GET /subscribers/count` sul servizio Render;
-2. intestazione CORS per `https://giuse2003.github.io`;
-3. card, contatore e pulsante sulla dashboard pubblica;
-4. apertura del bot tramite il deep link;
-5. iscrizione automatica tramite `/start iscrivimi`.
+La Fase 4 dovra:
 
-Al termine del collaudo pubblico, avviare la Fase 4 per l'invio collettivo ai
-soli iscritti attivi quando cambia segnale o rischio.
+1. leggere da Supabase soltanto gli iscritti con `active = true`;
+2. mantenere la notifica amministratore compatibile;
+3. evitare invii quando segnale e rischio non cambiano;
+4. gestire rate limit, errori parziali e utenti che bloccano il bot;
+5. aggiornare gli esiti di consegna senza interrompere gli altri invii;
+6. essere verificata con test automatici e una notifica collettiva controllata.
