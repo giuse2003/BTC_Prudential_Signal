@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>BTC Monitor — Dashboard</title>
+    <!-- Google Fonts for premium typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <main class="container">
+      <header class="header">
+        <div>
+          <h1>BTC MONITOR <span class="badge">v1.0</span></h1>
+          <p class="subtitle">Strategia Algoritmica Prudente per il Controllo del Rischio</p>
+        </div>
+        <div class="status" id="status">
+          <span class="dot" aria-hidden="true"></span>
+          <span id="statusText">Caricamento...</span>
+        </div>
+      </header>
+
+      <!-- Main Overview Grid -->
+      <section class="grid card">
+        <div class="metric highlight-card" id="signalCard">
+          <div class="label">Segnale Operativo</div>
+          <div class="value" id="signalVal">—</div>
+          <div class="hint" id="signalHint">In attesa dell'ultimo run...</div>
+        </div>
+
+        <div class="metric highlight-card" id="riskCard">
+          <div class="label">Livello di Rischio</div>
+          <div class="value" id="riskVal">—</div>
+          <div class="hint" id="riskHint">Calcolato sugli indicatori</div>
+        </div>
+      </section>
+
+      <!-- Prices Grid -->
+      <section class="grid-2 card">
+        <div class="metric price-card">
+          <div class="label">Prezzo BTC (USD)</div>
+          <div class="value price-val" id="priceUSD">—</div>
+          <div class="hint" id="priceUSDHint">All'ultimo controllo del bot</div>
+        </div>
+
+        <div class="metric price-card">
+          <div class="label">Prezzo BTC (EUR)</div>
+          <div class="value price-val" id="priceEUR">—</div>
+          <div class="hint" id="priceEURHint">All'ultimo controllo del bot</div>
+        </div>
+      </section>
+
+      <section class="card telegram-card" aria-labelledby="telegramTitle">
+        <div class="telegram-content">
+          <div>
+            <div class="label">Notifiche Telegram</div>
+            <h2 id="telegramTitle">Ricevi i cambi di segnale</h2>
+            <p class="telegram-description">
+              Ricevi un avviso solo quando cambia il segnale BTC o il livello
+              di rischio.
+            </p>
+            <p class="telegram-count" id="subscriberCount" aria-live="polite">
+              Iscritti attivi: caricamento...
+            </p>
+          </div>
+          <div class="telegram-action">
+            <a
+              class="telegram-button"
+              href="https://t.me/BTC_Prudential_Signal_bot?start=iscrivimi"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Iscriviti su Telegram
+            </a>
+            <span>Il bot completerà automaticamente l'iscrizione.</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Detailed Info & Controls -->
+      <div class="grid-2">
+        <section class="card technical-info">
+          <h2>Ultimo Aggiornamento Bot</h2>
+          <div class="update-info">
+            <div class="info-row">
+              <span class="info-lbl">Data ultimo run:</span>
+              <span class="info-val mono" id="lastUpdate">—</span>
+            </div>
+            <div class="info-row">
+              <span class="info-lbl">Stato Monitor:</span>
+              <span class="info-val" id="monitorStatus">Attivo</span>
+            </div>
+          </div>
+
+          <h2 style="margin-top: 24px;">Configurazione Refresh Live (Prezzi Spot)</h2>
+          <div class="row">
+            <select id="refreshSelect" class="select" aria-label="Intervallo refresh">
+              <option value="5000">Refresh ogni 5 secondi</option>
+              <option value="10000" selected>Refresh ogni 10 secondi</option>
+              <option value="30000">Refresh ogni 30 secondi</option>
+              <option value="60000">Refresh ogni 60 secondi</option>
+            </select>
+          </div>
+        </section>
+
+        <!-- Technical Analysis / Indicators Summary -->
+        <section class="card technical-details">
+          <h2>Indicatori Storici Registrati (Fine Giornata)</h2>
+          <div class="indicator-grid">
+            <div class="ind-box">
+              <span class="ind-lbl">RSI (14)</span>
+              <span class="ind-val" id="rsiVal">—</span>
+            </div>
+            <div class="ind-box">
+              <span class="ind-lbl">SMA 50</span>
+              <span class="ind-val" id="sma50Val">—</span>
+            </div>
+            <div class="ind-box">
+              <span class="ind-lbl">SMA 200</span>
+              <span class="ind-val" id="sma200Val">—</span>
+            </div>
+            <div class="ind-box">
+              <span class="ind-lbl">ATR (14)</span>
+              <span class="ind-val" id="atrVal">—</span>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- CORS instructions helper in case of local file loading -->
+      <section class="card cors-helper" id="corsHelper" style="display: none; margin-top: 18px;">
+        <h3>💡 Nota CORS / Apertura locale</h3>
+        <p>
+          Il browser sembra bloccare il caricamento dei file JSON locali. Per far funzionare correttamente la dashboard dinamica, avvia il server locale eseguendo da terminale nella cartella del progetto:
+        </p>
+        <pre>python run_dashboard.py</pre>
+        <p>Oppure apri l'indirizzo <a href="http://localhost:8000" target="_blank">http://localhost:8000</a> nel browser.</p>
+      </section>
+
+      <footer>
+        <p class="footnote">
+          Nota: BTC Monitor è uno strumento algoritmico informativo. Non costituisce sollecitazione al pubblico risparmio né consulenza finanziaria.
+        </p>
+      </footer>
+    </main>
+
+    <script src="./app.js?v=3"></script>
+  </body>
+</html>
