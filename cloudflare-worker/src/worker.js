@@ -1,4 +1,4 @@
-﻿const HELP_MESSAGE = [
+const HELP_MESSAGE = [
   "BTC PRUDENTIAL SIGNAL",
   "",
   "/segnale - mostra il segnale BTC corrente",
@@ -312,7 +312,7 @@ function deriveConditionGroups(status) {
 
 function formatConditionGroup(conditions) {
   return conditions.map((condition, index) => {
-    const marker = condition.passed ? "🟩" : "🟥";
+    const marker = condition.passed ? "✅" : "❌";
     return `${marker} ${index + 1}. ${condition.label}`;
   });
 }
@@ -468,3 +468,4 @@ function corsHeaders(request) {
     Vary: "Origin",
   };
 }
+
