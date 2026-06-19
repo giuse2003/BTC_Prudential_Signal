@@ -38,7 +38,7 @@ jobs:
             --request POST \
             "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/setMyCommands" \
             --header "Content-Type: application/json" \
-            --data '{"commands":[{"command":"segnale","description":"Mostra il segnale BTC corrente"},{"command":"conditions","description":"Mostra le condizioni di acquisto e vendita"},{"command":"help","description":"Mostra i comandi disponibili"}]}'
+            --data '{"commands":[{"command":"segnale","description":"Mostra il segnale BTC corrente"},{"command":"conditions","description":"Mostra le condizioni di acquisto e vendita"},{"command":"iscrivimi","description":"Ricevi notifiche automatiche"},{"command":"disiscrivimi","description":"Interrompi le notifiche automatiche"},{"command":"privacy","description":"Informazioni sui dati memorizzati"},{"command":"help","description":"Mostra i comandi disponibili"}]}'
 
       - name: Process Telegram commands
         env:
