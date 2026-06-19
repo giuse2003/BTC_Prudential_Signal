@@ -7,15 +7,15 @@ from state.state_store import MonitorState
 
 
 class HourlyMonitorNotificationTests(unittest.TestCase):
-    def test_first_run_sends_initial_notification(self) -> None:
+    def test_first_run_saves_baseline_without_notification(self) -> None:
         must_notify, reason = should_notify(
             MonitorState(),
             signal="MANTIENI",
             conditions_key="BUY:00100|SELL:0",
         )
 
-        self.assertTrue(must_notify)
-        self.assertEqual(reason, "prima notifica automatica")
+        self.assertFalse(must_notify)
+        self.assertEqual(reason, "baseline iniziale salvata senza notifica")
 
     def test_unchanged_signal_and_conditions_do_not_notify(self) -> None:
         must_notify, reason = should_notify(

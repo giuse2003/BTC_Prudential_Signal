@@ -27,7 +27,7 @@ from reports.generate import save_status_json
 
 def should_notify(state: MonitorState, signal: str, conditions_key: str) -> tuple[bool, str]:
     if state.last_signal is None or state.last_conditions_key is None:
-        return True, "prima notifica automatica"
+        return False, "baseline iniziale salvata senza notifica"
 
     if signal != state.last_signal:
         return True, f"segnale cambiato: {state.last_signal} -> {signal}"
@@ -125,7 +125,7 @@ def main() -> None:
     state.last_computed_signal = signal
     state.last_computed_conditions_key = conditions_key
     state.last_computed_risk_level = risk_level
-    if notification_sent:
+    if notification_sent or state.last_signal is None or state.last_conditions_key is None:
         state.last_signal = signal
         state.last_conditions_key = conditions_key
         state.last_risk_level = risk_level
