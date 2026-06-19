@@ -194,7 +194,8 @@ async function fetchGithubStatus(env) {
   const statusUrl =
     env.STATUS_JSON_URL ||
     "https://raw.githubusercontent.com/giuse2003/BTC_Prudential_Signal/main/docs/status.json";
-  const response = await fetch(statusUrl, {
+  const separator = statusUrl.includes("?") ? "&" : "?";
+  const response = await fetch(`${statusUrl}${separator}t=${Date.now()}`, {
     headers: {
       Accept: "application/json",
       "Cache-Control": "no-cache",
@@ -217,7 +218,11 @@ function buildSignalMessage(status) {
       ? null
       : Number(status.price_eur);
 
-  return formatMonitorMessage(signal, priceEur, status.condition_groups);
+  return formatMonitorMessage(
+    signal,
+    priceEur,
+    status.condition_groups || deriveConditionGroups(status),
+  );
 }
 
 function formatMonitorMessage(signal, priceEur, conditionGroups) {
@@ -256,6 +261,53 @@ function formatSignalConditions(conditionGroups) {
     "Condizioni VENDI:",
     ...formatConditionGroup(conditionGroups.sell),
   ];
+}
+
+function deriveConditionGroups(status) {
+  const close = Number(status.price_usd);
+  const sma50 = Number(status.sma50);
+  const sma200 = Number(status.sma200);
+  const rsi = Number(status.rsi);
+  const volume = Number(status.volume);
+  const volumeAvg20 = Number(status.volume_avg20);
+  const close7dAgo = Number(status.close_7d_ago);
+
+  if (
+    ![
+      close,
+      sma50,
+      sma200,
+      rsi,
+      volume,
+      volumeAvg20,
+      close7dAgo,
+    ].every(Number.isFinite)
+  ) {
+    return null;
+  }
+
+  return {
+    buy: [
+      { label: "prezzo sopra SMA200", passed: close > sma200 },
+      { label: "SMA50 sopra SMA200", passed: sma50 > sma200 },
+      { label: "RSI tra 40 e 65", passed: rsi >= 40 && rsi <= 65 },
+      {
+        label: "prezzo sopra quello di 7 giorni prima",
+        passed: close > close7dAgo,
+      },
+      { label: "volume sopra media 20 giorni", passed: volume > volumeAvg20 },
+    ],
+    sell: [
+      { label: "prezzo sotto SMA200", passed: close < sma200 },
+      { label: "SMA50 sotto SMA200", passed: sma50 < sma200 },
+      { label: "RSI sotto 35", passed: rsi < 35 },
+      {
+        label: "prezzo sotto quello di 7 giorni prima",
+        passed: close < close7dAgo,
+      },
+      { label: "volume sopra media 20 giorni", passed: volume > volumeAvg20 },
+    ],
+  };
 }
 
 function formatConditionGroup(conditions) {
