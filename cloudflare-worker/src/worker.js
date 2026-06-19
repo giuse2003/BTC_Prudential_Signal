@@ -235,10 +235,9 @@ function formatMonitorMessage(signal, priceEur, conditionGroups) {
     "Prezzo:",
     priceText,
     "",
-    ...formatSignalConditions(conditionGroups),
+    "(per le condizioni: /conditions)",
     "",
-    "Indicazione:",
-    signalIndication(signal),
+    ...formatSignalConditions(conditionGroups),
   ].join("\n");
 }
 
@@ -251,10 +250,10 @@ function formatSignalConditions(conditionGroups) {
   }
 
   return [
-    "Condizioni ACQUISTA:",
+    "ACQUISTA:",
     ...formatConditionGroup(conditionGroups.buy),
     "",
-    "Condizioni VENDI:",
+    "VENDI:",
     ...formatConditionGroup(conditionGroups.sell),
   ];
 }
@@ -314,18 +313,8 @@ function deriveConditionGroups(status) {
 function formatConditionGroup(conditions) {
   return conditions.map((condition, index) => {
     const marker = condition.passed ? "✅" : "🅾️";
-    return `${marker} ${index + 1}. ${condition.label}`;
+    return `${marker} ${index + 1}.`;
   });
-}
-
-function signalIndication(signal) {
-  if (signal === "ACQUISTA") {
-    return "Accumulare o acquistare posizioni.";
-  }
-  if (signal === "VENDI") {
-    return "Valutare la riduzione del rischio o vendita.";
-  }
-  return "Attendere. Nessuna nuova operazione consigliata.";
 }
 async function subscribeUser(request, env) {
   if (!env.SUPABASE_URL || !env.SUPABASE_SERVICE_ROLE_KEY) {
