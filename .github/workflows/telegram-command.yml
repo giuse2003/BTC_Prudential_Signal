@@ -1,36 +1,22 @@
-﻿name: Telegram command listener
+name: Telegram command menu
 
 on:
-  schedule:
-    - cron: "*/5 * * * *"
   workflow_dispatch: {}
 
 permissions:
   contents: read
 
 concurrency:
-  group: telegram-command-listener
+  group: telegram-command-menu
   cancel-in-progress: false
 
 jobs:
-  listen:
+  update-menu:
     runs-on: ubuntu-latest
     timeout-minutes: 5
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.13"
-
-      - name: Install dependency
-        run: pip install requests
-
       - name: Configure Telegram command menu
-        if: github.event_name == 'workflow_dispatch'
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
         run: |
@@ -39,9 +25,3 @@ jobs:
             "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/setMyCommands" \
             --header "Content-Type: application/json" \
             --data '{"commands":[{"command":"segnale","description":"Mostra il segnale BTC corrente"},{"command":"conditions","description":"Mostra le condizioni di acquisto e vendita"},{"command":"iscrivimi","description":"Ricevi notifiche automatiche"},{"command":"disiscrivimi","description":"Interrompi le notifiche automatiche"},{"command":"privacy","description":"Informazioni sui dati memorizzati"},{"command":"help","description":"Mostra i comandi disponibili"}]}'
-
-      - name: Process Telegram commands
-        env:
-          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: python telegram_command.py
