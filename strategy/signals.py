@@ -17,7 +17,6 @@ import numpy as np
 import pandas as pd
 
 from config import CFG
-from notifications.telegram import format_monitor_message
 
 
 def _distance_from_sma200_pct(close: pd.Series, sma200: pd.Series) -> pd.Series:
@@ -172,11 +171,10 @@ def format_telegram_message(
     price_eur: float | None = None,
 ) -> str:
     """
-    Produce il messaggio operativo semplificato per Telegram.
+    Produce il messaggio operativo compatto per Telegram.
     """
     row = df_with_signals.iloc[-1]
     segnale = row.get("Segnale", "N/A")
-    rischio = row.get("Livello_Rischio", "MEDIO")
 
     eur_val = price_eur
     if eur_val is None:
@@ -184,11 +182,59 @@ def format_telegram_message(
         if pd.isna(eur_val):
             eur_val = None
 
-    return format_monitor_message(
-        signal=str(segnale),
-        risk_level=str(rischio),
-        price_eur=float(eur_val) if eur_val is not None else None,
+    if eur_val is None:
+        price_text = "BTC-EUR non disponibile"
+    else:
+        price_text = f"{int(float(eur_val)):,}".replace(",", ".") + " EUR"
+
+    return "\n".join(
+        [
+            "BTC MONITOR",
+            "",
+            f"Segnale: {segnale}",
+            "",
+            "Prezzo:",
+            price_text,
+            "",
+            "(per le condizioni: /conditions)",
+            "",
+            "ACQUISTA:",
+            *_format_condition_numbers(_buy_condition_statuses(df_with_signals)),
+            "",
+            "VENDI:",
+            *_format_condition_numbers(_sell_condition_statuses(df_with_signals)),
+        ]
     )
+
+
+def _format_condition_numbers(statuses: list[bool]) -> list[str]:
+    return [
+        f"{'✅' if passed else '🅾️'} {index}."
+        for index, passed in enumerate(statuses, start=1)
+    ]
+
+
+def _buy_condition_statuses(df_with_signals: pd.DataFrame) -> list[bool]:
+    row = df_with_signals.iloc[-1]
+    momentum_col = f"Close_{CFG.momentum_days}d_ago"
+    return [
+        bool(row["Close"] > row["SMA200"]),
+        bool(row["SMA50"] > row["SMA200"]),
+        bool(row["RSI"] >= 40),
+        bool(row["Close"] > row[momentum_col]),
+        bool(row["Volume"] > row["VolumeAvg20"]),
+    ]
+
+
+def _sell_condition_statuses(df_with_signals: pd.DataFrame) -> list[bool]:
+    if len(df_with_signals) < 2:
+        return [False]
+
+    previous = df_with_signals.iloc[-2]
+    row = df_with_signals.iloc[-1]
+    return [
+        bool(row["Close"] < row["SMA50"] and previous["Close"] < previous["SMA50"])
+    ]
 
 
 def explain_latest_row(
