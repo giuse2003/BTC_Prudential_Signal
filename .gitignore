@@ -17,6 +17,7 @@ ENV/
 Thumbs.db
 .idea/
 .vscode/
+.wrangler/
 
 # Project outputs (generated)
 data/*.csv

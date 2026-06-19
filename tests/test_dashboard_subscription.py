@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import unittest
 from pathlib import Path
@@ -26,7 +26,7 @@ class DashboardSubscriptionTests(unittest.TestCase):
 
     def test_dashboard_uses_safe_public_count_endpoint_and_fallback(self) -> None:
         self.assertIn(
-            "https://btc-prudential-signal.onrender.com/subscribers/count",
+            "https://btc-prudential-signal.giuse2003.workers.dev/subscribers/count",
             self.javascript,
         )
         self.assertIn("Iscritti attivi: non disponibile", self.javascript)

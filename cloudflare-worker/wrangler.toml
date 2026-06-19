@@ -1,0 +1,6 @@
+name = "btc-prudential-signal"
+main = "src/worker.js"
+compatibility_date = "2026-06-18"
+
+[vars]
+STATUS_JSON_URL = "https://raw.githubusercontent.com/giuse2003/BTC_Prudential_Signal/main/docs/status.json"

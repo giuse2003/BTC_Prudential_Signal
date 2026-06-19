@@ -2,7 +2,7 @@ const STATUS_ENDPOINT = "./reports/status.json";
 const COINBASE_EUR_ENDPOINT = "https://api.coinbase.com/v2/prices/BTC-EUR/spot";
 const COINBASE_USD_ENDPOINT = "https://api.coinbase.com/v2/prices/BTC-USD/spot";
 const SUBSCRIBER_COUNT_ENDPOINT =
-  "https://btc-prudential-signal.onrender.com/subscribers/count";
+  "https://btc-prudential-signal.giuse2003.workers.dev/subscribers/count";
 
 const els = {
   signalVal: document.getElementById("signalVal"),
