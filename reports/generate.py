@@ -1,4 +1,4 @@
-"""
+﻿"""
 Generazione report:
 - report testuale
 - CSV storico con indicatori e segnali
@@ -227,6 +227,54 @@ def save_status_json(
     if usd_val is not None and (np.isnan(usd_val) or usd_val != usd_val):
         usd_val = None
 
+    momentum_col = f"Close_{CFG.momentum_days}d_ago"
+    condition_groups = {
+        "buy": [
+            {
+                "label": "prezzo sopra SMA200",
+                "passed": bool(latest["Close"] > latest["SMA200"]),
+            },
+            {
+                "label": "SMA50 sopra SMA200",
+                "passed": bool(latest["SMA50"] > latest["SMA200"]),
+            },
+            {
+                "label": "RSI tra 40 e 65",
+                "passed": bool(40 <= latest["RSI"] <= 65),
+            },
+            {
+                "label": f"prezzo sopra quello di {CFG.momentum_days} giorni prima",
+                "passed": bool(latest["Close"] > latest[momentum_col]),
+            },
+            {
+                "label": "volume sopra media 20 giorni",
+                "passed": bool(latest["Volume"] > latest["VolumeAvg20"]),
+            },
+        ],
+        "sell": [
+            {
+                "label": "prezzo sotto SMA200",
+                "passed": bool(latest["Close"] < latest["SMA200"]),
+            },
+            {
+                "label": "SMA50 sotto SMA200",
+                "passed": bool(latest["SMA50"] < latest["SMA200"]),
+            },
+            {
+                "label": "RSI sotto 35",
+                "passed": bool(latest["RSI"] < 35),
+            },
+            {
+                "label": f"prezzo sotto quello di {CFG.momentum_days} giorni prima",
+                "passed": bool(latest["Close"] < latest[momentum_col]),
+            },
+            {
+                "label": "volume sopra media 20 giorni",
+                "passed": bool(latest["Volume"] > latest["VolumeAvg20"]),
+            },
+        ],
+    }
+
     status_data = {
         "price_usd": usd_val,
         "price_eur": eur_val,
@@ -238,6 +286,10 @@ def save_status_json(
         "sma50": float(latest.get("SMA50")) if not pd.isna(latest.get("SMA50")) else None,
         "sma200": float(latest.get("SMA200")) if not pd.isna(latest.get("SMA200")) else None,
         "atr": float(latest.get("ATR")) if not pd.isna(latest.get("ATR")) else None,
+        "volume": float(latest.get("Volume")) if not pd.isna(latest.get("Volume")) else None,
+        "volume_avg20": float(latest.get("VolumeAvg20")) if not pd.isna(latest.get("VolumeAvg20")) else None,
+        "close_7d_ago": float(latest.get(momentum_col)) if not pd.isna(latest.get(momentum_col)) else None,
+        "condition_groups": condition_groups,
     }
     
     out_path.write_text(json.dumps(status_data, indent=2), encoding="utf-8")

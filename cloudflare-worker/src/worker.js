@@ -1,12 +1,29 @@
-const HELP_MESSAGE = [
+﻿const HELP_MESSAGE = [
   "BTC PRUDENTIAL SIGNAL",
   "",
   "/segnale - mostra il segnale BTC corrente",
+  "/conditions - mostra le condizioni di acquisto e vendita",
   "/iscrivimi - ricevi notifiche quando cambia segnale o rischio",
   "/disiscrivimi - interrompi le notifiche automatiche",
   "/privacy - informazioni sui dati memorizzati",
 ].join("\n");
-
+const CONDITIONS_MESSAGE = [
+  "CONDIZIONI BTC MONITOR",
+  "",
+  "Per ACQUISTA devono essere vere tutte queste condizioni:",
+  "1. prezzo sopra SMA200;",
+  "2. SMA50 sopra SMA200;",
+  "3. RSI tra 40 e 65;",
+  "4. prezzo sopra quello di 7 giorni prima;",
+  "5. volume sopra media 20 giorni.",
+  "",
+  "Per VENDI devono essere vere tutte queste:",
+  "1. prezzo sotto SMA200;",
+  "2. SMA50 sotto SMA200;",
+  "3. RSI sotto 35;",
+  "4. prezzo sotto quello di 7 giorni prima;",
+  "5. volume sopra media 20 giorni.",
+].join("\n");
 const PRIVACY_MESSAGE = [
   "PRIVACY",
   "",
@@ -156,6 +173,8 @@ async function processCommand(request, env) {
       console.error("Impossibile recuperare status.json.", error);
       message = STATUS_ERROR_MESSAGE;
     }
+  } else if (request.command === "/conditions") {
+    message = CONDITIONS_MESSAGE;
   } else if (request.command === "/start" || request.command === "/help") {
     message = HELP_MESSAGE;
   } else if (request.command === "/privacy") {
@@ -192,42 +211,69 @@ async function fetchGithubStatus(env) {
 }
 
 function buildSignalMessage(status) {
-  return formatMonitorMessage(
-    String(status.signal || "MANTIENI"),
-    String(status.risk_level || "MEDIO"),
+  const signal = String(status.signal || "MANTIENI");
+  const priceEur =
     status.price_eur === null || status.price_eur === undefined
       ? null
-      : Number(status.price_eur),
-  );
+      : Number(status.price_eur);
+
+  return formatMonitorMessage(signal, priceEur, status.condition_groups);
 }
 
-function formatMonitorMessage(signal, riskLevel, priceEur) {
+function formatMonitorMessage(signal, priceEur, conditionGroups) {
   const priceText =
     Number.isFinite(priceEur) && priceEur !== null
       ? `${Math.trunc(priceEur).toLocaleString("it-IT")} EUR`
       : "BTC-EUR non disponibile";
 
-  let indication = "Attendere. Nessuna nuova operazione consigliata.";
-  if (signal === "ACQUISTA") {
-    indication = "Accumulare o acquistare posizioni.";
-  } else if (signal === "VENDI") {
-    indication = "Valutare la riduzione del rischio o vendita.";
-  }
-
   return [
     "BTC MONITOR",
     "",
     `Segnale: ${signal}`,
-    `Rischio: ${riskLevel}`,
     "",
     "Prezzo:",
     priceText,
     "",
+    ...formatSignalConditions(conditionGroups),
+    "",
     "Indicazione:",
-    indication,
+    signalIndication(signal),
   ].join("\n");
 }
 
+function formatSignalConditions(conditionGroups) {
+  if (!conditionGroups || !Array.isArray(conditionGroups.buy) || !Array.isArray(conditionGroups.sell)) {
+    return [
+      "Condizioni:",
+      "non disponibili nello status corrente. Attendi il prossimo aggiornamento del monitor.",
+    ];
+  }
+
+  return [
+    "Condizioni ACQUISTA:",
+    ...formatConditionGroup(conditionGroups.buy),
+    "",
+    "Condizioni VENDI:",
+    ...formatConditionGroup(conditionGroups.sell),
+  ];
+}
+
+function formatConditionGroup(conditions) {
+  return conditions.map((condition, index) => {
+    const marker = condition.passed ? "🟩" : "🟥";
+    return `${marker} ${index + 1}. ${condition.label}`;
+  });
+}
+
+function signalIndication(signal) {
+  if (signal === "ACQUISTA") {
+    return "Accumulare o acquistare posizioni.";
+  }
+  if (signal === "VENDI") {
+    return "Valutare la riduzione del rischio o vendita.";
+  }
+  return "Attendere. Nessuna nuova operazione consigliata.";
+}
 async function subscribeUser(request, env) {
   if (!env.SUPABASE_URL || !env.SUPABASE_SERVICE_ROLE_KEY) {
     return SUBSCRIPTION_ERROR_MESSAGE;
