@@ -5,8 +5,7 @@ Comportamento:
 - Scarica/aggiorna dati giornalieri BTC-USD (Yahoo Finance) e calcola indicatori giornalieri.
 - Calcola segnale "di regime" (prudente).
 - Legge prezzo spot "live" da Coinbase in EUR.
-- Invia notifica Telegram se cambia il segnale notificato o se il rischio diventa ALTO.
-- Se avviato manualmente da GitHub Actions, invia sempre un messaggio di attivazione.
+- Invia notifica Telegram solo se cambia il segnale o cambia almeno una condizione operativa.
 """
 
 from __future__ import annotations
@@ -21,14 +20,26 @@ from data.daily_candles import keep_closed_daily_candles
 from indicators.technical_indicators import compute_all_indicators
 from live.coinbase import fetch_spot_price
 from notifications.telegram import TelegramConfig, send_telegram_message
-from strategy.signals import compute_signals, format_telegram_message
+from strategy.signals import compute_signals, condition_state_key, format_telegram_message
 from state.state_store import MonitorState, load_state, save_state
 from reports.generate import save_status_json
 
 
+def should_notify(state: MonitorState, signal: str, conditions_key: str) -> tuple[bool, str]:
+    if state.last_signal is None or state.last_conditions_key is None:
+        return True, "prima notifica automatica"
+
+    if signal != state.last_signal:
+        return True, f"segnale cambiato: {state.last_signal} -> {signal}"
+
+    if conditions_key != state.last_conditions_key:
+        return True, "condizioni operative cambiate"
+
+    return False, "segnale e condizioni invariati"
+
+
 def main() -> None:
     github_event_name = os.environ.get("GITHUB_EVENT_NAME", "").strip()
-    is_manual_run = github_event_name == "workflow_dispatch"
     print(f"Evento GitHub rilevato: {github_event_name or 'non disponibile'}")
 
     # Telegram secrets
@@ -68,9 +79,11 @@ def main() -> None:
     latest = df_sig.iloc[-1]
     signal = str(latest["Segnale"])
     risk_level = str(latest.get("Livello_Rischio", "MEDIO"))
+    conditions_key = condition_state_key(df_sig)
     print(f"Ultima candela giornaliera chiusa: {df_sig.index[-1]:%Y-%m-%d}")
     print(f"Segnale calcolato: {signal}")
     print(f"Rischio calcolato: {risk_level}")
+    print(f"Condizioni calcolate: {conditions_key}")
 
     # 3) Prezzo spot live da Coinbase
     try:
@@ -85,19 +98,9 @@ def main() -> None:
         print("ATTENZIONE: Impossibile recuperare il prezzo spot BTC-USD live.")
         spot_usd = None
 
-    # 4) Eventi: notifica se cambia il segnale notificato o il rischio diventa ALTO
-    signal_changed = (state.last_signal is None) or (signal != state.last_signal)
-    risk_became_high = (risk_level == "ALTO") and (state.last_risk_level != "ALTO")
-    
-    must_notify = is_manual_run or signal_changed or risk_became_high
+    # 4) Eventi: notifica solo se cambia il segnale o cambia una condizione operativa.
+    must_notify, notify_reason = should_notify(state, signal, conditions_key)
     notification_sent = False
-    notify_reason = "nessuna notifica necessaria"
-    if is_manual_run:
-        notify_reason = "avvio manuale workflow_dispatch"
-    elif signal_changed:
-        notify_reason = f"segnale cambiato: {state.last_signal or 'nessuno'} -> {signal}"
-    elif risk_became_high:
-        notify_reason = f"rischio diventato ALTO: {state.last_risk_level or 'nessuno'} -> {risk_level}"
     print(f"Motivo decisione Telegram: {notify_reason}")
 
     # 5) Invio Telegram
@@ -120,9 +123,11 @@ def main() -> None:
 
     # 7) Salvataggio stato
     state.last_computed_signal = signal
+    state.last_computed_conditions_key = conditions_key
     state.last_computed_risk_level = risk_level
-    if notification_sent and not is_manual_run:
+    if notification_sent:
         state.last_signal = signal
+        state.last_conditions_key = conditions_key
         state.last_risk_level = risk_level
     if spot_eur is not None:
         state.last_spot_price = float(spot_eur)

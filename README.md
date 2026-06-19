@@ -29,9 +29,9 @@ costituiscono consulenza finanziaria.
 - Backtest della strategia rispetto al Buy & Hold.
 - Report testuale, CSV storico, serie equity e grafico.
 - Dashboard locale e dashboard pubblicabile con GitHub Pages.
-- Monitor schedulato con GitHub Actions e notifiche Telegram.
-- Comando Telegram `/segnale` servito in tempo reale da un webhook FastAPI
-  pubblicato su Render.
+- Monitor schedulato con GitHub Actions e notifiche Telegram solo su cambio
+  segnale o cambio condizioni.
+- Comando Telegram `/segnale` servito in tempo reale da Cloudflare Worker.
 - Iscrizioni Telegram persistenti su Supabase tramite `/iscrivimi` e
   `/disiscrivimi`.
 - Card pubblica per aprire il bot e visualizzare il numero aggregato degli
@@ -138,10 +138,9 @@ Il workflow `.github/workflows/hourly-monitor.yml`:
 2. rimuove la candela giornaliera UTC ancora aperta;
 3. calcola segnale e rischio sull'ultima candela chiusa;
 4. aggiorna la dashboard;
-5. invia Telegram quando cambia il segnale o il rischio diventa `ALTO`.
+5. invia Telegram solo quando cambia il segnale o cambia almeno una condizione
+   operativa mostrata nel messaggio.
 
-Un avvio manuale tramite `workflow_dispatch` invia il messaggio operativo
-completo, utile per verificare direttamente il layout su Telegram.
 La pianificazione GitHub Actions e best effort e puo subire ritardi.
 
 ### Comando Telegram in tempo reale
@@ -152,21 +151,20 @@ Scrivi al bot:
 /segnale
 ```
 
-Il comando viene gestito dal servizio FastAPI `telegram_webhook.py`, operativo
-su Render:
+Il comando viene gestito dal Cloudflare Worker:
 
 ```text
-https://btc-prudential-signal.onrender.com
+https://btc-prudential-signal.giuse2003.workers.dev
 ```
 
 Il webhook:
 
 - riceve `POST /webhook` da Telegram;
-- accetta comandi soltanto da `TELEGRAM_CHAT_ID`;
 - scarica sempre `docs/status.json` dal GitHub Raw URL pubblico;
 - non salva copie locali e non modifica il monitor;
 - usa il formatter Telegram gia esistente.
-- risponde con segnale, rischio, prezzo EUR e indicazione.
+- risponde solo alla chat privata dell'utente che ha inviato il comando.
+- risponde con segnale, prezzo EUR e stato sintetico delle condizioni.
 
 Sono disponibili anche `/start` e `/help`.
 
@@ -184,29 +182,23 @@ La dashboard pubblica contiene il pulsante **Iscriviti su Telegram**, collegato
 a `@BTC_Prudential_Signal_bot`, e mostra il conteggio aggregato ottenuto da:
 
 ```text
-GET https://btc-prudential-signal.onrender.com/subscribers/count
+GET https://btc-prudential-signal.giuse2003.workers.dev/subscribers/count
 ```
 
 L'endpoint restituisce soltanto `active_subscribers`. Il frontend non contiene
 chiavi Supabase, token Telegram o altri secret.
 
-Il deploy e il collegamento Telegram sono stati verificati il 9 giugno 2026:
+Il deploy e il collegamento Telegram sono stati verificati su Cloudflare Worker:
 
-- servizio Render in stato `Live`;
 - health check `GET /` con risposta `{"status":"ok"}`;
 - webhook Telegram registrato su `/webhook`;
 - comando `/segnale` verificato con risposta immediata.
 
-Guida completa: [RENDER_DEPLOYMENT.md](RENDER_DEPLOYMENT.md).
+Guida completa: [CLOUDFLARE_WORKER_DEPLOYMENT.md](CLOUDFLARE_WORKER_DEPLOYMENT.md).
 
-Il workflow `Telegram command listener`, basato su `getUpdates`, resta nel
-repository soltanto come fallback e deve rimanere disabilitato mentre il
-webhook e registrato. Il workflow `Hourly BTC monitor (Telegram)` deve restare
+Il workflow `Telegram command menu` serve solo ad aggiornare il menu dei
+comandi Telegram. Il workflow `Hourly BTC monitor (Telegram)` deve restare
 attivo per aggiornare `docs/status.json` e inviare i cambi automatici.
-
-Sul piano gratuito Render il servizio puo sospendersi dopo un periodo di
-inattivita. In quel caso soltanto la prima richiesta puo richiedere piu tempo;
-quando il servizio e attivo, la risposta e normalmente immediata.
 
 ## Test
 
@@ -235,8 +227,8 @@ state/          stato persistente del monitor
 strategy/       punteggio, segnale e rischio
 tests/          test automatici
 docs/           dashboard GitHub Pages
-telegram_webhook.py  servizio FastAPI per i comandi Telegram
-render.yaml          configurazione Blueprint Render
+telegram_webhook.py  fallback legacy FastAPI per i comandi Telegram
+render.yaml          configurazione legacy Render
 ```
 
 Per lo stato corrente e le decisioni progettuali:

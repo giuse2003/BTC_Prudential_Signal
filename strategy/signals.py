@@ -207,6 +207,22 @@ def format_telegram_message(
     )
 
 
+def condition_state_key(df_with_signals: pd.DataFrame) -> str:
+    """
+    Restituisce un'impronta stabile delle condizioni operative mostrate su Telegram.
+
+    Serve al monitor automatico per inviare una notifica solo quando cambia
+    almeno una condizione, ignorando le oscillazioni del solo prezzo live.
+    """
+    buy_key = _bools_to_key(_buy_condition_statuses(df_with_signals))
+    sell_key = _bools_to_key(_sell_condition_statuses(df_with_signals))
+    return f"BUY:{buy_key}|SELL:{sell_key}"
+
+
+def _bools_to_key(statuses: list[bool]) -> str:
+    return "".join("1" if passed else "0" for passed in statuses)
+
+
 def _format_condition_numbers(statuses: list[bool]) -> list[str]:
     return [
         f"{'✅' if passed else '🅾️'} {index}."
