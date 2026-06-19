@@ -22,6 +22,8 @@ const els = {
   statusDot: document.querySelector("#status .dot"),
   corsHelper: document.getElementById("corsHelper"),
   subscriberCount: document.getElementById("subscriberCount"),
+  buyConditions: document.getElementById("buyConditions"),
+  sellConditions: document.getElementById("sellConditions"),
   
   // Technical details
   rsiVal: document.getElementById("rsiVal"),
@@ -109,16 +111,16 @@ function updateBotUI(data) {
     els.signalHint.textContent = "Allineamento tecnico favorevole.";
   } else if (isSellSignal) {
     els.signalCard.classList.add("signal-sell");
-    els.signalHint.textContent = "Rilevata forte debolezza. Ridurre rischio.";
+    els.signalHint.textContent = "Uscita protettiva attiva secondo le regole.";
   } else {
     els.signalCard.classList.add("signal-hold");
-    els.signalHint.textContent = "Nessuna operazione. Mantieni posizioni.";
+    els.signalHint.textContent = "Nessuna nuova operazione secondo il metodo.";
   }
 
   // Update risk level card
   const risk = data.risk_level || "MEDIO";
   els.riskVal.textContent = risk;
-  els.riskCard.className = "metric highlight-card"; // reset classes
+  els.riskCard.className = "ind-box"; // reset classes
   
   if (risk === "BASSO") {
     els.riskCard.classList.add("risk-low");
@@ -136,11 +138,33 @@ function updateBotUI(data) {
   els.sma50Val.textContent = data.sma50 ? formatCurrency(data.sma50, "USD") : "N/D";
   els.sma200Val.textContent = data.sma200 ? formatCurrency(data.sma200, "USD") : "N/D";
   els.atrVal.textContent = data.atr ? data.atr.toFixed(2) : "N/D";
+  updateConditionList(els.buyConditions, data.condition_groups?.buy);
+  updateConditionList(els.sellConditions, data.condition_groups?.sell);
 
   // Last update time
   els.lastUpdate.textContent = data.last_update || "N/D";
   els.monitorStatus.textContent = data.status || "Attivo";
   els.monitorStatus.className = "info-val monitor-active";
+}
+
+function updateConditionList(listEl, conditions) {
+  if (!listEl || !Array.isArray(conditions)) return;
+
+  listEl.innerHTML = "";
+  conditions.forEach((condition) => {
+    const item = document.createElement("li");
+    item.className = condition.passed ? "passed" : "failed";
+
+    const flag = document.createElement("span");
+    flag.className = "condition-flag";
+    flag.textContent = condition.passed ? "✓" : "0";
+
+    const text = document.createElement("span");
+    text.textContent = condition.label;
+
+    item.append(flag, text);
+    listEl.appendChild(item);
+  });
 }
 
 async function fetchLiveCoinbasePrice(url) {
@@ -166,17 +190,17 @@ async function tick() {
     // Aggiorna prezzi in USD
     els.priceUSD.textContent = formatCurrency(priceUSD, "USD");
     if (botData && botData.price_usd) {
-      els.priceUSDHint.innerHTML = `Live Spot (Bot run: <b>${formatCurrency(botData.price_usd, "USD")}</b>)`;
+      els.priceUSDHint.textContent = formatCurrency(botData.price_usd, "USD");
     } else {
-      els.priceUSDHint.textContent = "Prezzo live spot Coinbase";
+      els.priceUSDHint.textContent = "Non disponibile";
     }
 
     // Aggiorna prezzi in EUR
     els.priceEUR.textContent = formatCurrency(priceEUR, "EUR");
     if (botData && botData.price_eur) {
-      els.priceEURHint.innerHTML = `Live Spot (Bot run: <b>${formatCurrency(botData.price_eur, "EUR")}</b>)`;
+      els.priceEURHint.textContent = formatCurrency(botData.price_eur, "EUR");
     } else {
-      els.priceEURHint.textContent = "Prezzo live spot Coinbase";
+      els.priceEURHint.textContent = "Non disponibile";
     }
 
     setStatus("ok", "Connesso live");

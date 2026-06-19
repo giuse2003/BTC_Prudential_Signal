@@ -4,6 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>BTC Monitor — Dashboard</title>
+    <link rel="icon" href="data:," />
     <!-- Google Fonts for premium typography -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -14,8 +15,8 @@
     <main class="container">
       <header class="header">
         <div>
-          <h1>BTC MONITOR <span class="badge">v1.0</span></h1>
-          <p class="subtitle">Strategia Algoritmica Prudente per il Controllo del Rischio</p>
+          <h1>BTC Prudential Signal <span class="badge">Live</span></h1>
+          <p class="subtitle">Metodo algoritmico Bitcoin con segnali operativi e controllo del drawdown</p>
         </div>
         <div class="status" id="status">
           <span class="dot" aria-hidden="true"></span>
@@ -23,44 +24,155 @@
         </div>
       </header>
 
-      <!-- Main Overview Grid -->
-      <section class="grid card">
-        <div class="metric highlight-card" id="signalCard">
-          <div class="label">Segnale Operativo</div>
-          <div class="value" id="signalVal">—</div>
-          <div class="hint" id="signalHint">In attesa dell'ultimo run...</div>
+      <section class="hero">
+        <div class="hero-copy">
+          <div class="label">Strategia Bitcoin data-driven</div>
+          <h2>Entra quando il trend e favorevole. Esci quando il rischio aumenta.</h2>
+          <p>
+            Il bot controlla Bitcoin ogni ora, ma invia notifiche Telegram solo
+            quando cambia il segnale o cambia una condizione operativa.
+          </p>
+          <div class="hero-actions">
+            <a
+              class="telegram-button primary"
+              href="https://t.me/BTC_Prudential_Signal_bot?start=iscrivimi"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Iscriviti al bot Telegram
+            </a>
+            <a class="ghost-link" href="#metodo">Scopri il metodo</a>
+          </div>
         </div>
 
-        <div class="metric highlight-card" id="riskCard">
-          <div class="label">Livello di Rischio</div>
-          <div class="value" id="riskVal">—</div>
-          <div class="hint" id="riskHint">Calcolato sugli indicatori</div>
+        <div class="live-panel card">
+          <div class="metric highlight-card" id="signalCard">
+            <div class="label">Segnale attuale</div>
+            <div class="value" id="signalVal">—</div>
+            <div class="hint" id="signalHint">In attesa dell'ultimo run...</div>
+          </div>
+          <div class="live-price-row">
+            <div>
+              <div class="label">Prezzo BTC EUR</div>
+              <div class="value price-val" id="priceEUR">—</div>
+            </div>
+            <div>
+              <div class="label">Prezzo BTC USD</div>
+              <div class="value price-val compact" id="priceUSD">—</div>
+            </div>
+          </div>
+          <div class="small-note">
+            Ultimo aggiornamento bot: <span id="lastUpdate">—</span>
+          </div>
         </div>
       </section>
 
-      <!-- Prices Grid -->
-      <section class="grid-2 card">
-        <div class="metric price-card">
-          <div class="label">Prezzo BTC (USD)</div>
-          <div class="value price-val" id="priceUSD">—</div>
-          <div class="hint" id="priceUSDHint">All'ultimo controllo del bot</div>
+      <section class="results card" aria-labelledby="resultsTitle">
+        <div class="section-heading">
+          <div class="label">Backtest 2015 - oggi</div>
+          <h2 id="resultsTitle">Cosa sarebbe successo seguendo il metodo</h2>
+          <p>
+            Il test storico applica i segnali alla chiusura giornaliera
+            successiva, confrontando la strategia con un semplice Buy & Hold.
+          </p>
         </div>
 
-        <div class="metric price-card">
-          <div class="label">Prezzo BTC (EUR)</div>
-          <div class="value price-val" id="priceEUR">—</div>
-          <div class="hint" id="priceEURHint">All'ultimo controllo del bot</div>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <span class="stat-label">Rendimento strategia</span>
+            <strong>+42.475,12%</strong>
+            <span>Totale storico</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Drawdown massimo</span>
+            <strong>-42,06%</strong>
+            <span>Contro -83,40% del Buy & Hold</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Sharpe ratio</span>
+            <strong>1,451</strong>
+            <span>Su calendario crypto 365 giorni</span>
+          </div>
         </div>
+
+        <div class="comparison">
+          <div class="comparison-row">
+            <div>
+              <strong>BTC Prudential Signal</strong>
+              <span>Rendimento totale +42.475,12%</span>
+            </div>
+            <div class="bar"><span style="width: 100%"></span></div>
+          </div>
+          <div class="comparison-row muted-row">
+            <div>
+              <strong>Buy & Hold Bitcoin</strong>
+              <span>Rendimento totale +20.399,17%</span>
+            </div>
+            <div class="bar"><span style="width: 48%"></span></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="explainer-grid" id="metodo">
+        <article class="card method-card">
+          <div class="label">Metodo</div>
+          <h2>Come nasce un segnale</h2>
+          <p>
+            La strategia non prova a prevedere il prezzo minuto per minuto.
+            Usa solo candele giornaliere chiuse e cerca conferme su trend,
+            momentum e volume.
+          </p>
+          <div class="condition-columns">
+            <div>
+              <h3>ACQUISTA</h3>
+              <ol id="buyConditions">
+                <li>Prezzo sopra SMA200</li>
+                <li>SMA50 sopra SMA200</li>
+                <li>RSI uguale o maggiore di 40</li>
+                <li>Prezzo sopra quello di 7 giorni prima</li>
+                <li>Volume sopra media 20 giorni</li>
+              </ol>
+            </div>
+            <div>
+              <h3>VENDI</h3>
+              <ol id="sellConditions">
+                <li>Prezzo sotto SMA50 per 2 giorni consecutivi</li>
+              </ol>
+            </div>
+          </div>
+        </article>
+
+        <article class="card backtest-card">
+          <div class="label">Cos'e un backtest</div>
+          <h2>Una simulazione storica, non una promessa</h2>
+          <p>
+            Un backtest prende le regole di oggi e le applica ai dati passati
+            per capire come si sarebbero comportate nel tempo.
+          </p>
+          <p>
+            Nel nostro caso il segnale viene calcolato sulla candela giornaliera
+            chiusa e applicato al rendimento del giorno successivo. Questo evita
+            di usare informazioni non ancora disponibili.
+          </p>
+          <ul class="check-list">
+            <li>Dati storici BTC-USD da Yahoo Finance</li>
+            <li>Periodo dal 2015 a oggi</li>
+            <li>Confronto con Buy & Hold</li>
+            <li>Esclusi costi, spread, slippage e imposte</li>
+          </ul>
+        </article>
       </section>
 
       <section class="card telegram-card" aria-labelledby="telegramTitle">
         <div class="telegram-content">
           <div>
             <div class="label">Notifiche Telegram</div>
-            <h2 id="telegramTitle">Ricevi i cambi di segnale</h2>
+            <h2 id="telegramTitle">Ricevi solo i cambi importanti</h2>
             <p class="telegram-description">
-              Ricevi un avviso solo quando cambia il segnale BTC o il livello
-              di rischio.
+              Niente messaggi ogni ora. Il bot scrive solo quando cambia il
+              segnale o quando una condizione passa da verde a rossa, o viceversa.
+              Puoi comunque chiedere il segnale in qualsiasi momento con
+              <span class="mono">/segnale</span>.
             </p>
             <p class="telegram-count" id="subscriberCount" aria-live="polite">
               Iscritti attivi: caricamento...
@@ -86,12 +198,16 @@
           <h2>Ultimo Aggiornamento Bot</h2>
           <div class="update-info">
             <div class="info-row">
-              <span class="info-lbl">Data ultimo run:</span>
-              <span class="info-val mono" id="lastUpdate">—</span>
-            </div>
-            <div class="info-row">
               <span class="info-lbl">Stato Monitor:</span>
               <span class="info-val" id="monitorStatus">Attivo</span>
+            </div>
+            <div class="info-row">
+              <span class="info-lbl">Prezzo USD al run:</span>
+              <span class="info-val" id="priceUSDHint">—</span>
+            </div>
+            <div class="info-row">
+              <span class="info-lbl">Prezzo EUR al run:</span>
+              <span class="info-val" id="priceEURHint">—</span>
             </div>
           </div>
 
@@ -110,6 +226,11 @@
         <section class="card technical-details">
           <h2>Indicatori Storici Registrati (Fine Giornata)</h2>
           <div class="indicator-grid">
+            <div class="ind-box" id="riskCard">
+              <span class="ind-lbl">Rischio informativo</span>
+              <span class="ind-val" id="riskVal">—</span>
+              <span class="hint" id="riskHint">Calcolato sugli indicatori</span>
+            </div>
             <div class="ind-box">
               <span class="ind-lbl">RSI (14)</span>
               <span class="ind-val" id="rsiVal">—</span>
@@ -145,6 +266,6 @@
       </footer>
     </main>
 
-    <script src="./app.js?v=3"></script>
+    <script src="./app.js?v=4"></script>
   </body>
 </html>
