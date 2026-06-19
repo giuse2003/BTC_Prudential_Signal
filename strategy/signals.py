@@ -83,8 +83,7 @@ def compute_strict_signal(df: pd.DataFrame) -> pd.DataFrame:
     """
     Classificazione stretta:
     ACQUISTA se TUTTE le condizioni rialziste sono vere.
-    VENDI se TUTTE le condizioni ribassiste sono vere, oppure se il prezzo
-    chiude sotto SMA50.
+    VENDI se il prezzo chiude sotto SMA50 per due giorni consecutivi.
     Altrimenti MANTIENI.
     """
     df = df.copy()
@@ -106,18 +105,12 @@ def compute_strict_signal(df: pd.DataFrame) -> pd.DataFrame:
         (volume > volume_avg20)
     )
 
-    sell_cond = (
-        (close < sma200) &
-        (sma50 < sma200) &
-        (rsi < 35) &
-        (close < close_momentum) &
-        (volume > volume_avg20)
-    )
-    protective_sell_cond = close < sma50
+    below_sma50 = close < sma50
+    sell_cond = below_sma50 & below_sma50.shift(1).fillna(False)
 
     signal = np.full(len(df), "MANTIENI", dtype=object)
     signal[buy_cond] = "ACQUISTA"
-    signal[sell_cond | protective_sell_cond] = "VENDI"
+    signal[sell_cond] = "VENDI"
     
     df["Segnale"] = signal
     return df

@@ -17,15 +17,8 @@ const CONDITIONS_MESSAGE = [
   "4. prezzo sopra quello di 7 giorni prima;",
   "5. volume sopra media 20 giorni.",
   "",
-  "Per VENDI devono essere vere tutte queste:",
-  "1. prezzo sotto SMA200;",
-  "2. SMA50 sotto SMA200;",
-  "3. RSI sotto 35;",
-  "4. prezzo sotto quello di 7 giorni prima;",
-  "5. volume sopra media 20 giorni.",
-  "",
-  "Oppure:",
-  "prezzo sotto SMA50.",
+  "Per VENDI deve essere vera questa condizione:",
+  "1. prezzo sotto SMA50 per 2 giorni consecutivi.",
 ].join("\n");
 const PRIVACY_MESSAGE = [
   "PRIVACY",
@@ -263,32 +256,19 @@ function formatSignalConditions(conditionGroups) {
     "",
     "Condizioni VENDI:",
     ...formatConditionGroup(conditionGroups.sell),
-    ...formatSellAlternatives(conditionGroups.sell_alternatives),
-  ];
-}
-
-function formatSellAlternatives(alternatives) {
-  if (!Array.isArray(alternatives) || alternatives.length === 0) {
-    return [];
-  }
-  return [
-    "",
-    "Oppure:",
-    ...alternatives.map((condition) => {
-      const marker = condition.passed ? "✅" : "🅾️";
-      return `${marker} ${condition.label}`;
-    }),
   ];
 }
 
 function deriveConditionGroups(status) {
-  const close = Number(status.price_usd);
+  const close = Number(status.close_last_candle ?? status.price_usd);
   const sma50 = Number(status.sma50);
   const sma200 = Number(status.sma200);
   const rsi = Number(status.rsi);
   const volume = Number(status.volume);
   const volumeAvg20 = Number(status.volume_avg20);
   const close7dAgo = Number(status.close_7d_ago);
+  const previousClose = Number(status.previous_close);
+  const previousSma50 = Number(status.previous_sma50);
 
   if (
     ![
@@ -316,17 +296,17 @@ function deriveConditionGroups(status) {
       { label: "volume sopra media 20 giorni", passed: volume > volumeAvg20 },
     ],
     sell: [
-      { label: "prezzo sotto SMA200", passed: close < sma200 },
-      { label: "SMA50 sotto SMA200", passed: sma50 < sma200 },
-      { label: "RSI sotto 35", passed: rsi < 35 },
       {
-        label: "prezzo sotto quello di 7 giorni prima",
-        passed: close < close7dAgo,
+        label: "prezzo sotto SMA50 per 2 giorni consecutivi",
+        passed:
+          typeof status.below_sma50_2d === "boolean"
+            ? status.below_sma50_2d
+            :
+          close < sma50 &&
+          Number.isFinite(previousClose) &&
+          Number.isFinite(previousSma50) &&
+          previousClose < previousSma50,
       },
-      { label: "volume sopra media 20 giorni", passed: volume > volumeAvg20 },
-    ],
-    sell_alternatives: [
-      { label: "prezzo sotto SMA50", passed: close < sma50 },
     ],
   };
 }

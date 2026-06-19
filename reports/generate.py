@@ -228,6 +228,12 @@ def save_status_json(
         usd_val = None
 
     momentum_col = f"Close_{CFG.momentum_days}d_ago"
+    prev = df.iloc[-2] if len(df) >= 2 else None
+    sell_below_sma50_2d = bool(
+        latest["Close"] < latest["SMA50"]
+        and prev is not None
+        and prev["Close"] < prev["SMA50"]
+    )
     condition_groups = {
         "buy": [
             {
@@ -253,30 +259,8 @@ def save_status_json(
         ],
         "sell": [
             {
-                "label": "prezzo sotto SMA200",
-                "passed": bool(latest["Close"] < latest["SMA200"]),
-            },
-            {
-                "label": "SMA50 sotto SMA200",
-                "passed": bool(latest["SMA50"] < latest["SMA200"]),
-            },
-            {
-                "label": "RSI sotto 35",
-                "passed": bool(latest["RSI"] < 35),
-            },
-            {
-                "label": f"prezzo sotto quello di {CFG.momentum_days} giorni prima",
-                "passed": bool(latest["Close"] < latest[momentum_col]),
-            },
-            {
-                "label": "volume sopra media 20 giorni",
-                "passed": bool(latest["Volume"] > latest["VolumeAvg20"]),
-            },
-        ],
-        "sell_alternatives": [
-            {
-                "label": "prezzo sotto SMA50",
-                "passed": bool(latest["Close"] < latest["SMA50"]),
+                "label": "prezzo sotto SMA50 per 2 giorni consecutivi",
+                "passed": sell_below_sma50_2d,
             },
         ],
     }
@@ -295,6 +279,10 @@ def save_status_json(
         "volume": float(latest.get("Volume")) if not pd.isna(latest.get("Volume")) else None,
         "volume_avg20": float(latest.get("VolumeAvg20")) if not pd.isna(latest.get("VolumeAvg20")) else None,
         "close_7d_ago": float(latest.get(momentum_col)) if not pd.isna(latest.get(momentum_col)) else None,
+        "close_last_candle": float(latest.get("Close")) if not pd.isna(latest.get("Close")) else None,
+        "previous_close": float(prev.get("Close")) if prev is not None and not pd.isna(prev.get("Close")) else None,
+        "previous_sma50": float(prev.get("SMA50")) if prev is not None and not pd.isna(prev.get("SMA50")) else None,
+        "below_sma50_2d": sell_below_sma50_2d,
         "condition_groups": condition_groups,
     }
     
