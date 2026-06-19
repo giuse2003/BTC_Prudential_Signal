@@ -1,9 +1,9 @@
 {
-  "price_usd": 62400.59,
-  "price_eur": 54436.105,
-  "signal": "MANTIENI",
+  "price_usd": 62988.855,
+  "price_eur": 54969.83,
+  "signal": "VENDI",
   "risk_level": "ALTO",
-  "last_update": "2026-06-19 14:34:01",
+  "last_update": "2026-06-19 15:43:16",
   "status": "Attivo",
   "rsi": 38.582053597838524,
   "sma50": 73198.68046875,
@@ -23,7 +23,7 @@
         "passed": false
       },
       {
-        "label": "RSI tra 40 e 65",
+        "label": "RSI uguale o maggiore di 40",
         "passed": false
       },
       {
@@ -55,6 +55,12 @@
       {
         "label": "volume sopra media 20 giorni",
         "passed": false
+      }
+    ],
+    "sell_alternatives": [
+      {
+        "label": "prezzo sotto SMA50",
+        "passed": true
       }
     ]
   }

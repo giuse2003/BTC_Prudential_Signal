@@ -13,7 +13,7 @@ const CONDITIONS_MESSAGE = [
   "Per ACQUISTA devono essere vere tutte queste condizioni:",
   "1. prezzo sopra SMA200;",
   "2. SMA50 sopra SMA200;",
-  "3. RSI tra 40 e 65;",
+  "3. RSI uguale o maggiore di 40;",
   "4. prezzo sopra quello di 7 giorni prima;",
   "5. volume sopra media 20 giorni.",
   "",
@@ -23,6 +23,9 @@ const CONDITIONS_MESSAGE = [
   "3. RSI sotto 35;",
   "4. prezzo sotto quello di 7 giorni prima;",
   "5. volume sopra media 20 giorni.",
+  "",
+  "Oppure:",
+  "prezzo sotto SMA50.",
 ].join("\n");
 const PRIVACY_MESSAGE = [
   "PRIVACY",
@@ -260,6 +263,21 @@ function formatSignalConditions(conditionGroups) {
     "",
     "Condizioni VENDI:",
     ...formatConditionGroup(conditionGroups.sell),
+    ...formatSellAlternatives(conditionGroups.sell_alternatives),
+  ];
+}
+
+function formatSellAlternatives(alternatives) {
+  if (!Array.isArray(alternatives) || alternatives.length === 0) {
+    return [];
+  }
+  return [
+    "",
+    "Oppure:",
+    ...alternatives.map((condition) => {
+      const marker = condition.passed ? "✅" : "🅾️";
+      return `${marker} ${condition.label}`;
+    }),
   ];
 }
 
@@ -290,7 +308,7 @@ function deriveConditionGroups(status) {
     buy: [
       { label: "prezzo sopra SMA200", passed: close > sma200 },
       { label: "SMA50 sopra SMA200", passed: sma50 > sma200 },
-      { label: "RSI tra 40 e 65", passed: rsi >= 40 && rsi <= 65 },
+      { label: "RSI uguale o maggiore di 40", passed: rsi >= 40 },
       {
         label: "prezzo sopra quello di 7 giorni prima",
         passed: close > close7dAgo,
@@ -306,6 +324,9 @@ function deriveConditionGroups(status) {
         passed: close < close7dAgo,
       },
       { label: "volume sopra media 20 giorni", passed: volume > volumeAvg20 },
+    ],
+    sell_alternatives: [
+      { label: "prezzo sotto SMA50", passed: close < sma50 },
     ],
   };
 }

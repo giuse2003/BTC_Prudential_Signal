@@ -239,8 +239,8 @@ def save_status_json(
                 "passed": bool(latest["SMA50"] > latest["SMA200"]),
             },
             {
-                "label": "RSI tra 40 e 65",
-                "passed": bool(40 <= latest["RSI"] <= 65),
+                "label": "RSI uguale o maggiore di 40",
+                "passed": bool(latest["RSI"] >= 40),
             },
             {
                 "label": f"prezzo sopra quello di {CFG.momentum_days} giorni prima",
@@ -271,6 +271,12 @@ def save_status_json(
             {
                 "label": "volume sopra media 20 giorni",
                 "passed": bool(latest["Volume"] > latest["VolumeAvg20"]),
+            },
+        ],
+        "sell_alternatives": [
+            {
+                "label": "prezzo sotto SMA50",
+                "passed": bool(latest["Close"] < latest["SMA50"]),
             },
         ],
     }

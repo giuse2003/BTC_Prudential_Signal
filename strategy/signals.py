@@ -52,12 +52,11 @@ def score_rowwise(df: pd.DataFrame) -> pd.DataFrame:
     trend_secondary = (sma50 > sma200).astype(float) * 25.0
 
     # RSI scoring (spec)
-    # 40-65: +15
+    # >= 40: +15
     # 30-40: +10
-    # RSI > 75: 0
     # RSI < 30: 0
     rsi_score = np.zeros(len(df), dtype=float)
-    rsi_score[(rsi >= 40) & (rsi <= 65)] = 15.0
+    rsi_score[rsi >= 40] = 15.0
     rsi_score[(rsi >= 30) & (rsi < 40)] = 10.0
     df["RSI_Score"] = rsi_score
 
@@ -84,7 +83,8 @@ def compute_strict_signal(df: pd.DataFrame) -> pd.DataFrame:
     """
     Classificazione stretta:
     ACQUISTA se TUTTE le condizioni rialziste sono vere.
-    VENDI se TUTTE le condizioni ribassiste sono vere.
+    VENDI se TUTTE le condizioni ribassiste sono vere, oppure se il prezzo
+    chiude sotto SMA50.
     Altrimenti MANTIENI.
     """
     df = df.copy()
@@ -101,7 +101,7 @@ def compute_strict_signal(df: pd.DataFrame) -> pd.DataFrame:
     buy_cond = (
         (close > sma200) &
         (sma50 > sma200) &
-        (rsi >= 40) & (rsi <= 65) &
+        (rsi >= 40) &
         (close > close_momentum) &
         (volume > volume_avg20)
     )
@@ -113,10 +113,11 @@ def compute_strict_signal(df: pd.DataFrame) -> pd.DataFrame:
         (close < close_momentum) &
         (volume > volume_avg20)
     )
+    protective_sell_cond = close < sma50
 
     signal = np.full(len(df), "MANTIENI", dtype=object)
     signal[buy_cond] = "ACQUISTA"
-    signal[sell_cond] = "VENDI"
+    signal[sell_cond | protective_sell_cond] = "VENDI"
     
     df["Segnale"] = signal
     return df
@@ -243,7 +244,7 @@ def explain_latest_row(
     if segnale == "ACQUISTA":
         sintesi_lines.append("Tutte le conferme rialziste sono allineate.")
     elif segnale == "VENDI":
-        sintesi_lines.append("Forte debolezza confermata dai volumi.")
+        sintesi_lines.append("Debolezza tecnica o uscita protettiva confermata.")
     else:
         sintesi_lines.append("Nessuna conferma sufficiente per acquistare.")
 
