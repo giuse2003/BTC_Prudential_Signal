@@ -1,7 +1,50 @@
 # BTC Prudential Signal
 
+BTC Prudential Signal is a transparent Bitcoin risk-management model based on
+daily technical indicators: SMA50, SMA200, RSI and volume confirmation. It
+generates three signals — `ACQUISTA`, `MANTIENI`, `VENDI` — and publishes the
+current status through a GitHub Pages dashboard and a Telegram bot.
+
+The project is for informational and educational purposes only. It is not
+financial advice.
+
 Sistema Python per il monitoraggio prudenziale di Bitcoin tramite indicatori
 tecnici giornalieri, dashboard web e notifiche Telegram.
+
+## What it does
+
+- Analyzes Bitcoin daily closed candles.
+- Calculates SMA50, SMA200, RSI(14), volume average and trend conditions.
+- Generates BUY / HOLD / SELL style signals.
+- Compares the strategy against Bitcoin Buy & Hold through backtesting.
+- Publishes a public dashboard.
+- Supports Telegram commands and alerts.
+
+## Strategy rules
+
+### BUY / ACQUISTA
+
+- Close above SMA200.
+- SMA50 above SMA200.
+- RSI(14) >= 40.
+- Close above the close of 7 days ago.
+- Daily volume above 20-day average volume.
+
+### SELL / VENDI
+
+- Close below SMA50 for two consecutive days.
+
+### HOLD / MANTIENI
+
+- No buy or sell condition is triggered.
+
+## Disclaimer
+
+This project does not predict Bitcoin price and does not guarantee profits.
+It is a personal, transparent and educational project created to test simple
+risk-management rules on Bitcoin historical data.
+
+Use it only as a technical monitoring tool.
 
 ## Monitor online
 
