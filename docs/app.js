@@ -1,4 +1,5 @@
 const STATUS_ENDPOINT = "./status.json";
+const CHART_DATA_ENDPOINT = "./chart-data.json";
 const COINBASE_EUR_ENDPOINT = "https://api.coinbase.com/v2/prices/BTC-EUR/spot";
 const COINBASE_USD_ENDPOINT = "https://api.coinbase.com/v2/prices/BTC-USD/spot";
 const SUBSCRIBER_COUNT_ENDPOINT =
@@ -24,6 +25,12 @@ const els = {
   subscriberCount: document.getElementById("subscriberCount"),
   buyConditions: document.getElementById("buyConditions"),
   sellConditions: document.getElementById("sellConditions"),
+  btcTrendChart: document.getElementById("btcTrendChart"),
+  rsiChart: document.getElementById("rsiChart"),
+  volumeChart: document.getElementById("volumeChart"),
+  chartLoading: document.getElementById("chartLoading"),
+  chartNote: document.getElementById("chartNote"),
+  chartRanges: Array.from(document.querySelectorAll(".chart-range")),
   
   // Technical details
   rsiVal: document.getElementById("rsiVal"),
@@ -35,6 +42,8 @@ const els = {
 let botData = null;
 let intervalId = null;
 let inFlight = false;
+let chartRows = [];
+let chartRange = "365";
 
 // Custom currency formatting for Italian locale
 function formatCurrency(value, currency) {
@@ -167,6 +176,244 @@ function updateConditionList(listEl, conditions) {
   });
 }
 
+async function loadChartData() {
+  if (!els.btcTrendChart) return;
+
+  try {
+    const response = await fetch(CHART_DATA_ENDPOINT, { cache: "no-store" });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const rows = await response.json();
+    if (!Array.isArray(rows)) throw new Error("Formato grafico non valido");
+
+    chartRows = rows
+      .map((row) => ({
+        date: row.date,
+        close: Number(row.close),
+        sma50: nullableNumber(row.sma50),
+        sma200: nullableNumber(row.sma200),
+        rsi: nullableNumber(row.rsi),
+        volume: nullableNumber(row.volume),
+        volumeAvg20: nullableNumber(row.volume_avg20),
+      }))
+      .filter((row) => row.date && Number.isFinite(row.close));
+
+    drawTrendChart();
+  } catch (error) {
+    console.warn("Grafico storico non disponibile:", error.message);
+    if (els.chartLoading) {
+      els.chartLoading.textContent = "Grafico non disponibile.";
+      els.chartLoading.style.display = "grid";
+    }
+  }
+}
+
+function nullableNumber(value) {
+  const number = Number(value);
+  return Number.isFinite(number) ? number : null;
+}
+
+function getVisibleChartRows() {
+  if (chartRange === "all") return chartRows;
+  const count = Number(chartRange);
+  return chartRows.slice(Math.max(0, chartRows.length - count));
+}
+
+function drawTrendChart() {
+  const canvas = els.btcTrendChart;
+  if (!canvas || !chartRows.length) return;
+
+  const ctx = canvas.getContext("2d");
+  const rect = canvas.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  const width = Math.max(320, Math.floor(rect.width || canvas.clientWidth || 1040));
+  const height = Math.max(260, Math.floor(width * 0.42));
+  canvas.width = Math.floor(width * dpr);
+  canvas.height = Math.floor(height * dpr);
+  canvas.style.height = `${height}px`;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, width, height);
+
+  const rows = getVisibleChartRows();
+  const values = rows.flatMap((row) => [row.close, row.sma50, row.sma200]).filter(Number.isFinite);
+  const minValue = Math.min(...values);
+  const maxValue = Math.max(...values);
+  const padding = { top: 18, right: 18, bottom: 34, left: 72 };
+  const chartWidth = width - padding.left - padding.right;
+  const chartHeight = height - padding.top - padding.bottom;
+  const range = maxValue - minValue || 1;
+  const yMin = minValue - range * 0.08;
+  const yMax = maxValue + range * 0.08;
+
+  const xFor = (index) =>
+    padding.left + (rows.length <= 1 ? 0 : (index / (rows.length - 1)) * chartWidth);
+  const yFor = (value) =>
+    padding.top + ((yMax - value) / (yMax - yMin)) * chartHeight;
+
+  drawGrid(ctx, rows, xFor, yFor, width, height, padding, yMin, yMax);
+  drawLine(ctx, rows, "close", xFor, yFor, "#f7931a", 2.3);
+  drawLine(ctx, rows, "sma50", xFor, yFor, "#38bdf8", 1.8);
+  drawLine(ctx, rows, "sma200", xFor, yFor, "#22c55e", 1.8);
+  drawRsiChart(rows);
+  drawVolumeChart(rows);
+
+  const first = rows[0];
+  const last = rows[rows.length - 1];
+  if (els.chartLoading) els.chartLoading.style.display = "none";
+  if (els.chartNote) {
+    els.chartNote.textContent =
+      `Periodo mostrato: ${formatDateShort(first.date)} - ${formatDateShort(last.date)}. ` +
+      `Ultimo close BTC-USD: ${formatCurrency(last.close, "USD")}.`;
+  }
+}
+
+function setupCanvas(canvas, ratio = 0.36) {
+  const ctx = canvas.getContext("2d");
+  const rect = canvas.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  const width = Math.max(280, Math.floor(rect.width || canvas.clientWidth || 500));
+  const height = Math.max(150, Math.floor(width * ratio));
+  canvas.width = Math.floor(width * dpr);
+  canvas.height = Math.floor(height * dpr);
+  canvas.style.height = `${height}px`;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, width, height);
+  return { ctx, width, height };
+}
+
+function drawRsiChart(rows) {
+  const canvas = els.rsiChart;
+  if (!canvas) return;
+
+  const { ctx, width, height } = setupCanvas(canvas, 0.34);
+  const padding = { top: 12, right: 12, bottom: 20, left: 38 };
+  const chartWidth = width - padding.left - padding.right;
+  const chartHeight = height - padding.top - padding.bottom;
+  const xFor = (index) =>
+    padding.left + (rows.length <= 1 ? 0 : (index / (rows.length - 1)) * chartWidth);
+  const yFor = (value) =>
+    padding.top + ((80 - value) / 60) * chartHeight;
+
+  ctx.save();
+  ctx.strokeStyle = "rgba(255,255,255,0.08)";
+  ctx.fillStyle = "rgba(248,250,252,0.62)";
+  ctx.font = "11px Outfit, sans-serif";
+  [40, 70].forEach((level) => {
+    const y = yFor(level);
+    ctx.beginPath();
+    ctx.moveTo(padding.left, y);
+    ctx.lineTo(width - padding.right, y);
+    ctx.stroke();
+    ctx.fillText(String(level), 10, y + 4);
+  });
+  ctx.restore();
+
+  drawLine(ctx, rows, "rsi", xFor, yFor, "#f7931a", 2);
+}
+
+function drawVolumeChart(rows) {
+  const canvas = els.volumeChart;
+  if (!canvas) return;
+
+  const { ctx, width, height } = setupCanvas(canvas, 0.34);
+  const padding = { top: 12, right: 12, bottom: 20, left: 46 };
+  const chartWidth = width - padding.left - padding.right;
+  const chartHeight = height - padding.top - padding.bottom;
+  const values = rows.flatMap((row) => [row.volume, row.volumeAvg20]).filter(Number.isFinite);
+  const maxValue = Math.max(...values, 1);
+  const xFor = (index) =>
+    padding.left + (rows.length <= 1 ? 0 : (index / (rows.length - 1)) * chartWidth);
+  const yFor = (value) =>
+    padding.top + (1 - value / maxValue) * chartHeight;
+
+  ctx.save();
+  ctx.strokeStyle = "rgba(255,255,255,0.08)";
+  ctx.fillStyle = "rgba(248,250,252,0.62)";
+  ctx.font = "11px Outfit, sans-serif";
+  [0.5, 1].forEach((part) => {
+    const value = maxValue * part;
+    const y = yFor(value);
+    ctx.beginPath();
+    ctx.moveTo(padding.left, y);
+    ctx.lineTo(width - padding.right, y);
+    ctx.stroke();
+    ctx.fillText(compactUsd(value), 8, y + 4);
+  });
+  ctx.restore();
+
+  drawLine(ctx, rows, "volume", xFor, yFor, "rgba(247,147,26,0.5)", 1.5);
+  drawLine(ctx, rows, "volumeAvg20", xFor, yFor, "#38bdf8", 2);
+}
+
+function drawGrid(ctx, rows, xFor, yFor, width, height, padding, yMin, yMax) {
+  ctx.save();
+  ctx.strokeStyle = "rgba(255,255,255,0.08)";
+  ctx.fillStyle = "rgba(248,250,252,0.68)";
+  ctx.lineWidth = 1;
+  ctx.font = "12px Outfit, sans-serif";
+
+  for (let i = 0; i <= 4; i += 1) {
+    const value = yMin + ((yMax - yMin) / 4) * i;
+    const y = yFor(value);
+    ctx.beginPath();
+    ctx.moveTo(padding.left, y);
+    ctx.lineTo(width - padding.right, y);
+    ctx.stroke();
+    ctx.fillText(compactUsd(value), 8, y + 4);
+  }
+
+  const tickCount = Math.min(5, rows.length);
+  for (let i = 0; i < tickCount; i += 1) {
+    const index = Math.round((rows.length - 1) * (i / Math.max(1, tickCount - 1)));
+    const x = xFor(index);
+    ctx.fillText(formatDateShort(rows[index].date), x - 24, height - 10);
+  }
+  ctx.restore();
+}
+
+function drawLine(ctx, rows, key, xFor, yFor, color, width) {
+  ctx.save();
+  ctx.strokeStyle = color;
+  ctx.lineWidth = width;
+  ctx.lineJoin = "round";
+  ctx.lineCap = "round";
+  ctx.beginPath();
+  let started = false;
+
+  rows.forEach((row, index) => {
+    const value = row[key];
+    if (!Number.isFinite(value)) {
+      started = false;
+      return;
+    }
+    const x = xFor(index);
+    const y = yFor(value);
+    if (!started) {
+      ctx.moveTo(x, y);
+      started = true;
+    } else {
+      ctx.lineTo(x, y);
+    }
+  });
+
+  ctx.stroke();
+  ctx.restore();
+}
+
+function compactUsd(value) {
+  return new Intl.NumberFormat("it-IT", {
+    notation: "compact",
+    maximumFractionDigits: 1,
+  }).format(value);
+}
+
+function formatDateShort(value) {
+  const date = new Date(`${value}T00:00:00Z`);
+  return new Intl.DateTimeFormat("it-IT", {
+    month: "short",
+    year: "2-digit",
+  }).format(date);
+}
+
 async function fetchLiveCoinbasePrice(url) {
   const res = await fetch(url, { cache: "no-store" });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -230,7 +477,20 @@ els.refreshSelect.addEventListener("change", () => {
   tick();
 });
 
+els.chartRanges.forEach((button) => {
+  button.addEventListener("click", () => {
+    chartRange = button.dataset.range || "365";
+    els.chartRanges.forEach((item) => item.classList.toggle("active", item === button));
+    drawTrendChart();
+  });
+});
+
+window.addEventListener("resize", () => {
+  window.requestAnimationFrame(drawTrendChart);
+});
+
 // Avvio
 start();
 tick();
 loadSubscriberCount();
+loadChartData();
