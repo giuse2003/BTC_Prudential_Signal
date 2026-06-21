@@ -26,8 +26,6 @@ const els = {
   buyConditions: document.getElementById("buyConditions"),
   sellConditions: document.getElementById("sellConditions"),
   btcTrendChart: document.getElementById("btcTrendChart"),
-  rsiChart: document.getElementById("rsiChart"),
-  volumeChart: document.getElementById("volumeChart"),
   chartLoading: document.getElementById("chartLoading"),
   chartNote: document.getElementById("chartNote"),
   chartRanges: Array.from(document.querySelectorAll(".chart-range")),
@@ -226,7 +224,7 @@ function drawTrendChart() {
   const rect = canvas.getBoundingClientRect();
   const dpr = window.devicePixelRatio || 1;
   const width = Math.max(320, Math.floor(rect.width || canvas.clientWidth || 1040));
-  const height = Math.max(260, Math.floor(width * 0.42));
+  const height = Math.max(520, Math.floor(width * 0.66));
   canvas.width = Math.floor(width * dpr);
   canvas.height = Math.floor(height * dpr);
   canvas.style.height = `${height}px`;
@@ -234,27 +232,54 @@ function drawTrendChart() {
   ctx.clearRect(0, 0, width, height);
 
   const rows = getVisibleChartRows();
-  const values = rows.flatMap((row) => [row.close, row.sma50, row.sma200]).filter(Number.isFinite);
-  const minValue = Math.min(...values);
-  const maxValue = Math.max(...values);
   const padding = { top: 18, right: 18, bottom: 34, left: 72 };
+  const gap = 22;
   const chartWidth = width - padding.left - padding.right;
-  const chartHeight = height - padding.top - padding.bottom;
-  const range = maxValue - minValue || 1;
-  const yMin = minValue - range * 0.08;
-  const yMax = maxValue + range * 0.08;
+  const availableHeight = height - padding.top - padding.bottom - gap * 2;
+  const priceHeight = Math.round(availableHeight * 0.58);
+  const rsiHeight = Math.round(availableHeight * 0.2);
+  const volumeHeight = availableHeight - priceHeight - rsiHeight;
+  const pricePanel = { top: padding.top, height: priceHeight };
+  const rsiPanel = { top: pricePanel.top + pricePanel.height + gap, height: rsiHeight };
+  const volumePanel = { top: rsiPanel.top + rsiPanel.height + gap, height: volumeHeight };
 
   const xFor = (index) =>
     padding.left + (rows.length <= 1 ? 0 : (index / (rows.length - 1)) * chartWidth);
-  const yFor = (value) =>
-    padding.top + ((yMax - value) / (yMax - yMin)) * chartHeight;
 
-  drawGrid(ctx, rows, xFor, yFor, width, height, padding, yMin, yMax);
-  drawLine(ctx, rows, "close", xFor, yFor, "#f7931a", 2.3);
-  drawLine(ctx, rows, "sma50", xFor, yFor, "#38bdf8", 1.8);
-  drawLine(ctx, rows, "sma200", xFor, yFor, "#22c55e", 1.8);
-  drawRsiChart(rows);
-  drawVolumeChart(rows);
+  const priceValues = rows.flatMap((row) => [row.close, row.sma50, row.sma200]).filter(Number.isFinite);
+  const minValue = Math.min(...priceValues);
+  const maxValue = Math.max(...priceValues);
+  const priceRange = maxValue - minValue || 1;
+  const priceMin = minValue - priceRange * 0.08;
+  const priceMax = maxValue + priceRange * 0.08;
+  const priceYFor = (value) =>
+    pricePanel.top + ((priceMax - value) / (priceMax - priceMin)) * pricePanel.height;
+
+  const rsiYFor = (value) =>
+    rsiPanel.top + ((80 - value) / 60) * rsiPanel.height;
+
+  const volumeValues = rows.flatMap((row) => [row.volume, row.volumeAvg20]).filter(Number.isFinite);
+  const volumeMax = Math.max(...volumeValues, 1);
+  const volumeYFor = (value) =>
+    volumePanel.top + (1 - value / volumeMax) * volumePanel.height;
+
+  drawCompositeGrid(ctx, rows, xFor, width, height, padding, {
+    pricePanel,
+    rsiPanel,
+    volumePanel,
+    priceYFor,
+    rsiYFor,
+    volumeYFor,
+    priceMin,
+    priceMax,
+    volumeMax,
+  });
+  drawLine(ctx, rows, "close", xFor, priceYFor, "#f7931a", 2.3);
+  drawLine(ctx, rows, "sma50", xFor, priceYFor, "#38bdf8", 1.8);
+  drawLine(ctx, rows, "sma200", xFor, priceYFor, "#22c55e", 1.8);
+  drawLine(ctx, rows, "rsi", xFor, rsiYFor, "#f7931a", 1.8);
+  drawLine(ctx, rows, "volume", xFor, volumeYFor, "rgba(247,147,26,0.38)", 1.2);
+  drawLine(ctx, rows, "volumeAvg20", xFor, volumeYFor, "#38bdf8", 1.8);
 
   const first = rows[0];
   const last = rows[rows.length - 1];
@@ -266,85 +291,7 @@ function drawTrendChart() {
   }
 }
 
-function setupCanvas(canvas, ratio = 0.36) {
-  const ctx = canvas.getContext("2d");
-  const rect = canvas.getBoundingClientRect();
-  const dpr = window.devicePixelRatio || 1;
-  const width = Math.max(280, Math.floor(rect.width || canvas.clientWidth || 500));
-  const height = Math.max(150, Math.floor(width * ratio));
-  canvas.width = Math.floor(width * dpr);
-  canvas.height = Math.floor(height * dpr);
-  canvas.style.height = `${height}px`;
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  ctx.clearRect(0, 0, width, height);
-  return { ctx, width, height };
-}
-
-function drawRsiChart(rows) {
-  const canvas = els.rsiChart;
-  if (!canvas) return;
-
-  const { ctx, width, height } = setupCanvas(canvas, 0.34);
-  const padding = { top: 12, right: 12, bottom: 20, left: 38 };
-  const chartWidth = width - padding.left - padding.right;
-  const chartHeight = height - padding.top - padding.bottom;
-  const xFor = (index) =>
-    padding.left + (rows.length <= 1 ? 0 : (index / (rows.length - 1)) * chartWidth);
-  const yFor = (value) =>
-    padding.top + ((80 - value) / 60) * chartHeight;
-
-  ctx.save();
-  ctx.strokeStyle = "rgba(255,255,255,0.08)";
-  ctx.fillStyle = "rgba(248,250,252,0.62)";
-  ctx.font = "11px Outfit, sans-serif";
-  [40, 70].forEach((level) => {
-    const y = yFor(level);
-    ctx.beginPath();
-    ctx.moveTo(padding.left, y);
-    ctx.lineTo(width - padding.right, y);
-    ctx.stroke();
-    ctx.fillText(String(level), 10, y + 4);
-  });
-  ctx.restore();
-
-  drawLine(ctx, rows, "rsi", xFor, yFor, "#f7931a", 2);
-}
-
-function drawVolumeChart(rows) {
-  const canvas = els.volumeChart;
-  if (!canvas) return;
-
-  const { ctx, width, height } = setupCanvas(canvas, 0.34);
-  const padding = { top: 12, right: 12, bottom: 20, left: 46 };
-  const chartWidth = width - padding.left - padding.right;
-  const chartHeight = height - padding.top - padding.bottom;
-  const values = rows.flatMap((row) => [row.volume, row.volumeAvg20]).filter(Number.isFinite);
-  const maxValue = Math.max(...values, 1);
-  const xFor = (index) =>
-    padding.left + (rows.length <= 1 ? 0 : (index / (rows.length - 1)) * chartWidth);
-  const yFor = (value) =>
-    padding.top + (1 - value / maxValue) * chartHeight;
-
-  ctx.save();
-  ctx.strokeStyle = "rgba(255,255,255,0.08)";
-  ctx.fillStyle = "rgba(248,250,252,0.62)";
-  ctx.font = "11px Outfit, sans-serif";
-  [0.5, 1].forEach((part) => {
-    const value = maxValue * part;
-    const y = yFor(value);
-    ctx.beginPath();
-    ctx.moveTo(padding.left, y);
-    ctx.lineTo(width - padding.right, y);
-    ctx.stroke();
-    ctx.fillText(compactUsd(value), 8, y + 4);
-  });
-  ctx.restore();
-
-  drawLine(ctx, rows, "volume", xFor, yFor, "rgba(247,147,26,0.5)", 1.5);
-  drawLine(ctx, rows, "volumeAvg20", xFor, yFor, "#38bdf8", 2);
-}
-
-function drawGrid(ctx, rows, xFor, yFor, width, height, padding, yMin, yMax) {
+function drawCompositeGrid(ctx, rows, xFor, width, height, padding, scale) {
   ctx.save();
   ctx.strokeStyle = "rgba(255,255,255,0.08)";
   ctx.fillStyle = "rgba(248,250,252,0.68)";
@@ -352,8 +299,8 @@ function drawGrid(ctx, rows, xFor, yFor, width, height, padding, yMin, yMax) {
   ctx.font = "12px Outfit, sans-serif";
 
   for (let i = 0; i <= 4; i += 1) {
-    const value = yMin + ((yMax - yMin) / 4) * i;
-    const y = yFor(value);
+    const value = scale.priceMin + ((scale.priceMax - scale.priceMin) / 4) * i;
+    const y = scale.priceYFor(value);
     ctx.beginPath();
     ctx.moveTo(padding.left, y);
     ctx.lineTo(width - padding.right, y);
@@ -361,12 +308,43 @@ function drawGrid(ctx, rows, xFor, yFor, width, height, padding, yMin, yMax) {
     ctx.fillText(compactUsd(value), 8, y + 4);
   }
 
+  [40, 70].forEach((level) => {
+    const y = scale.rsiYFor(level);
+    ctx.beginPath();
+    ctx.moveTo(padding.left, y);
+    ctx.lineTo(width - padding.right, y);
+    ctx.stroke();
+    ctx.fillText(String(level), 26, y + 4);
+  });
+
+  [0.5, 1].forEach((part) => {
+    const value = scale.volumeMax * part;
+    const y = scale.volumeYFor(value);
+    ctx.beginPath();
+    ctx.moveTo(padding.left, y);
+    ctx.lineTo(width - padding.right, y);
+    ctx.stroke();
+    ctx.fillText(compactUsd(value), 8, y + 4);
+  });
+
+  drawPanelLabel(ctx, "Prezzo / SMA", padding.left, scale.pricePanel.top);
+  drawPanelLabel(ctx, "RSI(14)", padding.left, scale.rsiPanel.top);
+  drawPanelLabel(ctx, "Volume", padding.left, scale.volumePanel.top);
+
   const tickCount = Math.min(5, rows.length);
   for (let i = 0; i < tickCount; i += 1) {
     const index = Math.round((rows.length - 1) * (i / Math.max(1, tickCount - 1)));
     const x = xFor(index);
     ctx.fillText(formatDateShort(rows[index].date), x - 24, height - 10);
   }
+  ctx.restore();
+}
+
+function drawPanelLabel(ctx, label, x, y) {
+  ctx.save();
+  ctx.fillStyle = "rgba(248,250,252,0.78)";
+  ctx.font = "700 12px Outfit, sans-serif";
+  ctx.fillText(label, x, y + 13);
   ctx.restore();
 }
 

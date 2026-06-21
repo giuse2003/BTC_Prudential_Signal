@@ -70,11 +70,11 @@
       <section class="card chart-card" aria-labelledby="priceChartTitle">
         <div class="chart-header">
           <div class="section-heading compact-heading">
-            <div class="label">Prezzo + medie mobili</div>
-            <h2 id="priceChartTitle">Andamento Bitcoin con SMA50 e SMA200</h2>
+            <div class="label">Prezzo + indicatori</div>
+            <h2 id="priceChartTitle">Andamento Bitcoin con SMA50, SMA200, RSI e volume</h2>
             <p>
               Il grafico mostra le candele giornaliere chiuse usate dal modello:
-              prezzo BTC-USD, media mobile a 50 giorni e media mobile a 200 giorni.
+              prezzo BTC-USD, medie mobili, RSI e volume sullo stesso periodo storico.
             </p>
           </div>
           <div class="chart-controls" aria-label="Periodo grafico">
@@ -87,26 +87,12 @@
           <span><i class="legend-price"></i>Prezzo BTC</span>
           <span><i class="legend-sma50"></i>SMA50</span>
           <span><i class="legend-sma200"></i>SMA200</span>
+          <span><i class="legend-rsi"></i>RSI</span>
+          <span><i class="legend-volume"></i>Volume / media 20g</span>
         </div>
         <div class="chart-wrap">
-          <canvas id="btcTrendChart" width="1040" height="430"></canvas>
+          <canvas id="btcTrendChart" width="1040" height="680"></canvas>
           <div class="chart-loading" id="chartLoading">Caricamento grafico...</div>
-        </div>
-        <div class="mini-chart-grid">
-          <div class="mini-chart-panel">
-            <div class="mini-chart-head">
-              <span>RSI(14)</span>
-              <small>Soglia acquisto: 40</small>
-            </div>
-            <canvas id="rsiChart" width="500" height="180"></canvas>
-          </div>
-          <div class="mini-chart-panel">
-            <div class="mini-chart-head">
-              <span>Volume</span>
-              <small>Volume vs media 20 giorni</small>
-            </div>
-            <canvas id="volumeChart" width="500" height="180"></canvas>
-          </div>
         </div>
         <p class="chart-note" id="chartNote">
           Dati storici BTC-USD da Yahoo Finance. Le medie mobili sono calcolate su candele giornaliere chiuse.
@@ -312,6 +298,6 @@
       </footer>
     </main>
 
-    <script src="./app.js?v=5"></script>
+    <script src="./app.js?v=6"></script>
   </body>
 </html>
