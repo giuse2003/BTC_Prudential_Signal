@@ -76,12 +76,15 @@ def fetch_btc_daily_csv(
         df_out.to_csv(out_path, index=False)
         return out_path
     except Exception as e:
+        if out_path.exists():
+            print(
+                f"ATTENZIONE: Fallito download dati per {symbol}: {e}. "
+                f"Uso il file storico esistente: {out_path}"
+            )
+            return out_path
+
         if is_optional:
             print(f"ATTENZIONE: Fallito download dati per {symbol}: {e}. Continuo con il workflow.")
-            # Se esiste un file locale precedente, usiamolo come fallback prima di arrendersi
-            if out_path.exists():
-                print(f"Uso il file storico esistente per {symbol}: {out_path}")
-                return out_path
             return None
         else:
             raise

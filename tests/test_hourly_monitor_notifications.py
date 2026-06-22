@@ -28,9 +28,9 @@ class HourlyMonitorNotificationTests(unittest.TestCase):
         )
 
         self.assertFalse(must_notify)
-        self.assertEqual(reason, "segnale e condizioni invariati")
+        self.assertEqual(reason, "segnale invariato")
 
-    def test_condition_change_notifies_even_when_signal_is_unchanged(self) -> None:
+    def test_condition_change_does_not_notify_when_signal_is_unchanged(self) -> None:
         must_notify, reason = should_notify(
             MonitorState(
                 last_signal="MANTIENI",
@@ -40,8 +40,8 @@ class HourlyMonitorNotificationTests(unittest.TestCase):
             conditions_key="BUY:00110|SELL:0",
         )
 
-        self.assertTrue(must_notify)
-        self.assertEqual(reason, "condizioni operative cambiate")
+        self.assertFalse(must_notify)
+        self.assertEqual(reason, "segnale invariato")
 
     def test_signal_change_notifies(self) -> None:
         must_notify, reason = should_notify(

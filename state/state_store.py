@@ -30,6 +30,8 @@ class MonitorState:
     last_computed_conditions_key: str | None = None
     # ultimo livello di rischio calcolato, anche se la notifica Telegram fallisce
     last_computed_risk_level: str | None = None
+    # ultima candela giornaliera chiusa gia processata (YYYY-MM-DD)
+    last_processed_candle_date: str | None = None
 
 
 def load_state(path: str | Path) -> MonitorState:
@@ -47,6 +49,7 @@ def load_state(path: str | Path) -> MonitorState:
             last_computed_signal=raw.get("last_computed_signal"),
             last_computed_conditions_key=raw.get("last_computed_conditions_key"),
             last_computed_risk_level=raw.get("last_computed_risk_level"),
+            last_processed_candle_date=raw.get("last_processed_candle_date"),
         )
     except Exception:
         return MonitorState()
@@ -64,6 +67,7 @@ def save_state(path: str | Path, state: MonitorState) -> None:
         "last_computed_signal": state.last_computed_signal,
         "last_computed_conditions_key": state.last_computed_conditions_key,
         "last_computed_risk_level": state.last_computed_risk_level,
+        "last_processed_candle_date": state.last_processed_candle_date,
     }
     path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
 

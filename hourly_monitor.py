@@ -11,6 +11,7 @@ Comportamento:
 from __future__ import annotations
 
 import os
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import pandas as pd
@@ -26,16 +27,13 @@ from reports.generate import save_status_json
 
 
 def should_notify(state: MonitorState, signal: str, conditions_key: str) -> tuple[bool, str]:
-    if state.last_signal is None or state.last_conditions_key is None:
+    if state.last_signal is None:
         return False, "baseline iniziale salvata senza notifica"
 
     if signal != state.last_signal:
         return True, f"segnale cambiato: {state.last_signal} -> {signal}"
 
-    if conditions_key != state.last_conditions_key:
-        return True, "condizioni operative cambiate"
-
-    return False, "segnale e condizioni invariati"
+    return False, "segnale invariato"
 
 
 def main() -> None:
@@ -54,12 +52,21 @@ def main() -> None:
 
     # 1) Stato precedente
     state = load_state(state_path)
+    expected_closed_candle_date = (datetime.now(timezone.utc).date() - timedelta(days=1)).isoformat()
+    force_daily_download = state.last_processed_candle_date != expected_closed_candle_date
+    if force_daily_download:
+        print(f"Controllo Yahoo per cercare la candela chiusa attesa: {expected_closed_candle_date}")
+    else:
+        print(
+            f"Candela attesa {expected_closed_candle_date} gia processata. "
+            "Uso i dati locali/cache senza forzare Yahoo."
+        )
 
     # 2) Dati giornalieri + indicatori (con doppia valuta USD/EUR)
-    csv_path_usd = fetch_btc_daily_csv(symbol="BTC-USD", force_download=True, is_optional=False)
+    csv_path_usd = fetch_btc_daily_csv(symbol="BTC-USD", force_download=force_daily_download, is_optional=False)
     df_usd = keep_closed_daily_candles(load_daily_csv(csv_path_usd))
     
-    csv_path_eur = fetch_btc_daily_csv(symbol="BTC-EUR", force_download=True, is_optional=True)
+    csv_path_eur = fetch_btc_daily_csv(symbol="BTC-EUR", force_download=force_daily_download, is_optional=True)
     if csv_path_eur is not None:
         try:
             df_eur = keep_closed_daily_candles(load_daily_csv(csv_path_eur))
@@ -78,13 +85,22 @@ def main() -> None:
     df_sig = compute_signals(df_ind)
 
     latest = df_sig.iloc[-1]
+    latest_candle_date = df_sig.index[-1].strftime("%Y-%m-%d")
     signal = str(latest["Segnale"])
     risk_level = str(latest.get("Livello_Rischio", "MEDIO"))
     conditions_key = condition_state_key(df_sig)
-    print(f"Ultima candela giornaliera chiusa: {df_sig.index[-1]:%Y-%m-%d}")
+    print(f"Ultima candela giornaliera chiusa: {latest_candle_date}")
     print(f"Segnale calcolato: {signal}")
     print(f"Rischio calcolato: {risk_level}")
     print(f"Condizioni calcolate: {conditions_key}")
+    new_candle_available = latest_candle_date != state.last_processed_candle_date
+    if new_candle_available:
+        print(
+            "Nuova candela da processare: "
+            f"{state.last_processed_candle_date or 'nessuna precedente'} -> {latest_candle_date}"
+        )
+    else:
+        print(f"Candela {latest_candle_date} gia processata. Nessuna notifica o ricalcolo operativo.")
 
     # 3) Prezzo spot live da Coinbase
     try:
@@ -101,8 +117,12 @@ def main() -> None:
 
     # 4) Eventi:
     # - workflow manuale: invia sempre, come una richiesta esplicita /segnale
-    # - workflow schedulato: invia solo se cambia il segnale o una condizione operativa
-    scheduled_notify, notify_reason = should_notify(state, signal, conditions_key)
+    # - workflow schedulato: processa una candela giornaliera una sola volta
+    #   e invia Telegram solo se cambia il segnale finale.
+    if new_candle_available:
+        scheduled_notify, notify_reason = should_notify(state, signal, conditions_key)
+    else:
+        scheduled_notify, notify_reason = False, "candela gia processata"
     must_notify = is_manual_run or scheduled_notify
     notification_sent = False
     if is_manual_run:
@@ -128,10 +148,17 @@ def main() -> None:
     save_status_json(df_sig, price_eur=spot_eur, price_usd=spot_usd, out_path=status_json_path)
 
     # 7) Salvataggio stato
-    state.last_computed_signal = signal
-    state.last_computed_conditions_key = conditions_key
-    state.last_computed_risk_level = risk_level
-    if notification_sent or state.last_signal is None or state.last_conditions_key is None:
+    if new_candle_available:
+        state.last_computed_signal = signal
+        state.last_computed_conditions_key = conditions_key
+        state.last_computed_risk_level = risk_level
+
+    candle_processed = new_candle_available and (not must_notify or notification_sent)
+
+    if candle_processed:
+        state.last_processed_candle_date = latest_candle_date
+
+    if candle_processed:
         state.last_signal = signal
         state.last_conditions_key = conditions_key
         state.last_risk_level = risk_level

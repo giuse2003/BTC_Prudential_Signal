@@ -2,7 +2,7 @@ name: Hourly BTC monitor (Telegram)
 
 on:
   schedule:
-    - cron: "0 * * * *" # ogni ora
+    - cron: "30 * * * *" # ogni ora al minuto 30, da 00:30 UTC
   workflow_dispatch: {}
 
 permissions:
@@ -26,7 +26,10 @@ jobs:
         id: cache-state
         uses: actions/cache/restore@v4
         with:
-          path: .state
+          path: |
+            .state
+            data/BTC-USD_daily.csv
+            data/BTC-EUR_daily.csv
           key: state-${{ github.run_id }}
           restore-keys: |
             state-
@@ -56,6 +59,9 @@ jobs:
       - name: Save monitor state (cache)
         uses: actions/cache/save@v4
         with:
-          path: .state
+          path: |
+            .state
+            data/BTC-USD_daily.csv
+            data/BTC-EUR_daily.csv
           key: state-${{ github.run_id }}
 
