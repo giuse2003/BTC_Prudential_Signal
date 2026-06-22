@@ -310,11 +310,21 @@ function drawCompositeGrid(ctx, rows, xFor, width, height, padding, scale) {
 
   [40, 70].forEach((level) => {
     const y = scale.rsiYFor(level);
+    const isSignalThreshold = level === 40;
+    ctx.save();
+    if (isSignalThreshold) {
+      ctx.strokeStyle = "rgba(247,147,26,0.92)";
+      ctx.lineWidth = 1.8;
+      ctx.setLineDash([7, 5]);
+      ctx.fillStyle = "rgba(247,147,26,0.95)";
+    }
     ctx.beginPath();
     ctx.moveTo(padding.left, y);
     ctx.lineTo(width - padding.right, y);
     ctx.stroke();
-    ctx.fillText(String(level), 26, y + 4);
+    ctx.setLineDash([]);
+    ctx.fillText(isSignalThreshold ? "RSI 40" : String(level), isSignalThreshold ? 16 : 26, y + 4);
+    ctx.restore();
   });
 
   [0.5, 1].forEach((part) => {
