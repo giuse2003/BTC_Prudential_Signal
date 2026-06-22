@@ -32,6 +32,16 @@ class MonitorState:
     last_computed_risk_level: str | None = None
     # ultima candela giornaliera chiusa gia processata (YYYY-MM-DD)
     last_processed_candle_date: str | None = None
+    # ultima impronta condizioni LIVE osservata
+    last_live_conditions_key: str | None = None
+    # impronta LIVE candidata, in attesa che resti stabile
+    live_pending_conditions_key: str | None = None
+    # inizio stabilita della condizione LIVE candidata (ISO UTC)
+    live_pending_since_utc: str | None = None
+    # ultima impronta LIVE notificata
+    last_live_alert_conditions_key: str | None = None
+    # timestamp ultima allerta LIVE inviata (ISO UTC)
+    last_live_alert_sent_at_utc: str | None = None
 
 
 def load_state(path: str | Path) -> MonitorState:
@@ -50,6 +60,11 @@ def load_state(path: str | Path) -> MonitorState:
             last_computed_conditions_key=raw.get("last_computed_conditions_key"),
             last_computed_risk_level=raw.get("last_computed_risk_level"),
             last_processed_candle_date=raw.get("last_processed_candle_date"),
+            last_live_conditions_key=raw.get("last_live_conditions_key"),
+            live_pending_conditions_key=raw.get("live_pending_conditions_key"),
+            live_pending_since_utc=raw.get("live_pending_since_utc"),
+            last_live_alert_conditions_key=raw.get("last_live_alert_conditions_key"),
+            last_live_alert_sent_at_utc=raw.get("last_live_alert_sent_at_utc"),
         )
     except Exception:
         return MonitorState()
@@ -68,6 +83,11 @@ def save_state(path: str | Path, state: MonitorState) -> None:
         "last_computed_conditions_key": state.last_computed_conditions_key,
         "last_computed_risk_level": state.last_computed_risk_level,
         "last_processed_candle_date": state.last_processed_candle_date,
+        "last_live_conditions_key": state.last_live_conditions_key,
+        "live_pending_conditions_key": state.live_pending_conditions_key,
+        "live_pending_since_utc": state.live_pending_since_utc,
+        "last_live_alert_conditions_key": state.last_live_alert_conditions_key,
+        "last_live_alert_sent_at_utc": state.last_live_alert_sent_at_utc,
     }
     path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
 

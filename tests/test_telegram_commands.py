@@ -3,6 +3,7 @@ from __future__ import annotations
 import unittest
 
 from notifications.telegram import extract_authorized_commands, format_monitor_message
+from telegram_command import build_signal_message
 
 
 class TelegramCommandTests(unittest.TestCase):
@@ -48,6 +49,31 @@ class TelegramCommandTests(unittest.TestCase):
         self.assertIn("54.169 EUR", message)
         self.assertNotIn("USD", message)
         self.assertNotIn("Sintesi", message)
+
+    def test_command_signal_uses_daily_condition_layout(self) -> None:
+        message = build_signal_message(
+            {
+                "signal": "VENDI",
+                "price_eur": 56316.0,
+                "condition_groups": {
+                    "buy": [
+                        {"passed": False},
+                        {"passed": False},
+                        {"passed": False},
+                        {"passed": False},
+                        {"passed": False},
+                    ],
+                    "sell": [{"passed": True}],
+                },
+            },
+            price_eur=56316.0,
+        )
+
+        self.assertTrue(message.startswith("BTC MONITOR DAILY!"))
+        self.assertIn("56.316 EUR", message)
+        self.assertIn("ACQUISTA:\n🅾️ 1.", message)
+        self.assertIn("VENDI:\n✅ 1.", message)
+        self.assertNotIn("Rischio", message)
 
 
 if __name__ == "__main__":

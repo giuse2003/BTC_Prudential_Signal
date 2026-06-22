@@ -18,9 +18,9 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from notifications.telegram import (
     TelegramConfig,
-    format_monitor_message,
     send_telegram_message,
 )
+from strategy.signals import format_condition_message
 from telegram_subscribers import SupabaseSubscriberStore, TelegramSubscriber
 
 
@@ -153,13 +153,29 @@ def fetch_github_status(timeout_s: int = 8) -> dict[str, Any]:
 
 def build_signal_message(status: dict[str, Any]) -> str:
     """
-    Converte docs/status.json nel formato Telegram gia usato dal progetto.
+    Converte docs/status.json nel formato compatto Telegram DAILY.
     """
     price_eur = status.get("price_eur")
-    return format_monitor_message(
+    condition_groups = status.get("condition_groups")
+    buy_conditions = condition_groups.get("buy", []) if isinstance(condition_groups, dict) else []
+    sell_conditions = condition_groups.get("sell", []) if isinstance(condition_groups, dict) else []
+    buy_statuses = [
+        bool(condition.get("passed"))
+        for condition in buy_conditions
+        if isinstance(condition, dict)
+    ]
+    sell_statuses = [
+        bool(condition.get("passed"))
+        for condition in sell_conditions
+        if isinstance(condition, dict)
+    ]
+
+    return format_condition_message(
         signal=str(status.get("signal", "MANTIENI")),
-        risk_level=str(status.get("risk_level", "MEDIO")),
         price_eur=float(price_eur) if price_eur is not None else None,
+        buy_statuses=buy_statuses,
+        sell_statuses=sell_statuses,
+        title="BTC MONITOR DAILY!",
     )
 
 

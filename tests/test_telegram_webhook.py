@@ -87,18 +87,36 @@ class TelegramWebhookTests(unittest.TestCase):
         self.assertIsNotNone(command)
         self.assertEqual(command.command, "/iscrivimi")
 
-    def test_builds_existing_monitor_layout_from_status_json(self) -> None:
+    def test_builds_daily_condition_layout_from_status_json(self) -> None:
         message = build_signal_message(
             {
                 "signal": "MANTIENI",
                 "risk_level": "ALTO",
                 "price_eur": 54169.0,
+                "condition_groups": {
+                    "buy": [
+                        {"label": "prezzo sopra SMA200", "passed": False},
+                        {"label": "SMA50 sopra SMA200", "passed": False},
+                        {"label": "RSI uguale o maggiore di 40", "passed": True},
+                        {"label": "prezzo sopra quello di 7 giorni prima", "passed": False},
+                        {"label": "volume sopra media 20 giorni", "passed": False},
+                    ],
+                    "sell": [
+                        {
+                            "label": "prezzo sotto SMA50 per 2 giorni consecutivi",
+                            "passed": True,
+                        }
+                    ],
+                },
             }
         )
 
+        self.assertTrue(message.startswith("BTC MONITOR DAILY!"))
         self.assertIn("Segnale: MANTIENI", message)
-        self.assertIn("Rischio: ALTO", message)
         self.assertIn("54.169 EUR", message)
+        self.assertIn("✅ 3.", message)
+        self.assertIn("VENDI:\n✅ 1.", message)
+        self.assertNotIn("Rischio", message)
         self.assertNotIn("USD", message)
 
     @patch("telegram_webhook.requests.get")

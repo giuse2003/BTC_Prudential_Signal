@@ -166,9 +166,42 @@ def compute_signals(df_indicators: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
+def format_condition_message(
+    signal: str,
+    price_eur: float | None,
+    buy_statuses: list[bool],
+    sell_statuses: list[bool],
+    title: str = "BTC MONITOR",
+) -> str:
+    if price_eur is None:
+        price_text = "BTC-EUR non disponibile"
+    else:
+        price_text = f"{int(float(price_eur)):,}".replace(",", ".") + " EUR"
+
+    return "\n".join(
+        [
+            title,
+            "",
+            f"Segnale: {signal}",
+            "",
+            "Prezzo:",
+            price_text,
+            "",
+            "(per le condizioni: /conditions)",
+            "",
+            "ACQUISTA:",
+            *_format_condition_numbers(buy_statuses),
+            "",
+            "VENDI:",
+            *_format_condition_numbers(sell_statuses),
+        ]
+    )
+
+
 def format_telegram_message(
     df_with_signals: pd.DataFrame,
     price_eur: float | None = None,
+    title: str = "BTC MONITOR",
 ) -> str:
     """
     Produce il messaggio operativo compatto per Telegram.
@@ -182,28 +215,12 @@ def format_telegram_message(
         if pd.isna(eur_val):
             eur_val = None
 
-    if eur_val is None:
-        price_text = "BTC-EUR non disponibile"
-    else:
-        price_text = f"{int(float(eur_val)):,}".replace(",", ".") + " EUR"
-
-    return "\n".join(
-        [
-            "BTC MONITOR",
-            "",
-            f"Segnale: {segnale}",
-            "",
-            "Prezzo:",
-            price_text,
-            "",
-            "(per le condizioni: /conditions)",
-            "",
-            "ACQUISTA:",
-            *_format_condition_numbers(_buy_condition_statuses(df_with_signals)),
-            "",
-            "VENDI:",
-            *_format_condition_numbers(_sell_condition_statuses(df_with_signals)),
-        ]
+    return format_condition_message(
+        signal=str(segnale),
+        price_eur=eur_val,
+        buy_statuses=_buy_condition_statuses(df_with_signals),
+        sell_statuses=_sell_condition_statuses(df_with_signals),
+        title=title,
     )
 
 
@@ -217,6 +234,46 @@ def condition_state_key(df_with_signals: pd.DataFrame) -> str:
     buy_key = _bools_to_key(_buy_condition_statuses(df_with_signals))
     sell_key = _bools_to_key(_sell_condition_statuses(df_with_signals))
     return f"BUY:{buy_key}|SELL:{sell_key}"
+
+
+def condition_key_from_statuses(buy_statuses: list[bool], sell_statuses: list[bool]) -> str:
+    return f"BUY:{_bools_to_key(buy_statuses)}|SELL:{_bools_to_key(sell_statuses)}"
+
+
+def signal_from_condition_statuses(buy_statuses: list[bool], sell_statuses: list[bool]) -> str:
+    if all(buy_statuses):
+        return "ACQUISTA"
+    if any(sell_statuses):
+        return "VENDI"
+    return "MANTIENI"
+
+
+def live_condition_statuses(
+    df_with_signals: pd.DataFrame,
+    live_price_usd: float,
+) -> tuple[list[bool], list[bool]]:
+    row = df_with_signals.iloc[-1]
+    previous = df_with_signals.iloc[-2] if len(df_with_signals) >= 2 else None
+    momentum_col = f"Close_{CFG.momentum_days}d_ago"
+
+    # LIVE usa il prezzo Coinbase per le condizioni price-sensitive.
+    # RSI, SMA e volume restano basati sull'ultima candela daily chiusa:
+    # il volume intraday Coinbase non e direttamente confrontabile con Yahoo.
+    buy_statuses = [
+        bool(live_price_usd > row["SMA200"]),
+        bool(row["SMA50"] > row["SMA200"]),
+        bool(row["RSI"] >= 40),
+        bool(live_price_usd > row[momentum_col]),
+        bool(row["Volume"] > row["VolumeAvg20"]),
+    ]
+    sell_statuses = [
+        bool(
+            live_price_usd < row["SMA50"]
+            and previous is not None
+            and previous["Close"] < previous["SMA50"]
+        )
+    ]
+    return buy_statuses, sell_statuses
 
 
 def _bools_to_key(statuses: list[bool]) -> str:

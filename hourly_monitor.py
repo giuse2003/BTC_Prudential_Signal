@@ -5,7 +5,8 @@ Comportamento:
 - Scarica/aggiorna dati giornalieri BTC-USD (Yahoo Finance) e calcola indicatori giornalieri.
 - Calcola segnale "di regime" (prudente).
 - Legge prezzo spot "live" da Coinbase in EUR.
-- Invia notifica Telegram solo se cambia il segnale o cambia almeno una condizione operativa.
+- Invia DAILY su nuova candela se cambia il segnale.
+- Invia LIVE se le condizioni Coinbase restano variate per almeno 30 minuti.
 """
 
 from __future__ import annotations
@@ -21,24 +22,95 @@ from data.daily_candles import keep_closed_daily_candles
 from indicators.technical_indicators import compute_all_indicators
 from live.coinbase import fetch_spot_price
 from notifications.telegram import TelegramConfig, send_telegram_message
-from strategy.signals import compute_signals, condition_state_key, format_telegram_message
+from strategy.signals import (
+    compute_signals,
+    condition_key_from_statuses,
+    condition_state_key,
+    format_condition_message,
+    format_telegram_message,
+    live_condition_statuses,
+    signal_from_condition_statuses,
+)
 from state.state_store import MonitorState, load_state, save_state
 from reports.generate import save_status_json
 
 
+LIVE_STABILITY_MINUTES = 30
+LIVE_ALERT_COOLDOWN_HOURS = 2
+
+
 def should_notify(state: MonitorState, signal: str, conditions_key: str) -> tuple[bool, str]:
-    if state.last_signal is None:
+    if state.last_signal is None or state.last_conditions_key is None:
         return False, "baseline iniziale salvata senza notifica"
 
     if signal != state.last_signal:
         return True, f"segnale cambiato: {state.last_signal} -> {signal}"
 
-    return False, "segnale invariato"
+    if conditions_key != state.last_conditions_key:
+        return True, "condizioni operative cambiate"
+
+    return False, "segnale e condizioni invariati"
+
+
+def _parse_iso_utc(value: str | None) -> datetime | None:
+    if not value:
+        return None
+    try:
+        parsed = datetime.fromisoformat(value)
+    except ValueError:
+        return None
+    if parsed.tzinfo is None:
+        return parsed.replace(tzinfo=timezone.utc)
+    return parsed.astimezone(timezone.utc)
+
+
+def should_send_live_alert(
+    state: MonitorState,
+    live_conditions_key: str,
+    now_utc: datetime,
+) -> tuple[bool, str]:
+    now_iso = now_utc.isoformat()
+
+    if state.last_live_conditions_key is None:
+        state.last_live_conditions_key = live_conditions_key
+        state.live_pending_conditions_key = None
+        state.live_pending_since_utc = None
+        return False, "baseline LIVE salvata senza notifica"
+
+    if live_conditions_key != state.last_live_conditions_key:
+        state.last_live_conditions_key = live_conditions_key
+        state.live_pending_conditions_key = live_conditions_key
+        state.live_pending_since_utc = now_iso
+        return False, "condizioni LIVE variate; attendo stabilita 30 minuti"
+
+    if state.live_pending_conditions_key != live_conditions_key:
+        return False, "condizioni LIVE invariate"
+
+    pending_since = _parse_iso_utc(state.live_pending_since_utc)
+    if pending_since is None:
+        state.live_pending_since_utc = now_iso
+        return False, "stabilita LIVE inizializzata"
+
+    stable_for = now_utc - pending_since
+    if stable_for < timedelta(minutes=LIVE_STABILITY_MINUTES):
+        minutes = int(stable_for.total_seconds() // 60)
+        return False, f"condizioni LIVE stabili da {minutes} minuti; attendo 30 minuti"
+
+    last_alert_at = _parse_iso_utc(state.last_live_alert_sent_at_utc)
+    if (
+        state.last_live_alert_conditions_key == live_conditions_key
+        and last_alert_at is not None
+        and now_utc - last_alert_at < timedelta(hours=LIVE_ALERT_COOLDOWN_HOURS)
+    ):
+        return False, "allerta LIVE identica gia inviata nelle ultime 2 ore"
+
+    return True, "condizioni LIVE variate e stabili da almeno 30 minuti"
 
 
 def main() -> None:
     github_event_name = os.environ.get("GITHUB_EVENT_NAME", "").strip()
     is_manual_run = github_event_name == "workflow_dispatch"
+    now_utc = datetime.now(timezone.utc)
     print(f"Evento GitHub rilevato: {github_event_name or 'non disponibile'}")
 
     # Telegram secrets
@@ -52,10 +124,19 @@ def main() -> None:
 
     # 1) Stato precedente
     state = load_state(state_path)
-    expected_closed_candle_date = (datetime.now(timezone.utc).date() - timedelta(days=1)).isoformat()
-    force_daily_download = state.last_processed_candle_date != expected_closed_candle_date
+    expected_closed_candle_date = (now_utc.date() - timedelta(days=1)).isoformat()
+    should_poll_yahoo_now = now_utc.minute == 30 or is_manual_run
+    force_daily_download = (
+        state.last_processed_candle_date != expected_closed_candle_date
+        and should_poll_yahoo_now
+    )
     if force_daily_download:
         print(f"Controllo Yahoo per cercare la candela chiusa attesa: {expected_closed_candle_date}")
+    elif state.last_processed_candle_date != expected_closed_candle_date:
+        print(
+            f"Candela attesa {expected_closed_candle_date} non ancora processata. "
+            "Questo run aggiorna il LIVE; Yahoo verra forzato al minuto 30."
+        )
     else:
         print(
             f"Candela attesa {expected_closed_candle_date} gia processata. "
@@ -118,7 +199,7 @@ def main() -> None:
     # 4) Eventi:
     # - workflow manuale: invia sempre, come una richiesta esplicita /segnale
     # - workflow schedulato: processa una candela giornaliera una sola volta
-    #   e invia Telegram solo se cambia il segnale finale.
+    #   e invia DAILY se cambia almeno una condizione o il segnale finale.
     if new_candle_available:
         scheduled_notify, notify_reason = should_notify(state, signal, conditions_key)
     else:
@@ -132,7 +213,7 @@ def main() -> None:
     # 5) Invio Telegram
     if must_notify:
         cfg = TelegramConfig(bot_token=bot_token, chat_id=chat_id)
-        msg = format_telegram_message(df_sig, price_eur=spot_eur)
+        msg = format_telegram_message(df_sig, price_eur=spot_eur, title="BTC MONITOR DAILY!")
         try:
             send_telegram_message(cfg, msg)
             notification_sent = True
@@ -142,6 +223,41 @@ def main() -> None:
             print("Lo stato notificato non verra aggiornato; il prossimo run riprovera.")
     else:
         print("Nessuna notifica necessaria.")
+
+    if not is_manual_run and spot_usd is not None:
+        live_buy_statuses, live_sell_statuses = live_condition_statuses(df_sig, live_price_usd=spot_usd)
+        live_conditions_key = condition_key_from_statuses(live_buy_statuses, live_sell_statuses)
+        live_signal = signal_from_condition_statuses(live_buy_statuses, live_sell_statuses)
+        live_must_notify, live_notify_reason = should_send_live_alert(
+            state,
+            live_conditions_key,
+            now_utc,
+        )
+        print(f"Segnale LIVE calcolato: {live_signal}")
+        print(f"Condizioni LIVE calcolate: {live_conditions_key}")
+        print(f"Motivo decisione Telegram LIVE: {live_notify_reason}")
+
+        if live_must_notify:
+            cfg = TelegramConfig(bot_token=bot_token, chat_id=chat_id)
+            live_msg = format_condition_message(
+                signal=live_signal,
+                price_eur=spot_eur,
+                buy_statuses=live_buy_statuses,
+                sell_statuses=live_sell_statuses,
+                title="BTC MONITOR LIVE!",
+            )
+            try:
+                send_telegram_message(cfg, live_msg)
+                state.last_live_alert_conditions_key = live_conditions_key
+                state.last_live_alert_sent_at_utc = now_utc.isoformat()
+                state.live_pending_conditions_key = None
+                state.live_pending_since_utc = None
+                print("Notifica Telegram LIVE inviata con successo.")
+            except Exception as e:
+                print(f"Errore nell'invio della notifica Telegram LIVE: {e}")
+                print("L'allerta LIVE non verra marcata come inviata; il prossimo run riprovera.")
+    elif spot_usd is None:
+        print("LIVE non calcolabile: prezzo spot BTC-USD non disponibile.")
 
     # 6) Salva status.json per la dashboard
     status_json_path = project_root / "reports" / "status.json"

@@ -228,7 +228,7 @@ function formatMonitorMessage(signal, priceEur, conditionGroups) {
       : "BTC-EUR non disponibile";
 
   return [
-    "BTC MONITOR",
+    "BTC MONITOR DAILY!",
     "",
     `Segnale: ${signal}`,
     "",

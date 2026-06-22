@@ -12,10 +12,10 @@ from live.coinbase import fetch_spot_price
 from notifications.telegram import (
     TelegramConfig,
     extract_authorized_commands,
-    format_monitor_message,
     get_telegram_updates,
     send_telegram_message,
 )
+from strategy.signals import format_condition_message
 
 
 def load_published_status(project_root: Path) -> dict:
@@ -26,6 +26,33 @@ def load_published_status(project_root: Path) -> dict:
         if path.exists():
             return json.loads(path.read_text(encoding="utf-8"))
     raise FileNotFoundError("Nessun status.json pubblicato disponibile.")
+
+
+def _condition_statuses_from_status(status: dict) -> tuple[list[bool], list[bool]]:
+    groups = status.get("condition_groups")
+    if not isinstance(groups, dict):
+        return [], []
+
+    buy = groups.get("buy")
+    sell = groups.get("sell")
+    if not isinstance(buy, list) or not isinstance(sell, list):
+        return [], []
+
+    return (
+        [bool(item.get("passed")) for item in buy if isinstance(item, dict)],
+        [bool(item.get("passed")) for item in sell if isinstance(item, dict)],
+    )
+
+
+def build_signal_message(status: dict, price_eur: float | None = None) -> str:
+    buy_statuses, sell_statuses = _condition_statuses_from_status(status)
+    return format_condition_message(
+        signal=str(status.get("signal", "MANTIENI")),
+        price_eur=price_eur,
+        buy_statuses=buy_statuses,
+        sell_statuses=sell_statuses,
+        title="BTC MONITOR DAILY!",
+    )
 
 
 def main() -> None:
@@ -52,9 +79,8 @@ def main() -> None:
             except Exception:
                 price_eur = status.get("price_eur")
 
-            message = format_monitor_message(
-                signal=str(status.get("signal", "MANTIENI")),
-                risk_level=str(status.get("risk_level", "MEDIO")),
+            message = build_signal_message(
+                status,
                 price_eur=float(price_eur) if price_eur is not None else None,
             )
         elif command in {"/start", "/help"}:

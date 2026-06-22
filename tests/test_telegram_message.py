@@ -88,9 +88,29 @@ class TelegramMessageTests(unittest.TestCase):
 
         self.assertNotIn("BTC Monitor attivo e funzionante.", source)
         self.assertIn(
-            "msg = format_telegram_message(df_sig, price_eur=spot_eur)",
+            'msg = format_telegram_message(df_sig, price_eur=spot_eur, title="BTC MONITOR DAILY!")',
             source,
         )
+
+    def test_message_accepts_custom_title(self) -> None:
+        df = pd.DataFrame(
+            {
+                "Close_EUR": [50000.0, 50000.0],
+                "Close": [120.0, 90.0],
+                "SMA50": [100.0, 100.0],
+                "SMA200": [100.0, 100.0],
+                "RSI": [42.0, 39.0],
+                "Volume": [900.0, 800.0],
+                "VolumeAvg20": [1000.0, 1000.0],
+                "Close_7d_ago": [110.0, 95.0],
+                "Segnale": ["MANTIENI", "VENDI"],
+                "Livello_Rischio": ["MEDIO", "ALTO"],
+            }
+        )
+
+        message = format_telegram_message(df, price_eur=50000.0, title="BTC MONITOR LIVE!")
+
+        self.assertTrue(message.startswith("BTC MONITOR LIVE!"))
 
     def test_manual_workflow_dispatch_still_forces_telegram_response(self) -> None:
         source = (
