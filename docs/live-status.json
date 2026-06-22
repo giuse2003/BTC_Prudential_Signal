@@ -1,0 +1,38 @@
+{
+  "signal": "VENDI",
+  "price_usd": 64213.0,
+  "price_eur": 56193.0,
+  "volume_24h_usd": 27848132628.0,
+  "last_update": "2026-06-22 21:58:45 UTC",
+  "status": "Attivo",
+  "condition_groups": {
+    "buy": [
+      {
+        "label": "prezzo live sopra SMA200 live",
+        "passed": false
+      },
+      {
+        "label": "SMA50 live sopra SMA200 live",
+        "passed": false
+      },
+      {
+        "label": "RSI live uguale o maggiore di 40",
+        "passed": true
+      },
+      {
+        "label": "prezzo live sopra quello di 7 giorni prima",
+        "passed": false
+      },
+      {
+        "label": "volume 24h live sopra media 20 giorni",
+        "passed": false
+      }
+    ],
+    "sell": [
+      {
+        "label": "prezzo live sotto SMA50 live per 2 giorni consecutivi",
+        "passed": true
+      }
+    ]
+  }
+}
