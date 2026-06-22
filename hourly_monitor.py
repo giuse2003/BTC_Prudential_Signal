@@ -34,7 +34,7 @@ from strategy.signals import (
     signal_from_condition_statuses,
 )
 from state.state_store import MonitorState, load_state, save_state
-from reports.generate import save_status_json
+from reports.generate import save_chart_data_json, save_status_json
 
 
 LIVE_STABILITY_MINUTES = 30
@@ -274,6 +274,7 @@ def main() -> None:
     # 6) Salva status.json per la dashboard
     status_json_path = project_root / "reports" / "status.json"
     save_status_json(df_sig, price_eur=spot_eur, price_usd=spot_usd, out_path=status_json_path)
+    save_chart_data_json(df_sig, out_path=project_root / "reports" / "chart-data.json")
 
     # 7) Salvataggio stato
     if new_candle_available:

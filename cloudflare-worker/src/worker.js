@@ -164,10 +164,15 @@ async function processCommand(request, env) {
 
   if (request.command === "/segnale") {
     try {
-      message = buildSignalMessage(await fetchGithubStatus(env));
+      message = await buildLiveSignalMessage(env);
     } catch (error) {
-      console.error("Impossibile recuperare status.json.", error);
-      message = STATUS_ERROR_MESSAGE;
+      console.error("Impossibile calcolare il segnale LIVE; provo DAILY.", error);
+      try {
+        message = buildDailySignalMessage(await fetchGithubStatus(env));
+      } catch (dailyError) {
+        console.error("Impossibile recuperare status.json.", dailyError);
+        message = STATUS_ERROR_MESSAGE;
+      }
     }
   } else if (request.command === "/conditions") {
     message = CONDITIONS_MESSAGE;
@@ -207,7 +212,74 @@ async function fetchGithubStatus(env) {
   return status;
 }
 
-function buildSignalMessage(status) {
+async function fetchGithubChartData(env) {
+  const statusUrl =
+    env.STATUS_JSON_URL ||
+    "https://raw.githubusercontent.com/giuse2003/BTC_Prudential_Signal/main/docs/status.json";
+  const chartUrl =
+    env.CHART_DATA_URL ||
+    statusUrl.replace(/\/status\.json(\?.*)?$/, "/chart-data.json");
+  const separator = chartUrl.includes("?") ? "&" : "?";
+  const response = await fetch(`${chartUrl}${separator}t=${Date.now()}`, {
+    headers: {
+      Accept: "application/json",
+      "Cache-Control": "no-cache",
+    },
+  });
+  if (!response.ok) {
+    throw new Error(`GitHub chart-data HTTP ${response.status}`);
+  }
+  const rows = await response.json();
+  if (!Array.isArray(rows) || rows.length < 210) {
+    throw new Error("chart-data.json non contiene abbastanza storico.");
+  }
+  return rows;
+}
+
+async function fetchCoinGeckoMarket() {
+  const marketsResponse = await fetch(
+    "https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=bitcoin&per_page=1&page=1&sparkline=false",
+    { headers: { Accept: "application/json" } },
+  );
+  if (!marketsResponse.ok) {
+    throw new Error(`CoinGecko markets HTTP ${marketsResponse.status}`);
+  }
+  const marketsPayload = await marketsResponse.json();
+  if (!Array.isArray(marketsPayload) || !marketsPayload.length) {
+    throw new Error("CoinGecko markets non ha restituito bitcoin.");
+  }
+
+  const priceResponse = await fetch(
+    "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=eur",
+    { headers: { Accept: "application/json" } },
+  );
+  if (!priceResponse.ok) {
+    throw new Error(`CoinGecko price HTTP ${priceResponse.status}`);
+  }
+  const pricePayload = await priceResponse.json();
+
+  return {
+    priceUsd: Number(marketsPayload[0].current_price),
+    priceEur: Number(pricePayload?.bitcoin?.eur),
+    volume24hUsd: Number(marketsPayload[0].total_volume),
+  };
+}
+
+async function buildLiveSignalMessage(env) {
+  const [chartRows, market] = await Promise.all([
+    fetchGithubChartData(env),
+    fetchCoinGeckoMarket(),
+  ]);
+  const live = buildLiveSnapshot(chartRows, market);
+  return formatMonitorMessage(
+    live.signal,
+    market.priceEur,
+    live.conditionGroups,
+    "BTC MONITOR LIVE!",
+  );
+}
+
+function buildDailySignalMessage(status) {
   const signal = String(status.signal || "MANTIENI");
   const priceEur =
     status.price_eur === null || status.price_eur === undefined
@@ -218,17 +290,119 @@ function buildSignalMessage(status) {
     signal,
     priceEur,
     status.condition_groups || deriveConditionGroups(status),
+    "BTC MONITOR DAILY!",
   );
 }
 
-function formatMonitorMessage(signal, priceEur, conditionGroups) {
+function buildLiveSnapshot(rows, market) {
+  const cleanRows = rows
+    .filter((row) => Number.isFinite(Number(row.close)) && Number.isFinite(Number(row.volume)))
+    .map((row) => ({
+      date: row.date,
+      close: Number(row.close),
+      volume: Number(row.volume),
+      sma50: Number(row.sma50),
+      sma200: Number(row.sma200),
+    }));
+  if (cleanRows.length < 200) {
+    throw new Error("Storico insufficiente per SMA200 LIVE.");
+  }
+  if (!Number.isFinite(market.priceUsd) || !Number.isFinite(market.volume24hUsd)) {
+    throw new Error("CoinGecko non ha fornito prezzo o volume LIVE validi.");
+  }
+
+  const closesWithLive = cleanRows.map((row) => row.close).concat([market.priceUsd]);
+  const sma50 = average(closesWithLive.slice(-50));
+  const sma200 = average(closesWithLive.slice(-200));
+  const rsi = computeRsi14(closesWithLive);
+  const volumeAvg20 = average(cleanRows.slice(-20).map((row) => row.volume));
+  const close7dAgo = cleanRows[cleanRows.length - 7]?.close;
+  const previous = cleanRows[cleanRows.length - 1];
+
+  const buy = [
+    { label: "prezzo sopra SMA200", passed: market.priceUsd > sma200 },
+    { label: "SMA50 sopra SMA200", passed: sma50 > sma200 },
+    { label: "RSI uguale o maggiore di 40", passed: rsi >= 40 },
+    {
+      label: "prezzo sopra quello di 7 giorni prima",
+      passed: market.priceUsd > close7dAgo,
+    },
+    {
+      label: "volume 24h live sopra media 20 giorni",
+      passed: market.volume24hUsd > volumeAvg20,
+    },
+  ];
+  const sell = [
+    {
+      label: "prezzo sotto SMA50 per 2 giorni consecutivi",
+      passed:
+        market.priceUsd < sma50 &&
+        Number.isFinite(previous?.close) &&
+        Number.isFinite(previous?.sma50) &&
+        previous.close < previous.sma50,
+    },
+  ];
+
+  return {
+    signal: buy.every((condition) => condition.passed)
+      ? "ACQUISTA"
+      : sell.some((condition) => condition.passed)
+        ? "VENDI"
+        : "MANTIENI",
+    conditionGroups: { buy, sell },
+  };
+}
+
+function average(values) {
+  const finite = values.filter(Number.isFinite);
+  if (!finite.length) return Number.NaN;
+  return finite.reduce((sum, value) => sum + value, 0) / finite.length;
+}
+
+function computeRsi14(closes) {
+  const period = 14;
+  if (closes.length <= period) return Number.NaN;
+
+  let avgGain = 0;
+  let avgLoss = 0;
+  let initialized = false;
+  let seen = 0;
+
+  for (let index = 1; index < closes.length; index += 1) {
+    const delta = closes[index] - closes[index - 1];
+    const gain = Math.max(delta, 0);
+    const loss = Math.max(-delta, 0);
+
+    if (!initialized) {
+      avgGain += gain;
+      avgLoss += loss;
+      seen += 1;
+      if (seen === period) {
+        avgGain /= period;
+        avgLoss /= period;
+        initialized = true;
+      }
+      continue;
+    }
+
+    avgGain = (avgGain * (period - 1) + gain) / period;
+    avgLoss = (avgLoss * (period - 1) + loss) / period;
+  }
+
+  if (!initialized) return Number.NaN;
+  if (avgLoss === 0) return 100;
+  const rs = avgGain / avgLoss;
+  return 100 - 100 / (1 + rs);
+}
+
+function formatMonitorMessage(signal, priceEur, conditionGroups, title = "BTC MONITOR") {
   const priceText =
     Number.isFinite(priceEur) && priceEur !== null
       ? `${Math.trunc(priceEur).toLocaleString("it-IT")} EUR`
       : "BTC-EUR non disponibile";
 
   return [
-    "BTC MONITOR DAILY!",
+    title,
     "",
     `Segnale: ${signal}`,
     "",

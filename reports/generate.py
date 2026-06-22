@@ -69,6 +69,40 @@ def save_historical_csv(df: pd.DataFrame, out_path: str | Path) -> Path:
     return out_path
 
 
+def save_chart_data_json(df: pd.DataFrame, out_path: str | Path) -> Path:
+    """
+    Salva la serie storica compatta usata dalla dashboard e dal comando LIVE.
+    """
+    import json
+
+    out_path = Path(out_path)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+
+    rows: list[dict] = []
+    for date, row in df.sort_index().iterrows():
+        rows.append(
+            {
+                "date": pd.Timestamp(date).strftime("%Y-%m-%d"),
+                "close": _json_float(row.get("Close")),
+                "sma50": _json_float(row.get("SMA50")),
+                "sma200": _json_float(row.get("SMA200")),
+                "rsi": _json_float(row.get("RSI")),
+                "volume": _json_float(row.get("Volume")),
+                "volume_avg20": _json_float(row.get("VolumeAvg20")),
+                "signal": str(row.get("Segnale", "MANTIENI")),
+            }
+        )
+
+    out_path.write_text(json.dumps(rows, separators=(",", ":")), encoding="utf-8")
+    return out_path
+
+
+def _json_float(value) -> float | None:
+    if value is None or pd.isna(value):
+        return None
+    return float(value)
+
+
 def save_text_report(
     df: pd.DataFrame,
     metrics_strategy,
