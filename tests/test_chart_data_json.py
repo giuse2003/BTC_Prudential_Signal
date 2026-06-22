@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from reports.generate import save_chart_data_json
+from reports.generate import save_chart_data_json, save_live_status_json
 
 
 class ChartDataJsonTests(unittest.TestCase):
@@ -45,6 +45,25 @@ class ChartDataJsonTests(unittest.TestCase):
                 }
             ],
         )
+
+    def test_saves_live_status_json(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            path = Path(tmp_dir) / "live-status.json"
+            save_live_status_json(
+                signal="VENDI",
+                price_usd=64000.0,
+                price_eur=56000.0,
+                volume_24h_usd=27000000000.0,
+                buy_statuses=[False, False, True, False, False],
+                sell_statuses=[True],
+                out_path=path,
+            )
+            payload = json.loads(path.read_text(encoding="utf-8"))
+
+        self.assertEqual(payload["signal"], "VENDI")
+        self.assertEqual(payload["price_eur"], 56000.0)
+        self.assertTrue(payload["condition_groups"]["buy"][2]["passed"])
+        self.assertTrue(payload["condition_groups"]["sell"][0]["passed"])
 
 
 if __name__ == "__main__":

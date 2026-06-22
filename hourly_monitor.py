@@ -34,7 +34,7 @@ from strategy.signals import (
     signal_from_condition_statuses,
 )
 from state.state_store import MonitorState, load_state, save_state
-from reports.generate import save_chart_data_json, save_status_json
+from reports.generate import save_chart_data_json, save_live_status_json, save_status_json
 
 
 LIVE_STABILITY_MINUTES = 30
@@ -226,27 +226,37 @@ def main() -> None:
     else:
         print("Nessuna notifica necessaria.")
 
-    if not is_manual_run:
-        try:
-            live_market = fetch_btc_market(timeout_s=10)
-            live_df_sig = build_live_signal_frame(
-                df,
-                live_price_usd=live_market.price_usd,
-                live_volume_24h=live_market.volume_24h_usd,
-                live_time_utc=pd.Timestamp(now_utc),
-            )
-            live_buy_statuses, live_sell_statuses = live_condition_statuses(live_df_sig)
-            live_conditions_key = condition_key_from_statuses(live_buy_statuses, live_sell_statuses)
-            live_signal = signal_from_condition_statuses(live_buy_statuses, live_sell_statuses)
+    try:
+        live_market = fetch_btc_market(timeout_s=10)
+        live_df_sig = build_live_signal_frame(
+            df,
+            live_price_usd=live_market.price_usd,
+            live_volume_24h=live_market.volume_24h_usd,
+            live_time_utc=pd.Timestamp(now_utc),
+        )
+        live_buy_statuses, live_sell_statuses = live_condition_statuses(live_df_sig)
+        live_conditions_key = condition_key_from_statuses(live_buy_statuses, live_sell_statuses)
+        live_signal = signal_from_condition_statuses(live_buy_statuses, live_sell_statuses)
+        print(f"Segnale LIVE calcolato: {live_signal}")
+        print(f"Condizioni LIVE calcolate: {live_conditions_key}")
+        print(f"Prezzo LIVE aggregato CoinGecko: {live_market.price_usd:.2f} USD")
+        print(f"Volume LIVE aggregato 24h CoinGecko: {live_market.volume_24h_usd:.2f}")
+        save_live_status_json(
+            signal=live_signal,
+            price_usd=live_market.price_usd,
+            price_eur=live_market.price_eur,
+            volume_24h_usd=live_market.volume_24h_usd,
+            buy_statuses=live_buy_statuses,
+            sell_statuses=live_sell_statuses,
+            out_path=project_root / "reports" / "live-status.json",
+        )
+
+        if not is_manual_run:
             live_must_notify, live_notify_reason = should_send_live_alert(
                 state,
                 live_conditions_key,
                 now_utc,
             )
-            print(f"Segnale LIVE calcolato: {live_signal}")
-            print(f"Condizioni LIVE calcolate: {live_conditions_key}")
-            print(f"Prezzo LIVE aggregato CoinGecko: {live_market.price_usd:.2f} USD")
-            print(f"Volume LIVE aggregato 24h CoinGecko: {live_market.volume_24h_usd:.2f}")
             print(f"Motivo decisione Telegram LIVE: {live_notify_reason}")
 
             if live_must_notify:
@@ -268,8 +278,10 @@ def main() -> None:
                 except Exception as e:
                     print(f"Errore nell'invio della notifica Telegram LIVE: {e}")
                     print("L'allerta LIVE non verra marcata come inviata; il prossimo run riprovera.")
-        except Exception as e:
-            print(f"LIVE non calcolabile con dati aggregati CoinGecko: {e}")
+        else:
+            print("Workflow manuale: LIVE salvato senza inviare allerta automatica.")
+    except Exception as e:
+        print(f"LIVE non calcolabile con dati aggregati CoinGecko: {e}")
 
     # 6) Salva status.json per la dashboard
     status_json_path = project_root / "reports" / "status.json"

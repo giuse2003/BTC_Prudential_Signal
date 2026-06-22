@@ -97,6 +97,55 @@ def save_chart_data_json(df: pd.DataFrame, out_path: str | Path) -> Path:
     return out_path
 
 
+def save_live_status_json(
+    *,
+    signal: str,
+    price_usd: float,
+    price_eur: float | None,
+    volume_24h_usd: float,
+    buy_statuses: list[bool],
+    sell_statuses: list[bool],
+    out_path: str | Path,
+) -> Path:
+    """
+    Salva il segnale LIVE usato da Telegram su richiesta.
+    """
+    import json
+    from datetime import datetime, timezone
+
+    out_path = Path(out_path)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+
+    buy_labels = [
+        "prezzo live sopra SMA200 live",
+        "SMA50 live sopra SMA200 live",
+        "RSI live uguale o maggiore di 40",
+        "prezzo live sopra quello di 7 giorni prima",
+        "volume 24h live sopra media 20 giorni",
+    ]
+    sell_labels = ["prezzo live sotto SMA50 live per 2 giorni consecutivi"]
+    payload = {
+        "signal": signal,
+        "price_usd": float(price_usd),
+        "price_eur": _json_float(price_eur),
+        "volume_24h_usd": float(volume_24h_usd),
+        "last_update": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"),
+        "status": "Attivo",
+        "condition_groups": {
+            "buy": [
+                {"label": label, "passed": bool(passed)}
+                for label, passed in zip(buy_labels, buy_statuses)
+            ],
+            "sell": [
+                {"label": label, "passed": bool(passed)}
+                for label, passed in zip(sell_labels, sell_statuses)
+            ],
+        },
+    }
+    out_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+    return out_path
+
+
 def _json_float(value) -> float | None:
     if value is None or pd.isna(value):
         return None

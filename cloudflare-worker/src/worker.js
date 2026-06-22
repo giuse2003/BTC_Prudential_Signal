@@ -64,6 +64,21 @@ export default {
       return handleSubscriberCount(env, request);
     }
 
+    if (request.method === "GET" && url.pathname === "/live-preview") {
+      try {
+        return json({ message: await buildLiveSignalMessage(env) }, 200, corsHeaders(request));
+      } catch (error) {
+        return json(
+          {
+            detail: "LIVE preview non calcolabile.",
+            error: String(error?.message || error),
+          },
+          502,
+          corsHeaders(request),
+        );
+      }
+    }
+
     if (request.method === "POST" && url.pathname === "/webhook") {
       return handleTelegramWebhook(request, env, ctx);
     }
@@ -231,45 +246,36 @@ async function fetchGithubChartData(env) {
   return rows;
 }
 
-async function fetchCoinGeckoMarket() {
-  const marketsResponse = await fetch(
-    "https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=bitcoin&per_page=1&page=1&sparkline=false",
-    { headers: { Accept: "application/json" } },
-  );
-  if (!marketsResponse.ok) {
-    throw new Error(`CoinGecko markets HTTP ${marketsResponse.status}`);
+async function fetchGithubLiveStatus(env) {
+  const statusUrl =
+    env.STATUS_JSON_URL ||
+    "https://raw.githubusercontent.com/giuse2003/BTC_Prudential_Signal/main/docs/status.json";
+  const liveUrl =
+    env.LIVE_STATUS_URL ||
+    statusUrl.replace(/\/status\.json(\?.*)?$/, "/live-status.json");
+  const separator = liveUrl.includes("?") ? "&" : "?";
+  const response = await fetch(`${liveUrl}${separator}t=${Date.now()}`, {
+    headers: {
+      Accept: "application/json",
+      "Cache-Control": "no-cache",
+    },
+  });
+  if (!response.ok) {
+    throw new Error(`GitHub live-status HTTP ${response.status}`);
   }
-  const marketsPayload = await marketsResponse.json();
-  if (!Array.isArray(marketsPayload) || !marketsPayload.length) {
-    throw new Error("CoinGecko markets non ha restituito bitcoin.");
+  const status = await response.json();
+  if (!status || typeof status !== "object" || Array.isArray(status)) {
+    throw new Error("live-status.json non contiene un oggetto JSON.");
   }
-
-  const priceResponse = await fetch(
-    "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=eur",
-    { headers: { Accept: "application/json" } },
-  );
-  if (!priceResponse.ok) {
-    throw new Error(`CoinGecko price HTTP ${priceResponse.status}`);
-  }
-  const pricePayload = await priceResponse.json();
-
-  return {
-    priceUsd: Number(marketsPayload[0].current_price),
-    priceEur: Number(pricePayload?.bitcoin?.eur),
-    volume24hUsd: Number(marketsPayload[0].total_volume),
-  };
+  return status;
 }
 
 async function buildLiveSignalMessage(env) {
-  const [chartRows, market] = await Promise.all([
-    fetchGithubChartData(env),
-    fetchCoinGeckoMarket(),
-  ]);
-  const live = buildLiveSnapshot(chartRows, market);
+  const live = await fetchGithubLiveStatus(env);
   return formatMonitorMessage(
-    live.signal,
-    market.priceEur,
-    live.conditionGroups,
+    String(live.signal || "MANTIENI"),
+    Number(live.price_eur),
+    live.condition_groups,
     "BTC MONITOR LIVE!",
   );
 }
