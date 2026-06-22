@@ -8,7 +8,9 @@ import json
 import os
 from pathlib import Path
 
-from live.coinbase import fetch_spot_price
+import pandas as pd
+
+from live.coingecko import fetch_btc_market
 from notifications.telegram import (
     TelegramConfig,
     extract_authorized_commands,
@@ -16,6 +18,11 @@ from notifications.telegram import (
     send_telegram_message,
 )
 from strategy.signals import format_condition_message
+from strategy.signals import (
+    build_live_signal_frame,
+    live_condition_statuses,
+    signal_from_condition_statuses,
+)
 
 
 def load_published_status(project_root: Path) -> dict:
@@ -26,6 +33,36 @@ def load_published_status(project_root: Path) -> dict:
         if path.exists():
             return json.loads(path.read_text(encoding="utf-8"))
     raise FileNotFoundError("Nessun status.json pubblicato disponibile.")
+
+
+def load_published_chart_data(project_root: Path) -> list[dict]:
+    for path in (
+        project_root / "docs" / "chart-data.json",
+        project_root / "reports" / "chart-data.json",
+    ):
+        if path.exists():
+            payload = json.loads(path.read_text(encoding="utf-8"))
+            if isinstance(payload, list):
+                return payload
+    raise FileNotFoundError("Nessun chart-data.json pubblicato disponibile.")
+
+
+def _chart_rows_to_daily_frame(rows: list[dict]) -> pd.DataFrame:
+    frame = pd.DataFrame(
+        {
+            "Date": [row.get("date") for row in rows],
+            "Close": [row.get("close") for row in rows],
+            "Volume": [row.get("volume") for row in rows],
+        }
+    )
+    frame["Date"] = pd.to_datetime(frame["Date"])
+    frame["Close"] = pd.to_numeric(frame["Close"], errors="coerce")
+    frame["Volume"] = pd.to_numeric(frame["Volume"], errors="coerce")
+    frame = frame.dropna(subset=["Date", "Close", "Volume"]).sort_values("Date")
+    frame["Open"] = frame["Close"]
+    frame["High"] = frame["Close"]
+    frame["Low"] = frame["Close"]
+    return frame.set_index("Date")[["Open", "High", "Low", "Close", "Volume"]]
 
 
 def _condition_statuses_from_status(status: dict) -> tuple[list[bool], list[bool]]:
@@ -55,6 +92,24 @@ def build_signal_message(status: dict, price_eur: float | None = None) -> str:
     )
 
 
+def build_live_signal_message(chart_rows: list[dict]) -> str:
+    market = fetch_btc_market(timeout_s=10)
+    live_frame = build_live_signal_frame(
+        _chart_rows_to_daily_frame(chart_rows),
+        live_price_usd=market.price_usd,
+        live_volume_24h=market.volume_24h_usd,
+        live_time_utc=pd.Timestamp.now(tz="UTC"),
+    )
+    buy_statuses, sell_statuses = live_condition_statuses(live_frame)
+    return format_condition_message(
+        signal=signal_from_condition_statuses(buy_statuses, sell_statuses),
+        price_eur=market.price_eur,
+        buy_statuses=buy_statuses,
+        sell_statuses=sell_statuses,
+        title="BTC MONITOR LIVE!",
+    )
+
+
 def main() -> None:
     bot_token = os.environ.get("TELEGRAM_BOT_TOKEN", "").strip()
     chat_id = os.environ.get("TELEGRAM_CHAT_ID", "").strip()
@@ -69,20 +124,15 @@ def main() -> None:
         print("Nessun aggiornamento Telegram in attesa.")
         return
 
-    status = load_published_status(Path(__file__).resolve().parent)
     response_sent = False
+    project_root = Path(__file__).resolve().parent
 
     for command in commands:
         if command == "/segnale":
             try:
-                price_eur = fetch_spot_price("BTC-EUR", timeout_s=10).price
+                message = build_live_signal_message(load_published_chart_data(project_root))
             except Exception:
-                price_eur = status.get("price_eur")
-
-            message = build_signal_message(
-                status,
-                price_eur=float(price_eur) if price_eur is not None else None,
-            )
+                message = "Impossibile calcolare il segnale BTC LIVE aggiornato. Riprova tra poco."
         elif command in {"/start", "/help"}:
             message = "Comando disponibile:\n/segnale - mostra il segnale BTC corrente"
         else:

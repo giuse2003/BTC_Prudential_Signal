@@ -12,6 +12,7 @@ import os
 from dataclasses import dataclass
 from typing import Any
 
+import pandas as pd
 import requests
 from fastapi import BackgroundTasks, FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -21,6 +22,11 @@ from notifications.telegram import (
     send_telegram_message,
 )
 from strategy.signals import format_condition_message
+from strategy.signals import (
+    build_live_signal_frame,
+    live_condition_statuses,
+    signal_from_condition_statuses,
+)
 from telegram_subscribers import SupabaseSubscriberStore, TelegramSubscriber
 
 
@@ -28,8 +34,12 @@ STATUS_JSON_URL = (
     "https://raw.githubusercontent.com/"
     "giuse2003/BTC_Prudential_Signal/main/docs/status.json"
 )
+CHART_DATA_URL = (
+    "https://raw.githubusercontent.com/"
+    "giuse2003/BTC_Prudential_Signal/main/docs/chart-data.json"
+)
 STATUS_ERROR_MESSAGE = (
-    "Impossibile recuperare il segnale BTC aggiornato. Riprova tra poco."
+    "Impossibile calcolare il segnale BTC LIVE aggiornato. Riprova tra poco."
 )
 HELP_MESSAGE = "\n".join(
     [
@@ -151,7 +161,75 @@ def fetch_github_status(timeout_s: int = 8) -> dict[str, Any]:
     return status
 
 
-def build_signal_message(status: dict[str, Any]) -> str:
+def fetch_github_chart_data(timeout_s: int = 8) -> list[dict[str, Any]]:
+    response = requests.get(
+        CHART_DATA_URL,
+        headers={
+            "Accept": "application/json",
+            "Cache-Control": "no-cache",
+        },
+        timeout=timeout_s,
+    )
+    response.raise_for_status()
+    payload = response.json()
+    if not isinstance(payload, list) or len(payload) < 210:
+        raise ValueError("Il file chart-data.json non contiene abbastanza storico.")
+    return payload
+
+
+def fetch_coingecko_market(timeout_s: int = 8) -> dict[str, float | None]:
+    markets_response = requests.get(
+        "https://api.coingecko.com/api/v3/coins/markets",
+        params={
+            "vs_currency": "usd",
+            "ids": "bitcoin",
+            "per_page": 1,
+            "page": 1,
+            "sparkline": "false",
+        },
+        headers={"Accept": "application/json"},
+        timeout=timeout_s,
+    )
+    markets_response.raise_for_status()
+    markets = markets_response.json()
+    if not isinstance(markets, list) or not markets:
+        raise ValueError("CoinGecko non ha restituito dati market per bitcoin.")
+
+    price_response = requests.get(
+        "https://api.coingecko.com/api/v3/simple/price",
+        params={"ids": "bitcoin", "vs_currencies": "eur"},
+        headers={"Accept": "application/json"},
+        timeout=timeout_s,
+    )
+    price_response.raise_for_status()
+    price_payload = price_response.json()
+
+    return {
+        "price_usd": float(markets[0]["current_price"]),
+        "price_eur": float(price_payload["bitcoin"]["eur"]),
+        "volume_24h_usd": float(markets[0]["total_volume"]),
+    }
+
+
+def chart_rows_to_daily_frame(rows: list[dict[str, Any]]) -> pd.DataFrame:
+    frame = pd.DataFrame(
+        {
+            "Date": [row.get("date") for row in rows],
+            "Close": [row.get("close") for row in rows],
+            "Volume": [row.get("volume") for row in rows],
+        }
+    )
+    frame["Date"] = pd.to_datetime(frame["Date"])
+    frame["Close"] = pd.to_numeric(frame["Close"], errors="coerce")
+    frame["Volume"] = pd.to_numeric(frame["Volume"], errors="coerce")
+    frame = frame.dropna(subset=["Date", "Close", "Volume"]).sort_values("Date")
+    frame["Open"] = frame["Close"]
+    frame["High"] = frame["Close"]
+    frame["Low"] = frame["Close"]
+    return frame.set_index("Date")[["Open", "High", "Low", "Close", "Volume"]]
+
+
+def build_daily_signal_message(status: dict[str, Any]) -> str:
     """
     Converte docs/status.json nel formato compatto Telegram DAILY.
     """
@@ -179,6 +257,26 @@ def build_signal_message(status: dict[str, Any]) -> str:
     )
 
 
+def build_live_signal_message(
+    chart_rows: list[dict[str, Any]],
+    market: dict[str, float | None],
+) -> str:
+    live_frame = build_live_signal_frame(
+        chart_rows_to_daily_frame(chart_rows),
+        live_price_usd=float(market["price_usd"]),
+        live_volume_24h=float(market["volume_24h_usd"]),
+        live_time_utc=pd.Timestamp.now(tz="UTC"),
+    )
+    buy_statuses, sell_statuses = live_condition_statuses(live_frame)
+    return format_condition_message(
+        signal=signal_from_condition_statuses(buy_statuses, sell_statuses),
+        price_eur=float(market["price_eur"]) if market.get("price_eur") is not None else None,
+        buy_statuses=buy_statuses,
+        sell_statuses=sell_statuses,
+        title="BTC MONITOR LIVE!",
+    )
+
+
 def process_command(
     request: TelegramCommand,
     cfg: TelegramConfig,
@@ -189,9 +287,12 @@ def process_command(
     """
     if request.command == "/segnale":
         try:
-            message = build_signal_message(fetch_github_status())
+            message = build_live_signal_message(
+                fetch_github_chart_data(),
+                fetch_coingecko_market(),
+            )
         except Exception:
-            logger.exception("Impossibile recuperare docs/status.json da GitHub.")
+            logger.exception("Impossibile calcolare il segnale LIVE.")
             message = STATUS_ERROR_MESSAGE
     elif request.command in {"/start", "/help"}:
         message = HELP_MESSAGE

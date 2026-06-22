@@ -166,13 +166,8 @@ async function processCommand(request, env) {
     try {
       message = await buildLiveSignalMessage(env);
     } catch (error) {
-      console.error("Impossibile calcolare il segnale LIVE; provo DAILY.", error);
-      try {
-        message = buildDailySignalMessage(await fetchGithubStatus(env));
-      } catch (dailyError) {
-        console.error("Impossibile recuperare status.json.", dailyError);
-        message = STATUS_ERROR_MESSAGE;
-      }
+      console.error("Impossibile calcolare il segnale LIVE.", error);
+      message = STATUS_ERROR_MESSAGE;
     }
   } else if (request.command === "/conditions") {
     message = CONDITIONS_MESSAGE;

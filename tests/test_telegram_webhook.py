@@ -4,6 +4,7 @@ import unittest
 from os import environ
 from unittest.mock import Mock, patch
 
+import pandas as pd
 from fastapi import BackgroundTasks, HTTPException
 
 from telegram_webhook import (
@@ -12,7 +13,8 @@ from telegram_webhook import (
     UNSUBSCRIBED_MESSAGE,
     STATUS_JSON_URL,
     TelegramCommand,
-    build_signal_message,
+    build_daily_signal_message,
+    build_live_signal_message,
     extract_command,
     fetch_github_status,
     process_command,
@@ -88,7 +90,7 @@ class TelegramWebhookTests(unittest.TestCase):
         self.assertEqual(command.command, "/iscrivimi")
 
     def test_builds_daily_condition_layout_from_status_json(self) -> None:
-        message = build_signal_message(
+        message = build_daily_signal_message(
             {
                 "signal": "MANTIENI",
                 "risk_level": "ALTO",
@@ -118,6 +120,34 @@ class TelegramWebhookTests(unittest.TestCase):
         self.assertIn("VENDI:\n✅ 1.", message)
         self.assertNotIn("Rischio", message)
         self.assertNotIn("USD", message)
+
+    def test_builds_live_condition_layout_from_chart_data(self) -> None:
+        rows = [
+            {
+                "date": pd.Timestamp("2025-01-01") + pd.Timedelta(days=index),
+                "close": 100.0,
+                "volume": 1000.0,
+            }
+            for index in range(210)
+        ]
+
+        message = build_live_signal_message(
+            rows,
+            {
+                "price_usd": 150.0,
+                "price_eur": 130.0,
+                "volume_24h_usd": 2500.0,
+            },
+        )
+
+        self.assertTrue(message.startswith("BTC MONITOR LIVE!"))
+        self.assertIn("Segnale: ACQUISTA", message)
+        self.assertIn("130 EUR", message)
+        self.assertIn("✅ 1.", message)
+        self.assertIn("✅ 2.", message)
+        self.assertIn("✅ 3.", message)
+        self.assertIn("✅ 4.", message)
+        self.assertIn("✅ 5.", message)
 
     @patch("telegram_webhook.requests.get")
     def test_fetches_status_from_mandatory_github_raw_url(self, mock_get: Mock) -> None:
