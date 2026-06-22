@@ -40,6 +40,7 @@ def should_notify(state: MonitorState, signal: str, conditions_key: str) -> tupl
 
 def main() -> None:
     github_event_name = os.environ.get("GITHUB_EVENT_NAME", "").strip()
+    is_manual_run = github_event_name == "workflow_dispatch"
     print(f"Evento GitHub rilevato: {github_event_name or 'non disponibile'}")
 
     # Telegram secrets
@@ -98,9 +99,14 @@ def main() -> None:
         print("ATTENZIONE: Impossibile recuperare il prezzo spot BTC-USD live.")
         spot_usd = None
 
-    # 4) Eventi: notifica solo se cambia il segnale o cambia una condizione operativa.
-    must_notify, notify_reason = should_notify(state, signal, conditions_key)
+    # 4) Eventi:
+    # - workflow manuale: invia sempre, come una richiesta esplicita /segnale
+    # - workflow schedulato: invia solo se cambia il segnale o una condizione operativa
+    scheduled_notify, notify_reason = should_notify(state, signal, conditions_key)
+    must_notify = is_manual_run or scheduled_notify
     notification_sent = False
+    if is_manual_run:
+        notify_reason = "richiesta manuale workflow_dispatch"
     print(f"Motivo decisione Telegram: {notify_reason}")
 
     # 5) Invio Telegram

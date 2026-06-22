@@ -92,6 +92,19 @@ class TelegramMessageTests(unittest.TestCase):
             source,
         )
 
+    def test_manual_workflow_dispatch_still_forces_telegram_response(self) -> None:
+        source = (
+            __import__("pathlib")
+            .Path(__file__)
+            .resolve()
+            .parents[1]
+            .joinpath("hourly_monitor.py")
+            .read_text(encoding="utf-8")
+        )
+
+        self.assertIn("must_notify = is_manual_run or scheduled_notify", source)
+        self.assertIn('notify_reason = "richiesta manuale workflow_dispatch"', source)
+
 
 if __name__ == "__main__":
     unittest.main()
