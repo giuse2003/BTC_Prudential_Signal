@@ -442,11 +442,7 @@ h1 {
 .legend-sma200 { background: #22c55e; }
 .legend-rsi { background: #f7931a; opacity: 0.65; }
 .legend-rsi-threshold {
-  background: repeating-linear-gradient(
-    90deg,
-    #f7931a 0 8px,
-    transparent 8px 13px
-  );
+  background: #0ea5e9;
 }
 .legend-volume { background: #38bdf8; opacity: 0.7; }
 

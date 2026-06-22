@@ -313,16 +313,14 @@ function drawCompositeGrid(ctx, rows, xFor, width, height, padding, scale) {
     const isSignalThreshold = level === 40;
     ctx.save();
     if (isSignalThreshold) {
-      ctx.strokeStyle = "rgba(247,147,26,0.92)";
-      ctx.lineWidth = 1.8;
-      ctx.setLineDash([7, 5]);
-      ctx.fillStyle = "rgba(247,147,26,0.95)";
+      ctx.strokeStyle = "rgba(14,165,233,0.95)";
+      ctx.lineWidth = 2;
+      ctx.fillStyle = "rgba(125,211,252,0.98)";
     }
     ctx.beginPath();
     ctx.moveTo(padding.left, y);
     ctx.lineTo(width - padding.right, y);
     ctx.stroke();
-    ctx.setLineDash([]);
     ctx.fillText(isSignalThreshold ? "RSI 40" : String(level), isSignalThreshold ? 16 : 26, y + 4);
     ctx.restore();
   });
