@@ -6,7 +6,7 @@ Comportamento:
 - Calcola segnale "di regime" (prudente).
 - Legge prezzo spot "live" da Coinbase in EUR.
 - Invia DAILY su nuova candela se cambia il segnale.
-- Invia LIVE se le condizioni Coinbase restano variate per almeno 30 minuti.
+- Invia LIVE se le condizioni aggregate CoinGecko restano variate per almeno 30 minuti.
 """
 
 from __future__ import annotations
@@ -21,8 +21,10 @@ from data.fetch_yahoo import fetch_btc_daily_csv, load_daily_csv
 from data.daily_candles import keep_closed_daily_candles
 from indicators.technical_indicators import compute_all_indicators
 from live.coinbase import fetch_spot_price
+from live.coingecko import fetch_btc_market
 from notifications.telegram import TelegramConfig, send_telegram_message
 from strategy.signals import (
+    build_live_signal_frame,
     compute_signals,
     condition_key_from_statuses,
     condition_state_key,
@@ -224,40 +226,50 @@ def main() -> None:
     else:
         print("Nessuna notifica necessaria.")
 
-    if not is_manual_run and spot_usd is not None:
-        live_buy_statuses, live_sell_statuses = live_condition_statuses(df_sig, live_price_usd=spot_usd)
-        live_conditions_key = condition_key_from_statuses(live_buy_statuses, live_sell_statuses)
-        live_signal = signal_from_condition_statuses(live_buy_statuses, live_sell_statuses)
-        live_must_notify, live_notify_reason = should_send_live_alert(
-            state,
-            live_conditions_key,
-            now_utc,
-        )
-        print(f"Segnale LIVE calcolato: {live_signal}")
-        print(f"Condizioni LIVE calcolate: {live_conditions_key}")
-        print(f"Motivo decisione Telegram LIVE: {live_notify_reason}")
-
-        if live_must_notify:
-            cfg = TelegramConfig(bot_token=bot_token, chat_id=chat_id)
-            live_msg = format_condition_message(
-                signal=live_signal,
-                price_eur=spot_eur,
-                buy_statuses=live_buy_statuses,
-                sell_statuses=live_sell_statuses,
-                title="BTC MONITOR LIVE!",
+    if not is_manual_run:
+        try:
+            live_market = fetch_btc_market(timeout_s=10)
+            live_df_sig = build_live_signal_frame(
+                df,
+                live_price_usd=live_market.price_usd,
+                live_volume_24h=live_market.volume_24h_usd,
+                live_time_utc=pd.Timestamp(now_utc),
             )
-            try:
-                send_telegram_message(cfg, live_msg)
-                state.last_live_alert_conditions_key = live_conditions_key
-                state.last_live_alert_sent_at_utc = now_utc.isoformat()
-                state.live_pending_conditions_key = None
-                state.live_pending_since_utc = None
-                print("Notifica Telegram LIVE inviata con successo.")
-            except Exception as e:
-                print(f"Errore nell'invio della notifica Telegram LIVE: {e}")
-                print("L'allerta LIVE non verra marcata come inviata; il prossimo run riprovera.")
-    elif spot_usd is None:
-        print("LIVE non calcolabile: prezzo spot BTC-USD non disponibile.")
+            live_buy_statuses, live_sell_statuses = live_condition_statuses(live_df_sig)
+            live_conditions_key = condition_key_from_statuses(live_buy_statuses, live_sell_statuses)
+            live_signal = signal_from_condition_statuses(live_buy_statuses, live_sell_statuses)
+            live_must_notify, live_notify_reason = should_send_live_alert(
+                state,
+                live_conditions_key,
+                now_utc,
+            )
+            print(f"Segnale LIVE calcolato: {live_signal}")
+            print(f"Condizioni LIVE calcolate: {live_conditions_key}")
+            print(f"Prezzo LIVE aggregato CoinGecko: {live_market.price_usd:.2f} USD")
+            print(f"Volume LIVE aggregato 24h CoinGecko: {live_market.volume_24h_usd:.2f}")
+            print(f"Motivo decisione Telegram LIVE: {live_notify_reason}")
+
+            if live_must_notify:
+                cfg = TelegramConfig(bot_token=bot_token, chat_id=chat_id)
+                live_msg = format_condition_message(
+                    signal=live_signal,
+                    price_eur=live_market.price_eur if live_market.price_eur is not None else spot_eur,
+                    buy_statuses=live_buy_statuses,
+                    sell_statuses=live_sell_statuses,
+                    title="BTC MONITOR LIVE!",
+                )
+                try:
+                    send_telegram_message(cfg, live_msg)
+                    state.last_live_alert_conditions_key = live_conditions_key
+                    state.last_live_alert_sent_at_utc = now_utc.isoformat()
+                    state.live_pending_conditions_key = None
+                    state.live_pending_since_utc = None
+                    print("Notifica Telegram LIVE inviata con successo.")
+                except Exception as e:
+                    print(f"Errore nell'invio della notifica Telegram LIVE: {e}")
+                    print("L'allerta LIVE non verra marcata come inviata; il prossimo run riprovera.")
+        except Exception as e:
+            print(f"LIVE non calcolabile con dati aggregati CoinGecko: {e}")
 
     # 6) Salva status.json per la dashboard
     status_json_path = project_root / "reports" / "status.json"

@@ -250,30 +250,72 @@ def signal_from_condition_statuses(buy_statuses: list[bool], sell_statuses: list
 
 def live_condition_statuses(
     df_with_signals: pd.DataFrame,
-    live_price_usd: float,
 ) -> tuple[list[bool], list[bool]]:
     row = df_with_signals.iloc[-1]
     previous = df_with_signals.iloc[-2] if len(df_with_signals) >= 2 else None
     momentum_col = f"Close_{CFG.momentum_days}d_ago"
 
-    # LIVE usa il prezzo Coinbase per le condizioni price-sensitive.
-    # RSI, SMA e volume restano basati sull'ultima candela daily chiusa:
-    # il volume intraday Coinbase non e direttamente confrontabile con Yahoo.
     buy_statuses = [
-        bool(live_price_usd > row["SMA200"]),
+        bool(row["Close"] > row["SMA200"]),
         bool(row["SMA50"] > row["SMA200"]),
         bool(row["RSI"] >= 40),
-        bool(live_price_usd > row[momentum_col]),
+        bool(row["Close"] > row[momentum_col]),
         bool(row["Volume"] > row["VolumeAvg20"]),
     ]
     sell_statuses = [
         bool(
-            live_price_usd < row["SMA50"]
+            row["Close"] < row["SMA50"]
             and previous is not None
             and previous["Close"] < previous["SMA50"]
         )
     ]
     return buy_statuses, sell_statuses
+
+
+def build_live_signal_frame(
+    df_closed_daily: pd.DataFrame,
+    live_price_usd: float,
+    live_volume_24h: float,
+    live_time_utc: pd.Timestamp | None = None,
+) -> pd.DataFrame:
+    """
+    Costruisce un frame LIVE provvisorio e ricalcola indicatori/segnale.
+
+    La riga LIVE usa:
+    - Close provvisorio = prezzo live aggregato
+    - Volume provvisorio = volume aggregato rolling 24h
+    - VolumeAvg20 = media dei 20 volumi delle candele chiuse precedenti
+
+    La dashboard continua a usare solo il frame DAILY chiuso.
+    """
+    from indicators.technical_indicators import compute_all_indicators
+
+    if df_closed_daily.empty:
+        raise ValueError("Servono candele daily chiuse per costruire il segnale LIVE.")
+
+    live_ts = live_time_utc or pd.Timestamp.utcnow()
+    live_ts = pd.Timestamp(live_ts)
+    if live_ts.tzinfo is not None:
+        live_ts = live_ts.tz_convert("UTC").tz_localize(None)
+    live_day = live_ts.normalize()
+
+    df_live = df_closed_daily.copy()
+    previous_close = float(df_live.iloc[-1]["Close"])
+    live_row = df_live.iloc[-1].copy()
+    live_row["Open"] = previous_close
+    live_row["High"] = max(previous_close, float(live_price_usd))
+    live_row["Low"] = min(previous_close, float(live_price_usd))
+    live_row["Close"] = float(live_price_usd)
+    live_row["Volume"] = float(live_volume_24h)
+    if "Close_EUR" in live_row:
+        live_row["Close_EUR"] = float("nan")
+
+    df_live = pd.concat([df_live, pd.DataFrame([live_row], index=[live_day])])
+    df_live = df_live[~df_live.index.duplicated(keep="last")].sort_index()
+
+    df_ind = compute_all_indicators(df_live)
+    df_ind.loc[live_day, "VolumeAvg20"] = df_closed_daily["Volume"].tail(CFG.vol_avg_period).mean()
+    return compute_signals(df_ind)
 
 
 def _bools_to_key(statuses: list[bool]) -> str:
