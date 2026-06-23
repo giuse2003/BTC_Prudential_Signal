@@ -1,20 +1,20 @@
 {
-  "price_usd": 63873.495,
-  "price_eur": 55906.64,
+  "price_usd": 63920.315,
+  "price_eur": 55953.565,
   "signal": "VENDI",
   "risk_level": "ALTO",
-  "last_update": "2026-06-22 22:52:21",
+  "last_update": "2026-06-23 00:05:49",
   "status": "Attivo",
-  "rsi": 37.785922881194615,
-  "sma50": 72098.636875,
-  "sma200": 76723.71333984374,
-  "atr": 2056.537104689164,
-  "volume": 15739619591.0,
-  "volume_avg20": 33818556942.05,
-  "close_7d_ago": 65710.3984375,
-  "close_last_candle": 63237.5390625,
-  "previous_close": 64239.67578125,
-  "previous_sma50": 72407.03109375,
+  "rsi": 41.57549277059151,
+  "sma50": 71810.3265625,
+  "sma200": 76583.61876953125,
+  "atr": 2071.151362836367,
+  "volume": 27181637632.0,
+  "volume_avg20": 32428135129.55,
+  "close_7d_ago": 66289.5,
+  "close_last_candle": 64122.7109375,
+  "previous_close": 63237.5390625,
+  "previous_sma50": 72098.636875,
   "below_sma50_2d": true,
   "condition_groups": {
     "buy": [
@@ -28,7 +28,7 @@
       },
       {
         "label": "RSI uguale o maggiore di 40",
-        "passed": false
+        "passed": true
       },
       {
         "label": "prezzo sopra quello di 7 giorni prima",
