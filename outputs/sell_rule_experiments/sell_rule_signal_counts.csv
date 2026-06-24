@@ -1,0 +1,18 @@
+variant,description,buy_days,hold_days,sell_days,exposed_days,cash_days
+baseline_sma50_2d,Regola attuale: Close sotto SMA50 per 2 giorni consecutivi,645,1872,1675,1616,2576
+sma50_1d,Vende alla prima chiusura sotto SMA50,637,1774,1781,1549,2643
+sma50_3d,Vende dopo 3 chiusure consecutive sotto SMA50,649,1950,1593,1670,2522
+sma50_2d_or_rsi40,Regola attuale piu uscita se Close sotto SMA50 e RSI < 40,645,1856,1691,1603,2589
+sma50_2d_or_rsi50,Regola attuale piu uscita se Close sotto SMA50 e RSI < 50,642,1791,1759,1560,2632
+sma50_2d_or_sma60_2d,Regola attuale oppure Close sotto SMA60 per 2 giorni,638,1780,1774,1575,2617
+sma50_2d_or_sma70_2d,Regola attuale oppure Close sotto SMA70 per 2 giorni,633,1696,1863,1550,2642
+sma50_2d_or_sma80_2d,Regola attuale oppure Close sotto SMA80 per 2 giorni,633,1647,1912,1546,2646
+sma50_2d_or_sma90_2d,Regola attuale oppure Close sotto SMA90 per 2 giorni,639,1591,1962,1555,2637
+sma50_1d_or_7d_momentum,Vende sotto SMA50 1 giorno oppure se il rendimento a 7 giorni <= -10%,637,1703,1852,1374,2818
+sma50_2d_or_7d_momentum,Regola attuale piu uscita crash: rendimento a 7 giorni <= -10%,645,1787,1760,1433,2759
+sma50_1d_or_sma200,Vende sotto SMA50 1 giorno oppure sotto SMA200,637,1369,2186,1549,2643
+sma50_2d_or_sma200,Regola attuale oppure Close sotto SMA200,645,1430,2117,1616,2576
+trend_break_combo,"Vende sotto SMA50 1 giorno, oppure sotto SMA200 con RSI < 45",637,1762,1793,1549,2643
+atr_defensive,Vende sotto SMA50 1 giorno oppure sotto SMA50 - 1 ATR,637,1774,1781,1549,2643
+rolling_high_stop_15,Vende se scende oltre -15% dal massimo degli ultimi 30 giorni,677,2610,905,1851,2341
+hybrid_defensive,"SMA50 1 giorno, crash 7 giorni <= -10%, oppure sotto SMA200 con RSI < 45",637,1696,1859,1374,2818

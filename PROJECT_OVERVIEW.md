@@ -1,8 +1,8 @@
-# BTC Prudential Signal - Documento di progetto
+# BTC Signal Guard - Documento di progetto
 
 Ultimo aggiornamento: 2026-06-19
 
-Questo documento descrive l'intero progetto BTC Prudential Signal: cosa fa,
+Questo documento descrive l'intero progetto BTC Signal Guard: cosa fa,
 come genera i segnali Bitcoin, quali dati usa per backtest e monitoraggio,
 quali servizi esterni integra e come un altro agente IA puo replicarlo,
 testarlo e modificarlo.
@@ -12,7 +12,7 @@ consulenza finanziaria.
 
 ## Obiettivo
 
-BTC Prudential Signal monitora Bitcoin con dati giornalieri e produce tre
+BTC Signal Guard monitora Bitcoin con dati giornalieri e produce tre
 segnali:
 
 - `ACQUISTA`: le condizioni tecniche di ingresso sono tutte vere.
@@ -303,7 +303,7 @@ Non vengono inviati a tutti gli iscritti.
 Il messaggio e volutamente compatto:
 
 ```text
-BTC MONITOR
+BTC Signal Guard
 
 Segnale: VENDI
 

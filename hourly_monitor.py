@@ -215,7 +215,7 @@ def main() -> None:
     # 5) Invio Telegram
     if must_notify:
         cfg = TelegramConfig(bot_token=bot_token, chat_id=chat_id)
-        msg = format_telegram_message(df_sig, price_eur=spot_eur, title="BTC MONITOR DAILY!")
+        msg = format_telegram_message(df_sig, price_eur=spot_eur, title="BTC Signal Guard DAILY!")
         try:
             send_telegram_message(cfg, msg)
             notification_sent = True
@@ -266,7 +266,7 @@ def main() -> None:
                     price_eur=live_market.price_eur if live_market.price_eur is not None else spot_eur,
                     buy_statuses=live_buy_statuses,
                     sell_statuses=live_sell_statuses,
-                    title="BTC MONITOR LIVE!",
+                    title="BTC Signal Guard LIVE!",
                 )
                 try:
                     send_telegram_message(cfg, live_msg)

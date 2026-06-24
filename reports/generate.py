@@ -178,7 +178,7 @@ def save_text_report(
     rischio = latest.get("Livello_Rischio", "MEDIO")
 
     lines: list[str] = []
-    lines.append("BITCOIN ANALYSIS")
+    lines.append(f"{CFG.model_name.upper()} ANALYSIS")
     lines.append(f"Data: {day}")
     lines.append("")
     lines.append(f"Prezzo USD: {float(latest['Close']):.4f} USD")
@@ -211,7 +211,7 @@ def save_text_report(
             return "n/a"
         return f"{x*100:.2f}%"
 
-    lines.append("Strategia proposta (prudente)")
+    lines.append(CFG.model_name)
     lines.append(f"- Rendimento totale: {fmt_pct(metrics_strategy.total_return)}")
     lines.append(f"- Rendimento annualizzato: {fmt_pct(metrics_strategy.annualized_return)}")
     lines.append(f"- Drawdown massimo: {fmt_pct(metrics_strategy.max_drawdown)}")

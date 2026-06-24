@@ -113,7 +113,7 @@ class TelegramWebhookTests(unittest.TestCase):
             }
         )
 
-        self.assertTrue(message.startswith("BTC MONITOR DAILY!"))
+        self.assertTrue(message.startswith("BTC Signal Guard DAILY!"))
         self.assertIn("Segnale: MANTIENI", message)
         self.assertIn("54.169 EUR", message)
         self.assertIn("✅ 3.", message)
@@ -140,7 +140,7 @@ class TelegramWebhookTests(unittest.TestCase):
             },
         )
 
-        self.assertTrue(message.startswith("BTC MONITOR LIVE!"))
+        self.assertTrue(message.startswith("BTC Signal Guard LIVE!"))
         self.assertIn("Segnale: ACQUISTA", message)
         self.assertIn("130 EUR", message)
         self.assertIn("✅ 1.", message)

@@ -14,6 +14,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
+from config import CFG
+
 @dataclass(frozen=True)
 class TelegramConfig:
     bot_token: str
@@ -42,7 +44,7 @@ def format_monitor_message(
 
     return "\n".join(
         [
-            "BTC MONITOR",
+            CFG.model_name,
             "",
             f"Segnale: {signal}",
             f"Rischio: {risk_level}",

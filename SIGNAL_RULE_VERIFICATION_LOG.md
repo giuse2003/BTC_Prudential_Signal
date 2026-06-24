@@ -1,7 +1,7 @@
 # Signal Rule Verification Log
 
 Questo documento riepiloga le verifiche fatte sulle regole operative del
-progetto BTC Prudential Signal, incluse le ipotesi messe in dubbio, i test
+progetto BTC Signal Guard, incluse le ipotesi messe in dubbio, i test
 comparativi e le decisioni finali adottate.
 
 Il file serve come riferimento per futuri agenti IA o sviluppatori che vogliano
@@ -232,16 +232,16 @@ Sul periodo completo del dataset:
 
 | Strategia | Capitale finale da 1.000 | Rendimento totale | Annualizzato | Max drawdown | Sharpe |
 |---|---:|---:|---:|---:|---:|
-| BTC Prudential Signal finale | 425.751,21 | +42.475,12% | +69,51% | -42,06% | 1,450 |
+| BTC Signal Guard finale | 425.751,21 | +42.475,12% | +69,51% | -42,06% | 1,450 |
 | Buy & Hold Bitcoin | 202.898,12 | +20.189,81% | +58,90% | -83,40% | 1,031 |
 
 Su finestre piu recenti il confronto puo cambiare:
 
 | Periodo | Strategia | Capitale finale da 1.000 | Rendimento | Max drawdown | Sharpe |
 |---|---|---:|---:|---:|---:|
-| 2022-01-01 / 2026-06-20 | Prudential Signal | 2.017,92 | +101,79% | -27,66% | 0,724 |
+| 2022-01-01 / 2026-06-20 | BTC Signal Guard | 2.017,92 | +101,79% | -27,66% | 0,724 |
 | 2022-01-01 / 2026-06-20 | Buy & Hold | 1.337,07 | +33,71% | -66,89% | 0,384 |
-| 2024-01-01 / 2026-06-20 | Prudential Signal | 1.425,60 | +42,56% | -27,66% | 0,632 |
+| 2024-01-01 / 2026-06-20 | BTC Signal Guard | 1.425,60 | +42,56% | -27,66% | 0,632 |
 | 2024-01-01 / 2026-06-20 | Buy & Hold | 1.443,61 | +44,36% | -51,21% | 0,548 |
 
 Interpretazione:

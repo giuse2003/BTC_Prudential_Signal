@@ -13,6 +13,8 @@ from dataclasses import dataclass
 
 @dataclass(frozen=True)
 class Config:
+    model_name: str = "BTC Signal Guard"
+
     # Intervallo dati
     start_date: str = "2015-01-01"
     end_date: str = "today"

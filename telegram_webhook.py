@@ -77,7 +77,7 @@ SUBSCRIPTION_ERROR_MESSAGE = (
 )
 
 logger = logging.getLogger(__name__)
-app = FastAPI(title="BTC Prudential Signal Telegram Webhook")
+app = FastAPI(title="BTC Signal Guard Telegram Webhook")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -253,7 +253,7 @@ def build_daily_signal_message(status: dict[str, Any]) -> str:
         price_eur=float(price_eur) if price_eur is not None else None,
         buy_statuses=buy_statuses,
         sell_statuses=sell_statuses,
-        title="BTC MONITOR DAILY!",
+        title="BTC Signal Guard DAILY!",
     )
 
 
@@ -273,7 +273,7 @@ def build_live_signal_message(
         price_eur=float(market["price_eur"]) if market.get("price_eur") is not None else None,
         buy_statuses=buy_statuses,
         sell_statuses=sell_statuses,
-        title="BTC MONITOR LIVE!",
+        title="BTC Signal Guard LIVE!",
     )
 
 

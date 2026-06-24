@@ -88,7 +88,7 @@ def build_signal_message(status: dict, price_eur: float | None = None) -> str:
         price_eur=price_eur,
         buy_statuses=buy_statuses,
         sell_statuses=sell_statuses,
-        title="BTC MONITOR DAILY!",
+        title="BTC Signal Guard DAILY!",
     )
 
 
@@ -106,7 +106,7 @@ def build_live_signal_message(chart_rows: list[dict]) -> str:
         price_eur=market.price_eur,
         buy_statuses=buy_statuses,
         sell_statuses=sell_statuses,
-        title="BTC MONITOR LIVE!",
+        title="BTC Signal Guard LIVE!",
     )
 
 

@@ -1,6 +1,6 @@
-# BTC Prudential Signal
+# BTC Signal Guard
 
-BTC Prudential Signal is a transparent Bitcoin risk-management model based on
+BTC Signal Guard is a transparent Bitcoin risk-management model based on
 daily technical indicators: SMA50, SMA200, RSI and volume confirmation. It
 generates three signals — `ACQUISTA`, `MANTIENI`, `VENDI` — and publishes the
 current status through a GitHub Pages dashboard and a Telegram bot.
@@ -48,7 +48,7 @@ Use it only as a technical monitoring tool.
 
 ## Monitor online
 
-**[Apri la dashboard BTC Prudential Signal](https://giuse2003.github.io/BTC_Prudential_Signal/)**
+**[Apri la dashboard BTC Signal Guard](https://giuse2003.github.io/BTC_Prudential_Signal/)**
 
 La pagina mostra il segnale corrente, il livello di rischio, i prezzi BTC e
 gli ultimi indicatori pubblicati dal monitor.

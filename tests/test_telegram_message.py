@@ -30,7 +30,7 @@ class TelegramMessageTests(unittest.TestCase):
             message,
             "\n".join(
                 [
-                    "BTC MONITOR",
+                    "BTC Signal Guard",
                     "",
                     "Segnale: VENDI",
                     "",
@@ -88,7 +88,7 @@ class TelegramMessageTests(unittest.TestCase):
 
         self.assertNotIn("BTC Monitor attivo e funzionante.", source)
         self.assertIn(
-            'msg = format_telegram_message(df_sig, price_eur=spot_eur, title="BTC MONITOR DAILY!")',
+            'msg = format_telegram_message(df_sig, price_eur=spot_eur, title="BTC Signal Guard DAILY!")',
             source,
         )
 
@@ -108,9 +108,9 @@ class TelegramMessageTests(unittest.TestCase):
             }
         )
 
-        message = format_telegram_message(df, price_eur=50000.0, title="BTC MONITOR LIVE!")
+        message = format_telegram_message(df, price_eur=50000.0, title="BTC Signal Guard LIVE!")
 
-        self.assertTrue(message.startswith("BTC MONITOR LIVE!"))
+        self.assertTrue(message.startswith("BTC Signal Guard LIVE!"))
 
     def test_manual_workflow_dispatch_still_forces_telegram_response(self) -> None:
         source = (

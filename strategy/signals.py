@@ -171,8 +171,11 @@ def format_condition_message(
     price_eur: float | None,
     buy_statuses: list[bool],
     sell_statuses: list[bool],
-    title: str = "BTC MONITOR",
+    title: str | None = None,
 ) -> str:
+    if title is None:
+        title = CFG.model_name
+
     if price_eur is None:
         price_text = "BTC-EUR non disponibile"
     else:
@@ -201,7 +204,7 @@ def format_condition_message(
 def format_telegram_message(
     df_with_signals: pd.DataFrame,
     price_eur: float | None = None,
-    title: str = "BTC MONITOR",
+    title: str | None = None,
 ) -> str:
     """
     Produce il messaggio operativo compatto per Telegram.
@@ -410,7 +413,7 @@ def explain_latest_row(
         indicazione = "Attendere. Nessuna nuova operazione consigliata."
 
     lines = [
-        "BTC MONITOR",
+        CFG.model_name,
         "",
         f"Segnale: {segnale}",
         f"Rischio: {rischio}",

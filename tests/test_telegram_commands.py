@@ -69,7 +69,7 @@ class TelegramCommandTests(unittest.TestCase):
             price_eur=56316.0,
         )
 
-        self.assertTrue(message.startswith("BTC MONITOR DAILY!"))
+        self.assertTrue(message.startswith("BTC Signal Guard DAILY!"))
         self.assertIn("56.316 EUR", message)
         self.assertIn("ACQUISTA:\n🅾️ 1.", message)
         self.assertIn("VENDI:\n✅ 1.", message)
