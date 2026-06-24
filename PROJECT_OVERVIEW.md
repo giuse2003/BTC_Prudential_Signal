@@ -340,6 +340,19 @@ Il workflow si chiama `Telegram command menu` e va lanciato manualmente con
 
 Supabase salva gli iscritti Telegram.
 
+Il progetto Supabase e condiviso con il progetto Ethereum ed e stato rinominato
+`crypto-prudential-signal` per non legarlo nominalmente solo a Bitcoin.
+La separazione operativa avviene tramite tabelle dedicate:
+
+```text
+BTC: public.telegram_subscribers
+ETH: public.telegram_subscribers_eth
+```
+
+I due bot e i due Worker restano separati. Possono condividere lo stesso
+`SUPABASE_URL` e la stessa `SUPABASE_SERVICE_ROLE_KEY`, ma ogni progetto deve
+leggere e scrivere esclusivamente la propria tabella.
+
 Schema:
 
 ```text
@@ -368,6 +381,10 @@ Campi principali:
 
 La tabella ha Row Level Security attiva e forzata. I ruoli `anon` e
 `authenticated` non hanno accesso; il Worker usa `service_role`.
+
+La presenza della tabella `public.telegram_subscribers_eth` nello stesso
+progetto Supabase e prevista e appartiene al repository
+`ETH_Prudential_Signal`.
 
 ## GitHub Actions
 
@@ -541,7 +558,7 @@ Attualmente i test coprono:
 
 ### 4. Configurare Supabase
 
-1. creare un progetto Supabase;
+1. usare il progetto Supabase condiviso `crypto-prudential-signal`;
 2. eseguire `supabase/telegram_subscribers.sql` nel SQL Editor;
 3. copiare:
    - Project URL;

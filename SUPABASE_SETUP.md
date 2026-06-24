@@ -13,25 +13,36 @@ Non inserire token o chiavi Supabase nei file del repository.
 
 1. Apri <https://supabase.com/dashboard>.
 2. Accedi oppure crea un account.
-3. Seleziona **New project**.
+3. Seleziona il progetto condiviso `crypto-prudential-signal`.
 
-## 2. Crea il progetto
+## 2. Progetto Supabase
 
-Compila i campi:
+Il progetto Supabase era nato per BTC con il nome:
 
 ```text
-Organization: la tua organizzazione personale
-Name: btc-prudential-signal
-Database Password: genera una password forte e conservala
-Region: una regione europea vicina, ad esempio Frankfurt
+btc-prudential-signal
 ```
 
-Se disponibile, seleziona il piano gratuito.
+Dal 24 giugno 2026 e stato rinominato:
 
-Premi **Create new project** e attendi che il database sia pronto.
+```text
+crypto-prudential-signal
+```
 
-La password del database non serve al codice attuale, ma va conservata in un
-password manager.
+La rinomina serve perche lo stesso progetto Supabase viene condiviso anche dal
+progetto Ethereum. La separazione dei dati non dipende dal nome del progetto,
+ma dalle tabelle dedicate:
+
+```text
+BTC: public.telegram_subscribers
+ETH: public.telegram_subscribers_eth
+```
+
+Non creare una nuova tabella BTC se `public.telegram_subscribers` esiste gia.
+Non usare la tabella ETH per il bot BTC.
+
+Se devi ricreare il progetto da zero, usa comunque un nome neutro come
+`crypto-prudential-signal`, non `btc-prudential-signal`.
 
 ## 3. Crea la tabella
 
@@ -46,7 +57,7 @@ supabase/telegram_subscribers.sql
 4. Copia l'intero contenuto nel SQL Editor.
 5. Premi **Run**.
 
-Lo script:
+Lo script BTC:
 
 - crea `public.telegram_subscribers`;
 - usa `telegram_chat_id` come chiave primaria e impedisce duplicati;
@@ -76,6 +87,15 @@ telegram_subscribers
 
 La tabella inizialmente deve essere vuota.
 
+Nel progetto condiviso puoi vedere anche:
+
+```text
+telegram_subscribers_eth
+```
+
+Quella tabella appartiene al progetto ETH e non deve essere modificata dal
+codice BTC.
+
 ## 5. Recupera URL e chiave server
 
 Nel pannello Supabase apri:
@@ -100,13 +120,18 @@ service_role secret
 
 La service role:
 
-- deve essere usata soltanto da Render e GitHub Actions;
+- deve essere usata soltanto da backend/Worker e GitHub Actions;
 - non deve essere inserita nella dashboard web;
 - non deve essere aggiunta al repository;
 - non deve essere inviata in chat;
 - non deve essere mostrata nei log.
 
 Non usare la chiave `anon` o `publishable` per il backend degli iscritti.
+
+Nel progetto attuale la stessa `SUPABASE_URL` e la stessa
+`SUPABASE_SERVICE_ROLE_KEY` possono essere configurate sia nel Worker BTC sia
+nel Worker ETH. La sicurezza operativa resta affidata alle tabelle separate e
+al fatto che i secret non siano mai esposti nel frontend.
 
 ## 6. Cosa non fare ancora
 
@@ -121,13 +146,16 @@ dal comando `/iscrivimi`.
 Quando hai completato i passaggi, comunica soltanto:
 
 ```text
-Progetto Supabase creato.
+Progetto Supabase disponibile come crypto-prudential-signal.
 Script SQL eseguito.
 Tabella telegram_subscribers presente.
 RLS enabled: true.
 RLS forced: true.
 Policy trovate: 0.
 ```
+
+Se vedi anche `telegram_subscribers_eth`, e normale: e la tabella usata dal
+progetto Ethereum nello stesso Supabase condiviso.
 
 Non comunicare URL, chiavi, password o altri secret.
 

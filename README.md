@@ -231,6 +231,12 @@ GET https://btc-prudential-signal.giuse2003.workers.dev/subscribers/count
 L'endpoint restituisce soltanto `active_subscribers`. Il frontend non contiene
 chiavi Supabase, token Telegram o altri secret.
 
+Supabase e condiviso con il progetto Ethereum ed e stato rinominato
+`crypto-prudential-signal`. BTC continua a usare soltanto
+`public.telegram_subscribers`, mentre ETH usa `public.telegram_subscribers_eth`.
+I due bot e i due Worker restano separati; possono condividere URL e service
+role Supabase, ma non devono mai scrivere nella stessa tabella.
+
 Il deploy e il collegamento Telegram sono stati verificati su Cloudflare Worker:
 
 - health check `GET /` con risposta `{"status":"ok"}`;

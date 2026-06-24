@@ -1,6 +1,6 @@
 # Project Status
 
-Ultimo aggiornamento: 10 giugno 2026
+Ultimo aggiornamento: 24 giugno 2026
 
 ## Obiettivo
 
@@ -25,6 +25,10 @@ dashboard e notificare variazioni rilevanti tramite Telegram.
   `https://btc-prudential-signal.onrender.com/webhook`.
 - Comando `/segnale` disponibile in ogni chat privata con il bot.
 - Database Supabase degli iscritti creato e verificato con RLS forzata.
+- Il progetto Supabase e ora condiviso con ETH ed e stato rinominato
+  `crypto-prudential-signal` per evitare ambiguita.
+- BTC continua a usare la tabella dedicata `public.telegram_subscribers`;
+  ETH usa `public.telegram_subscribers_eth`.
 - Comandi `/iscrivimi`, `/disiscrivimi` e `/privacy` implementati.
 - Dashboard Telegram con deep link e contatore aggregato implementata.
 - Dashboard e contatore verificati pubblicamente su GitHub Pages e Render.
@@ -65,6 +69,18 @@ dashboard e notificare variazioni rilevanti tramite Telegram.
 - Iscrizioni persistenti su Supabase senza duplicati.
 - Endpoint pubblico `GET /subscribers/count` senza dati personali.
 - CORS limitato all'origine GitHub Pages e agli indirizzi locali di test.
+
+### Supabase condiviso con ETH
+
+- Il vecchio progetto Supabase nato come `btc-prudential-signal` e stato
+  rinominato `crypto-prudential-signal`.
+- La rinomina riguarda il nome visualizzato nel pannello Supabase, non la
+  separazione dei dati.
+- Le iscrizioni BTC restano in `public.telegram_subscribers`.
+- Le iscrizioni ETH sono isolate in `public.telegram_subscribers_eth`.
+- I Worker BTC ed ETH possono usare lo stesso `SUPABASE_URL` e la stessa
+  `SUPABASE_SERVICE_ROLE_KEY`, ma devono puntare a tabelle diverse.
+- Token Telegram, webhook secret e repository restano separati tra BTC ed ETH.
 
 ## Verifica
 

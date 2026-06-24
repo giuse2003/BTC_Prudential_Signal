@@ -1,6 +1,6 @@
 # Telegram Subscribers Roadmap
 
-Ultimo aggiornamento: 11 giugno 2026
+Ultimo aggiornamento: 24 giugno 2026
 
 Stato generale: `FASE 3 COMPLETATA - FASE 4 DA IMPLEMENTARE`
 
@@ -41,6 +41,10 @@ Notifica agli iscritti solo quando cambia segnale o rischio
 - Le notifiche collettive partiranno solo al cambio di segnale o rischio.
 - Non verra inviato un messaggio collettivo ogni ora senza variazioni.
 - Il database persistente previsto e Supabase.
+- Il progetto Supabase e condiviso anche con ETH ed e stato rinominato
+  `crypto-prudential-signal`.
+- La tabella BTC resta `public.telegram_subscribers`; la tabella ETH e
+  `public.telegram_subscribers_eth`.
 - `TELEGRAM_CHAT_ID` attuale identifica l'amministratore, non l'elenco degli
   iscritti.
 - Token, password e chiavi non verranno salvati nel repository.
@@ -76,6 +80,8 @@ Notifica agli iscritti solo quando cambia segnale o rischio
 
 - [x] **1.1 Utente:** creare un account o accedere a Supabase.
 - [x] **1.2 Utente:** creare un nuovo progetto Supabase.
+- [x] **1.2b Utente/Codex:** rinominare il progetto Supabase condiviso in
+  `crypto-prudential-signal` e documentare la separazione BTC/ETH per tabella.
 - [x] **1.3 Codex:** definire schema, vincoli e policy della tabella iscritti.
 - [x] **1.4 Codex:** preparare lo script SQL completo.
 - [x] **1.5 Utente:** eseguire lo script nell'SQL Editor Supabase.
@@ -361,6 +367,7 @@ La funzionalita sara considerata completata quando:
 | 2026-06-11 | Test Fase 3 | Completato | 32 test automatici e conteggio reale Supabase pari a 1. |
 | 2026-06-11 | Deploy pubblico Fase 3 | Completato | Render e GitHub Pages aggiornati; endpoint e card restituiscono il conteggio 1. |
 | 2026-06-11 | Verifica CORS e privacy | Completato | Origine GitHub Pages autorizzata; risposta limitata a `active_subscribers`. |
+| 2026-06-24 | Supabase condiviso con ETH | Completato | Progetto rinominato `crypto-prudential-signal`; BTC usa `telegram_subscribers`, ETH usa `telegram_subscribers_eth`. |
 
 ## Prossimo passo
 
