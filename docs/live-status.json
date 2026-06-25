@@ -1,9 +1,9 @@
 {
   "signal": "VENDI",
-  "price_usd": 61654.0,
-  "price_eur": 54264.0,
-  "volume_24h_usd": 45209299203.0,
-  "last_update": "2026-06-25 08:22:48 UTC",
+  "price_usd": 61108.0,
+  "price_eur": 53850.0,
+  "volume_24h_usd": 44942354220.0,
+  "last_update": "2026-06-25 11:15:33 UTC",
   "status": "Attivo",
   "condition_groups": {
     "buy": [
