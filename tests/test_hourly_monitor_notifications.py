@@ -1,8 +1,11 @@
 from __future__ import annotations
 
 import unittest
+from unittest.mock import Mock, patch
 
-from hourly_monitor import should_notify
+import requests
+
+from hourly_monitor import should_notify, broadcast_to_subscribers
 from state.state_store import MonitorState
 
 
@@ -55,6 +58,77 @@ class HourlyMonitorNotificationTests(unittest.TestCase):
 
         self.assertTrue(must_notify)
         self.assertEqual(reason, "segnale cambiato: MANTIENI -> VENDI")
+
+
+class BroadcastToSubscribersTests(unittest.TestCase):
+    @patch("hourly_monitor.SupabaseSubscriberStore")
+    @patch("hourly_monitor.send_telegram_message")
+    def test_broadcast_sends_to_all_active_and_updates_status(
+        self,
+        mock_send: Mock,
+        mock_store_cls: Mock,
+    ) -> None:
+        mock_store = Mock()
+        mock_store_cls.return_value = mock_store
+        
+        from telegram_subscribers import TelegramSubscriber
+        mock_store.get_active_subscribers.return_value = [
+            TelegramSubscriber(telegram_chat_id=111, telegram_user_id=1, telegram_username="u1", telegram_first_name="A", telegram_language_code="it"),
+            TelegramSubscriber(telegram_chat_id=222, telegram_user_id=2, telegram_username="u2", telegram_first_name="B", telegram_language_code="it"),
+        ]
+        
+        broadcast_to_subscribers("bot-token", "https://url.supabase.co", "key", "Hello world")
+        
+        self.assertEqual(mock_send.call_count, 2)
+        send_calls = mock_send.call_args_list
+        self.assertEqual(send_calls[0][0][0].chat_id, "111")
+        self.assertEqual(send_calls[1][0][0].chat_id, "222")
+        self.assertEqual(send_calls[0][0][1], "Hello world")
+        
+        self.assertEqual(mock_store.update_delivery_status.call_count, 2)
+        mock_store.update_delivery_status.assert_any_call(111, success=True)
+        mock_store.update_delivery_status.assert_any_call(222, success=True)
+
+    @patch("hourly_monitor.SupabaseSubscriberStore")
+    @patch("hourly_monitor.send_telegram_message")
+    def test_broadcast_handles_blocked_user_and_general_error(
+        self,
+        mock_send: Mock,
+        mock_store_cls: Mock,
+    ) -> None:
+        mock_store = Mock()
+        mock_store_cls.return_value = mock_store
+        
+        from telegram_subscribers import TelegramSubscriber
+        mock_store.get_active_subscribers.return_value = [
+            TelegramSubscriber(telegram_chat_id=111, telegram_user_id=1, telegram_username="u1", telegram_first_name="A", telegram_language_code="it"),
+            TelegramSubscriber(telegram_chat_id=222, telegram_user_id=2, telegram_username="u2", telegram_first_name="B", telegram_language_code="it"),
+            TelegramSubscriber(telegram_chat_id=333, telegram_user_id=3, telegram_username="u3", telegram_first_name="C", telegram_language_code="it"),
+        ]
+        
+        err_response = Mock()
+        err_response.status_code = 403
+        err_response.text = "Forbidden: bot was blocked by the user"
+        http_err = requests.exceptions.HTTPError("403 Forbidden", response=err_response)
+        
+        mock_send.side_effect = [
+            None,
+            http_err,
+            RuntimeError("Network issue"),
+        ]
+        
+        broadcast_to_subscribers("bot-token", "https://url.supabase.co", "key", "Hello world")
+        
+        self.assertEqual(mock_send.call_count, 3)
+        self.assertEqual(mock_store.update_delivery_status.call_count, 3)
+        
+        mock_store.update_delivery_status.assert_any_call(111, success=True)
+        mock_store.update_delivery_status.assert_any_call(
+            222, success=False, error_msg="HTTP 403: Forbidden: bot was blocked by the user", block_detected=True
+        )
+        mock_store.update_delivery_status.assert_any_call(
+            333, success=False, error_msg="Network issue", block_detected=False
+        )
 
 
 if __name__ == "__main__":

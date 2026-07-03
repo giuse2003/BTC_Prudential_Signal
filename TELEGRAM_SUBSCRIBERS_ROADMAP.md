@@ -1,8 +1,8 @@
 # Telegram Subscribers Roadmap
 
-Ultimo aggiornamento: 24 giugno 2026
+Ultimo aggiornamento: 4 luglio 2026
 
-Stato generale: `FASE 3 COMPLETATA - FASE 4 DA IMPLEMENTARE`
+Stato generale: `FASE 4 COMPLETATA - FASE 5 DA COMPLETARE`
 
 ## Obiettivo
 
@@ -66,7 +66,7 @@ Notifica agli iscritti solo quando cambia segnale o rischio
 - Preparare lo script SQL.
 - Implementare `/iscrivimi`, `/disiscrivimi`, `/start`, `/privacy` e
   aggiornare `/segnale`.
-- Implementare il repository degli iscritti.
+- Implementare the repository degli iscritti.
 - Aggiungere il pulsante alla dashboard.
 - Modificare l'invio automatico al cambio di segnale o rischio.
 - Gestire utenti che bloccano il bot o chat non piu raggiungibili.
@@ -250,13 +250,13 @@ Non modificare:
 
 ### Fase 4 - Invio collettivo
 
-- [ ] **4.1 Codex:** leggere gli iscritti attivi da Supabase.
-- [ ] **4.2 Codex:** inviare notifiche solo al cambio di segnale o rischio.
-- [ ] **4.3 Codex:** mantenere la notifica amministratore compatibile.
-- [ ] **4.4 Codex:** gestire rate limit Telegram e invii parzialmente falliti.
-- [ ] **4.5 Codex:** disattivare iscritti che bloccano il bot.
-- [ ] **4.6 Test:** simulare invio a piu chat di prova.
-- [ ] **4.7 Test:** verificare che nessun messaggio parta senza cambiamenti.
+- [x] **4.1 Codex:** leggere gli iscritti attivi da Supabase.
+- [x] **4.2 Codex:** inviare notifiche solo al cambio di segnale o rischio.
+- [x] **4.3 Codex:** mantenere la notifica amministratore compatibile.
+- [x] **4.4 Codex:** gestire rate limit Telegram e invii parzialmente falliti.
+- [x] **4.5 Codex:** disattivare iscritti che bloccano il bot.
+- [x] **4.6 Test:** simulare invio a piu chat di prova.
+- [x] **4.7 Test:** verificare che nessun messaggio parta senza cambiamenti.
 
 ### Fase 5 - Configurazione protetta
 
@@ -368,17 +368,8 @@ La funzionalita sara considerata completata quando:
 | 2026-06-11 | Deploy pubblico Fase 3 | Completato | Render e GitHub Pages aggiornati; endpoint e card restituiscono il conteggio 1. |
 | 2026-06-11 | Verifica CORS e privacy | Completato | Origine GitHub Pages autorizzata; risposta limitata a `active_subscribers`. |
 | 2026-06-24 | Supabase condiviso con ETH | Completato | Progetto rinominato `crypto-prudential-signal`; BTC usa `telegram_subscribers`, ETH usa `telegram_subscribers_eth`. |
+| 2026-07-04 | Fase 4 - Invio collettivo | Completato | Implementato broadcast automatico a tutti gli iscritti attivi con gestione rate limit, disattivazione automatica di blocchi e report su Supabase. |
 
 ## Prossimo passo
 
-Avviare la Fase 4 per l'invio collettivo ai soli iscritti attivi quando cambia
-il segnale o il rischio.
-
-La Fase 4 dovra:
-
-1. leggere da Supabase soltanto gli iscritti con `active = true`;
-2. mantenere la notifica amministratore compatibile;
-3. evitare invii quando segnale e rischio non cambiano;
-4. gestire rate limit, errori parziali e utenti che bloccano il bot;
-5. aggiornare gli esiti di consegna senza interrompere gli altri invii;
-6. essere verificata con test automatici e una notifica collettiva controllata.
+Completare la configurazione dei secret di GitHub Actions con `SUPABASE_URL` e `SUPABASE_SERVICE_ROLE_KEY` (Fase 5) e procedere con i test finali di release (Fase 6).

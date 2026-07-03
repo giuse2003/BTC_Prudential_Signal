@@ -85,6 +85,58 @@ class SupabaseSubscriberStoreTests(unittest.TestCase):
 
         self.assertEqual(self.store.count_active(), 0)
 
+    @patch("telegram_subscribers.requests.get")
+    def test_get_active_subscribers_paginates(self, mock_get: Mock) -> None:
+        response1 = Mock()
+        response1.json.return_value = [
+            {"telegram_chat_id": i, "telegram_user_id": 10, "telegram_username": f"user{i}", "telegram_first_name": "A", "telegram_language_code": "it"}
+            for i in range(1000)
+        ]
+        response2 = Mock()
+        response2.json.return_value = [
+            {"telegram_chat_id": 1000, "telegram_user_id": 10, "telegram_username": "user1000", "telegram_first_name": "A", "telegram_language_code": "it"}
+        ]
+        mock_get.side_effect = [response1, response2]
+
+        subs = self.store.get_active_subscribers()
+
+        self.assertEqual(len(subs), 1001)
+        self.assertEqual(subs[0].telegram_chat_id, 0)
+        self.assertEqual(subs[1000].telegram_username, "user1000")
+        self.assertEqual(mock_get.call_count, 2)
+
+    @patch("telegram_subscribers.requests.patch")
+    def test_update_delivery_status_success(self, mock_patch: Mock) -> None:
+        mock_patch.return_value = Mock()
+        
+        self.store.update_delivery_status(telegram_chat_id=123, success=True)
+        
+        _, kwargs = mock_patch.call_args
+        self.assertEqual(kwargs["params"]["telegram_chat_id"], "eq.123")
+        self.assertEqual(kwargs["json"]["delivery_failures"], 0)
+        self.assertIsNone(kwargs["json"]["last_delivery_error"])
+        mock_patch.return_value.raise_for_status.assert_called_once_with()
+
+    @patch("telegram_subscribers.requests.get")
+    @patch("telegram_subscribers.requests.patch")
+    def test_update_delivery_status_failure_and_block(self, mock_patch: Mock, mock_get: Mock) -> None:
+        mock_patch.return_value = Mock()
+        get_response = Mock()
+        get_response.json.return_value = [{"delivery_failures": 3}]
+        mock_get.return_value = get_response
+        
+        self.store.update_delivery_status(telegram_chat_id=123, success=False, error_msg="Timeout")
+        
+        _, kwargs = mock_patch.call_args
+        self.assertEqual(kwargs["json"]["delivery_failures"], 4)
+        self.assertEqual(kwargs["json"]["last_delivery_error"], "Timeout")
+        
+        self.store.update_delivery_status(telegram_chat_id=123, success=False, error_msg="Forbidden", block_detected=True)
+        
+        _, kwargs = mock_patch.call_args
+        self.assertFalse(kwargs["json"]["active"])
+        self.assertIsNotNone(kwargs["json"]["unsubscribed_at"])
+
 
 if __name__ == "__main__":
     unittest.main()

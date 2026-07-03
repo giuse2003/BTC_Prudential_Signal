@@ -12,10 +12,14 @@ Comportamento:
 from __future__ import annotations
 
 import os
+import requests
+import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import pandas as pd
+
+from telegram_subscribers import SupabaseSubscriberStore
 
 from data.fetch_yahoo import fetch_btc_daily_csv, load_daily_csv
 from data.daily_candles import keep_closed_daily_candles
@@ -109,6 +113,63 @@ def should_send_live_alert(
     return True, "condizioni LIVE variate e stabili da almeno 30 minuti"
 
 
+def broadcast_to_subscribers(
+    bot_token: str,
+    supabase_url: str,
+    supabase_key: str,
+    text: str,
+) -> None:
+    """
+    Invia il messaggio a tutti gli iscritti attivi memorizzati su Supabase.
+    Gestisce i fallimenti e disattiva chi ha bloccato il bot.
+    """
+    store = SupabaseSubscriberStore(supabase_url, supabase_key)
+    try:
+        subscribers = store.get_active_subscribers()
+    except Exception as e:
+        print(f"Errore nel recupero degli iscritti da Supabase: {e}")
+        return
+
+    print(f"Avvio broadcast a {len(subscribers)} iscritti attivi...")
+
+    for i, sub in enumerate(subscribers):
+        sub_chat_id = sub.telegram_chat_id
+        cfg = TelegramConfig(bot_token=bot_token, chat_id=str(sub_chat_id))
+        
+        # Ritardo per non superare il rate limit (max 30 msg/sec)
+        if i > 0:
+            time.sleep(0.05)
+            
+        try:
+            send_telegram_message(cfg, text)
+            print(f"Notifica inviata con successo a chat_id {sub_chat_id}")
+            try:
+                store.update_delivery_status(sub_chat_id, success=True)
+            except Exception as db_err:
+                print(f"Errore nell'aggiornamento dello stato di consegna su Supabase per chat_id {sub_chat_id}: {db_err}")
+        except requests.exceptions.HTTPError as err:
+            response = err.response
+            is_block = False
+            err_msg = str(err)
+            if response is not None:
+                err_msg = f"HTTP {response.status_code}: {response.text}"
+                if response.status_code == 403:
+                    is_block = True
+                    
+            print(f"Errore di invio a chat_id {sub_chat_id} (blocco={is_block}): {err_msg}")
+            try:
+                store.update_delivery_status(sub_chat_id, success=False, error_msg=err_msg, block_detected=is_block)
+            except Exception as db_err:
+                print(f"Errore nell'aggiornamento dello stato di fallimento su Supabase per chat_id {sub_chat_id}: {db_err}")
+        except Exception as e:
+            err_msg = str(e)
+            print(f"Errore generico di invio a chat_id {sub_chat_id}: {err_msg}")
+            try:
+                store.update_delivery_status(sub_chat_id, success=False, error_msg=err_msg, block_detected=False)
+            except Exception as db_err:
+                print(f"Errore nell'aggiornamento dello stato di fallimento su Supabase per chat_id {sub_chat_id}: {db_err}")
+
+
 def main() -> None:
     github_event_name = os.environ.get("GITHUB_EVENT_NAME", "").strip()
     is_manual_run = github_event_name == "workflow_dispatch"
@@ -120,6 +181,10 @@ def main() -> None:
     chat_id = os.environ.get("TELEGRAM_CHAT_ID", "").strip()
     if not bot_token or not chat_id:
         raise RuntimeError("Mancano TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID nelle variabili d'ambiente.")
+
+    # Supabase secrets
+    supabase_url = os.environ.get("SUPABASE_URL", "").strip()
+    supabase_key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "").strip()
 
     project_root = Path(__file__).resolve().parent
     state_path = project_root / ".state" / "state.json"
@@ -219,10 +284,18 @@ def main() -> None:
         try:
             send_telegram_message(cfg, msg)
             notification_sent = True
-            print("Notifica Telegram inviata con successo.")
+            print("Notifica Telegram all'amministratore inviata con successo.")
         except Exception as e:
-            print(f"Errore nell'invio della notifica Telegram: {e}")
+            print(f"Errore nell'invio della notifica Telegram all'amministratore: {e}")
             print("Lo stato notificato non verra aggiornato; il prossimo run riprovera.")
+
+        if supabase_url and supabase_key:
+            try:
+                broadcast_to_subscribers(bot_token, supabase_url, supabase_key, msg)
+            except Exception as e:
+                print(f"Errore durante il broadcast DAILY: {e}")
+        else:
+            print("Supabase non configurato. Salto il broadcast DAILY.")
     else:
         print("Nessuna notifica necessaria.")
 
@@ -274,10 +347,18 @@ def main() -> None:
                     state.last_live_alert_sent_at_utc = now_utc.isoformat()
                     state.live_pending_conditions_key = None
                     state.live_pending_since_utc = None
-                    print("Notifica Telegram LIVE inviata con successo.")
+                    print("Notifica Telegram LIVE all'amministratore inviata con successo.")
                 except Exception as e:
-                    print(f"Errore nell'invio della notifica Telegram LIVE: {e}")
+                    print(f"Errore nell'invio della notifica Telegram LIVE all'amministratore: {e}")
                     print("L'allerta LIVE non verra marcata come inviata; il prossimo run riprovera.")
+
+                if supabase_url and supabase_key:
+                    try:
+                        broadcast_to_subscribers(bot_token, supabase_url, supabase_key, live_msg)
+                    except Exception as e:
+                        print(f"Errore durante il broadcast LIVE: {e}")
+                else:
+                    print("Supabase non configurato. Salto il broadcast LIVE.")
         else:
             print("Workflow manuale: LIVE salvato senza inviare allerta automatica.")
     except Exception as e:

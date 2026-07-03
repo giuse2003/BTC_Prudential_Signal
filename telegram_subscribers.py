@@ -8,6 +8,8 @@ from datetime import datetime, timezone
 import requests
 
 
+from typing import Any
+
 TABLE_NAME = "telegram_subscribers"
 
 
@@ -101,6 +103,99 @@ class SupabaseSubscriberStore:
         if not total.isdigit():
             raise ValueError("Conteggio Supabase non valido.")
         return int(total)
+
+    def get_active_subscribers(self) -> list[TelegramSubscriber]:
+        """Recupera tutti gli iscritti attivi da Supabase (con paginazione)."""
+        subscribers: list[TelegramSubscriber] = []
+        limit = 1000
+        offset = 0
+        while True:
+            response = requests.get(
+                self.table_url,
+                params={
+                    "active": "eq.true",
+                    "select": "telegram_chat_id,telegram_user_id,telegram_username,telegram_first_name,telegram_language_code",
+                    "limit": limit,
+                    "offset": offset,
+                },
+                headers=self.headers,
+                timeout=self.timeout_s,
+            )
+            response.raise_for_status()
+            data = response.json()
+            if not data:
+                break
+            for item in data:
+                subscribers.append(
+                    TelegramSubscriber(
+                        telegram_chat_id=item["telegram_chat_id"],
+                        telegram_user_id=item.get("telegram_user_id"),
+                        telegram_username=item.get("telegram_username"),
+                        telegram_first_name=item.get("telegram_first_name"),
+                        telegram_language_code=item.get("telegram_language_code"),
+                    )
+                )
+            if len(data) < limit:
+                break
+            offset += limit
+        return subscribers
+
+    def update_delivery_status(
+        self,
+        telegram_chat_id: int,
+        success: bool,
+        error_msg: str | None = None,
+        block_detected: bool = False,
+    ) -> None:
+        """Aggiorna lo stato di consegna di un iscritto su Supabase."""
+        now = _utc_now()
+        if success:
+            payload: dict[str, Any] = {
+                "last_delivered_at": now,
+                "delivery_failures": 0,
+                "last_delivery_error": None,
+                "last_delivery_error_at": None,
+            }
+        else:
+            payload = {
+                "last_delivery_error": error_msg or "Unknown error",
+                "last_delivery_error_at": now,
+            }
+            if block_detected:
+                payload["active"] = False
+                payload["unsubscribed_at"] = now
+            else:
+                try:
+                    current_failures = self.get_delivery_failures(telegram_chat_id)
+                    payload["delivery_failures"] = current_failures + 1
+                except Exception:
+                    payload["delivery_failures"] = 1
+
+        response = requests.patch(
+            self.table_url,
+            params={"telegram_chat_id": f"eq.{telegram_chat_id}"},
+            headers=self.headers,
+            json=payload,
+            timeout=self.timeout_s,
+        )
+        response.raise_for_status()
+
+    def get_delivery_failures(self, telegram_chat_id: int) -> int:
+        """Recupera il numero corrente di fallimenti per un iscritto."""
+        response = requests.get(
+            self.table_url,
+            params={
+                "telegram_chat_id": f"eq.{telegram_chat_id}",
+                "select": "delivery_failures",
+            },
+            headers=self.headers,
+            timeout=self.timeout_s,
+        )
+        response.raise_for_status()
+        data = response.json()
+        if isinstance(data, list) and len(data) > 0:
+            return data[0].get("delivery_failures") or 0
+        return 0
 
 
 def _utc_now() -> str:
