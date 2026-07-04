@@ -36,7 +36,6 @@ Aggiornare:
   - lista statica delle condizioni nel blocco Metodo
   - statistiche statiche del blocco Backtest, incluse percentuali di
     rendimento, drawdown, Sharpe e barre comparative
-  - serie visualizzate nel grafico prezzo e relativa legenda
 - `docs/app.js`
   - rendering condizioni, se cambia la struttura JSON
 - `docs/status.json`
