@@ -2,7 +2,7 @@ name: Hourly BTC monitor (Telegram)
 
 on:
   schedule:
-    - cron: "0,30 * * * *" # LIVE ogni 30 minuti; DAILY forza Yahoo al minuto 30 se serve
+    - cron: "*/10 * * * *" # LIVE ogni 10 minuti; DAILY forza Yahoo al minuto 30 se serve
   workflow_dispatch: {}
 
 permissions:

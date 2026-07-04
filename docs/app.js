@@ -1,4 +1,4 @@
-const STATUS_ENDPOINT = "./status.json";
+const STATUS_ENDPOINT = "./live-status.json";
 const CHART_DATA_ENDPOINT = "./chart-data.json";
 const COINBASE_EUR_ENDPOINT = "https://api.coinbase.com/v2/prices/BTC-EUR/spot";
 const COINBASE_USD_ENDPOINT = "https://api.coinbase.com/v2/prices/BTC-USD/spot";

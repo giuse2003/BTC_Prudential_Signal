@@ -6,7 +6,7 @@ Comportamento:
 - Calcola segnale "di regime" (prudente).
 - Legge prezzo spot "live" da Coinbase in EUR.
 - Invia DAILY su nuova candela se cambia il segnale.
-- Invia LIVE se le condizioni aggregate CoinGecko restano variate per almeno 30 minuti.
+- Invia LIVE se le condizioni aggregate CoinGecko restano variate per almeno 10 minuti.
 """
 
 from __future__ import annotations
@@ -41,7 +41,7 @@ from state.state_store import MonitorState, load_state, save_state
 from reports.generate import save_chart_data_json, save_live_status_json, save_status_json
 
 
-LIVE_STABILITY_MINUTES = 30
+LIVE_STABILITY_MINUTES = 10
 LIVE_ALERT_COOLDOWN_HOURS = 2
 
 
@@ -87,7 +87,7 @@ def should_send_live_alert(
         state.last_live_conditions_key = live_conditions_key
         state.live_pending_conditions_key = live_conditions_key
         state.live_pending_since_utc = now_iso
-        return False, "condizioni LIVE variate; attendo stabilita 30 minuti"
+        return False, f"condizioni LIVE variate; attendo stabilita {LIVE_STABILITY_MINUTES} minuti"
 
     if state.live_pending_conditions_key != live_conditions_key:
         return False, "condizioni LIVE invariate"
@@ -100,7 +100,7 @@ def should_send_live_alert(
     stable_for = now_utc - pending_since
     if stable_for < timedelta(minutes=LIVE_STABILITY_MINUTES):
         minutes = int(stable_for.total_seconds() // 60)
-        return False, f"condizioni LIVE stabili da {minutes} minuti; attendo 30 minuti"
+        return False, f"condizioni LIVE stabili da {minutes} minuti; attendo {LIVE_STABILITY_MINUTES} minuti"
 
     last_alert_at = _parse_iso_utc(state.last_live_alert_sent_at_utc)
     if (
@@ -110,7 +110,7 @@ def should_send_live_alert(
     ):
         return False, "allerta LIVE identica gia inviata nelle ultime 2 ore"
 
-    return True, "condizioni LIVE variate e stabili da almeno 30 minuti"
+    return True, f"condizioni LIVE variate e stabili da almeno {LIVE_STABILITY_MINUTES} minuti"
 
 
 def broadcast_to_subscribers(
@@ -314,6 +314,7 @@ def main() -> None:
         print(f"Condizioni LIVE calcolate: {live_conditions_key}")
         print(f"Prezzo LIVE aggregato CoinGecko: {live_market.price_usd:.2f} USD")
         print(f"Volume LIVE aggregato 24h CoinGecko: {live_market.volume_24h_usd:.2f}")
+        live_latest = live_df_sig.iloc[-1]
         save_live_status_json(
             signal=live_signal,
             price_usd=live_market.price_usd,
@@ -321,6 +322,11 @@ def main() -> None:
             volume_24h_usd=live_market.volume_24h_usd,
             buy_statuses=live_buy_statuses,
             sell_statuses=live_sell_statuses,
+            rsi=float(live_latest.get("RSI", float("nan"))),
+            sma50=float(live_latest.get("SMA50", float("nan"))),
+            sma200=float(live_latest.get("SMA200", float("nan"))),
+            atr=float(live_latest.get("ATR", float("nan"))),
+            risk_level=str(live_latest.get("Livello_Rischio", "MEDIO")),
             out_path=project_root / "reports" / "live-status.json",
         )
 

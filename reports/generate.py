@@ -1,4 +1,4 @@
-﻿"""
+"""
 Generazione report:
 - report testuale
 - CSV storico con indicatori e segnali
@@ -105,6 +105,11 @@ def save_live_status_json(
     volume_24h_usd: float,
     buy_statuses: list[bool],
     sell_statuses: list[bool],
+    rsi: float | None = None,
+    sma50: float | None = None,
+    sma200: float | None = None,
+    atr: float | None = None,
+    risk_level: str = "MEDIO",
     out_path: str | Path,
 ) -> Path:
     """
@@ -131,6 +136,11 @@ def save_live_status_json(
         "volume_24h_usd": float(volume_24h_usd),
         "last_update": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"),
         "status": "Attivo",
+        "rsi": _json_float(rsi),
+        "sma50": _json_float(sma50),
+        "sma200": _json_float(sma200),
+        "atr": _json_float(atr),
+        "risk_level": risk_level,
         "condition_groups": {
             "buy": [
                 {"label": label, "passed": bool(passed)}
