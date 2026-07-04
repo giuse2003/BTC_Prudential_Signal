@@ -246,7 +246,7 @@ function drawTrendChart() {
   const xFor = (index) =>
     padding.left + (rows.length <= 1 ? 0 : (index / (rows.length - 1)) * chartWidth);
 
-  const priceValues = rows.flatMap((row) => [row.close, row.sma50, row.sma200]).filter(Number.isFinite);
+  const priceValues = rows.flatMap((row) => [row.close, row.sma50]).filter(Number.isFinite);
   const minValue = Math.min(...priceValues);
   const maxValue = Math.max(...priceValues);
   const priceRange = maxValue - minValue || 1;
@@ -276,7 +276,6 @@ function drawTrendChart() {
   });
   drawLine(ctx, rows, "close", xFor, priceYFor, "#f7931a", 2.3);
   drawLine(ctx, rows, "sma50", xFor, priceYFor, "#38bdf8", 1.8);
-  drawLine(ctx, rows, "sma200", xFor, priceYFor, "#22c55e", 1.8);
   drawLine(ctx, rows, "rsi", xFor, rsiYFor, "#f7931a", 1.8);
   drawLine(ctx, rows, "volume", xFor, volumeYFor, "rgba(247,147,26,0.38)", 1.2);
   drawLine(ctx, rows, "volumeAvg20", xFor, volumeYFor, "#38bdf8", 1.8);
@@ -335,7 +334,7 @@ function drawCompositeGrid(ctx, rows, xFor, width, height, padding, scale) {
     ctx.fillText(compactUsd(value), 8, y + 4);
   });
 
-  drawPanelLabel(ctx, "Prezzo / SMA", padding.left, scale.pricePanel.top);
+  drawPanelLabel(ctx, "Prezzo / SMA50", padding.left, scale.pricePanel.top);
   drawPanelLabel(ctx, "RSI(14)", padding.left, scale.rsiPanel.top);
   drawPanelLabel(ctx, "Volume", padding.left, scale.volumePanel.top);
 

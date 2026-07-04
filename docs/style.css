@@ -439,7 +439,6 @@ h1 {
 
 .legend-price { background: #f7931a; }
 .legend-sma50 { background: #38bdf8; }
-.legend-sma200 { background: #22c55e; }
 .legend-rsi { background: #f7931a; opacity: 0.65; }
 .legend-rsi-threshold {
   background: #0ea5e9;
