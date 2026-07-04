@@ -34,6 +34,8 @@ Aggiornare:
 
 - `docs/index.html`
   - lista statica delle condizioni nel blocco Metodo
+  - statistiche statiche del blocco Backtest, incluse percentuali di
+    rendimento, drawdown, Sharpe e barre comparative
 - `docs/app.js`
   - rendering condizioni, se cambia la struttura JSON
 - `docs/status.json`
