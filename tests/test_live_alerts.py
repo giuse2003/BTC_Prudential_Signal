@@ -13,33 +13,33 @@ class LiveAlertTests(unittest.TestCase):
 
         must_notify, reason = should_send_live_alert(
             state,
-            "BUY:00000|SELL:1",
+            "BUY:0000|SELL:1",
             datetime(2026, 6, 22, 12, 0, tzinfo=timezone.utc),
         )
 
         self.assertFalse(must_notify)
         self.assertEqual(reason, "baseline LIVE salvata senza notifica")
-        self.assertEqual(state.last_live_conditions_key, "BUY:00000|SELL:1")
+        self.assertEqual(state.last_live_conditions_key, "BUY:0000|SELL:1")
 
     def test_live_condition_change_must_stay_stable_before_notification(self) -> None:
         now = datetime(2026, 6, 22, 12, 0, tzinfo=timezone.utc)
-        state = MonitorState(last_live_conditions_key="BUY:00000|SELL:0")
+        state = MonitorState(last_live_conditions_key="BUY:0000|SELL:0")
 
-        must_notify, _ = should_send_live_alert(state, "BUY:00000|SELL:1", now)
+        must_notify, _ = should_send_live_alert(state, "BUY:0000|SELL:1", now)
         self.assertFalse(must_notify)
 
         must_notify, reason = should_send_live_alert(
             state,
-            "BUY:00000|SELL:1",
+            "BUY:0000|SELL:1",
             now + timedelta(minutes=30),
         )
 
         self.assertTrue(must_notify)
-        self.assertEqual(reason, "condizioni LIVE variate e stabili da almeno 30 minuti")
+        self.assertEqual(reason, "condizioni LIVE variate e stabili da almeno 10 minuti")
 
     def test_live_alert_cooldown_blocks_same_alert_for_two_hours(self) -> None:
         now = datetime(2026, 6, 22, 12, 0, tzinfo=timezone.utc)
-        key = "BUY:00000|SELL:1"
+        key = "BUY:0000|SELL:1"
         state = MonitorState(
             last_live_conditions_key=key,
             live_pending_conditions_key=key,

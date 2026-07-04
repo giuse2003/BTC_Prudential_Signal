@@ -1,6 +1,6 @@
 # Project Status
 
-Ultimo aggiornamento: 24 giugno 2026
+Ultimo aggiornamento: 4 luglio 2026
 
 ## Obiettivo
 
@@ -36,8 +36,22 @@ dashboard e notificare variazioni rilevanti tramite Telegram.
 - Workflow `Telegram command listener` mantenuto soltanto come fallback e
   disabilitato durante l'uso del webhook.
 - Workflow `Hourly BTC monitor (Telegram)` mantenuto attivo.
+- Baseline aggiornata: la condizione Golden Cross `SMA50 > SMA200` non e piu
+  richiesta per `ACQUISTA`.
 
 ## Correzioni completate
+
+### Baseline senza Golden Cross
+
+- `ACQUISTA` richiede ora Close sopra SMA200, RSI >= 40, momentum positivo a
+  7 giorni e volume sopra la media a 20 giorni.
+- `SMA50 > SMA200` resta disponibile nello scoring tecnico/rischio
+  informativo, ma non decide piu il segnale operativo di acquisto.
+- `VENDI` resta invariato: Close sotto SMA50 per 2 giorni consecutivi.
+- Dashboard, Telegram, Cloudflare Worker e JSON di stato mostrano 4 condizioni
+  di acquisto.
+- La variante prudenziale `No Golden Cross + SMA50 rising 7d` e documentata in
+  `SIGNAL_RULE_VERIFICATION_LOG.md` come possibile rimpiazzo futuro.
 
 ### Calendario crypto
 

@@ -123,7 +123,6 @@ def save_live_status_json(
 
     buy_labels = [
         "prezzo live sopra SMA200 live",
-        "SMA50 live sopra SMA200 live",
         "RSI live uguale o maggiore di 40",
         "prezzo live sopra quello di 7 giorni prima",
         "volume 24h live sopra media 20 giorni",
@@ -332,10 +331,6 @@ def save_status_json(
             {
                 "label": "prezzo sopra SMA200",
                 "passed": bool(latest["Close"] > latest["SMA200"]),
-            },
-            {
-                "label": "SMA50 sopra SMA200",
-                "passed": bool(latest["SMA50"] > latest["SMA200"]),
             },
             {
                 "label": "RSI uguale o maggiore di 40",

@@ -61,7 +61,6 @@ class TelegramCommandTests(unittest.TestCase):
                         {"passed": False},
                         {"passed": False},
                         {"passed": False},
-                        {"passed": False},
                     ],
                     "sell": [{"passed": True}],
                 },

@@ -2,6 +2,49 @@
 
 Registro sintetico delle decisioni che influenzano segnali e metriche.
 
+## 2026-07-04 - Rimozione Golden Cross dalla baseline
+
+**Decisione:** rimuovere `SMA50 > SMA200` dalle condizioni operative di
+acquisto della baseline.
+
+**Nuova regola `ACQUISTA`:**
+
+1. Close sopra SMA200.
+2. RSI(14) maggiore o uguale a 40.
+3. Close sopra il Close di 7 giorni prima.
+4. Volume giornaliero sopra la media volume a 20 giorni.
+
+La regola `VENDI` resta invariata: Close sotto SMA50 per 2 giorni consecutivi.
+
+**Test effettuati:**
+
+- confronto full period `2015-01-01 / 2026-07-03`;
+- confronto periodo recente `2022-01-01 / 2026-07-03`;
+- sensibilita ai costi da 5 a 200 bps per cambio esposizione;
+- sensibilita alla data di partenza dal 2015 al 2025;
+- finestre rolling a 1, 2, 3, 4 e 5 anni;
+- attribuzione degli ingressi anticipati generati dalla rimozione del vincolo.
+
+**Risultati principali:**
+
+| Strategia | Periodo | Rendimento | Max DD | Sharpe | Operazioni |
+|---|---|---:|---:|---:|---:|
+| Baseline con Golden Cross | 2015-2026 | +42.475,1% | -42,06% | 1,448 | 35 |
+| Senza Golden Cross | 2015-2026 | +76.073,6% | -48,77% | 1,519 | 40 |
+| Baseline con Golden Cross | 2022-2026 | +101,8% | -27,66% | 0,720 | 16 |
+| Senza Golden Cross | 2022-2026 | +215,6% | -29,76% | 1,039 | 18 |
+
+**Candidata non implementata:** `No Golden Cross + SMA50 rising 7d`.
+
+Questa variante richiede che la SMA50 sia superiore al valore di 7 giorni
+prima. Sul periodo completo ha prodotto +66.937,3%, max drawdown -42,25%,
+Sharpe 1,517, 31 operazioni e win rate 61,3%.
+
+**Motivo del rinvio:** e la migliore candidata prudenziale se in futuro si
+volesse ridurre il drawdown, ma non viene promossa ora per mantenere la
+baseline piu semplice e per catturare interamente il vantaggio storico
+dell'ingresso anticipato senza Golden Cross.
+
 ## 2026-06-11 - Iscrizione visibile nella dashboard
 
 **Decisione:** aggiungere alla dashboard pubblica una card Telegram con deep

@@ -8,11 +8,11 @@ from strategy.signals import build_live_signal_frame, compute_signals, live_cond
 
 
 class SignalRulesTests(unittest.TestCase):
-    def test_buy_keeps_five_conditions_and_allows_rsi_above_65(self) -> None:
+    def test_buy_ignores_golden_cross_and_allows_rsi_above_65(self) -> None:
         df = pd.DataFrame(
             {
                 "Close": [120.0],
-                "SMA50": [110.0],
+                "SMA50": [90.0],
                 "SMA200": [100.0],
                 "RSI": [72.0],
                 "Volume": [2000.0],
@@ -85,9 +85,9 @@ class SignalRulesTests(unittest.TestCase):
         self.assertEqual(result.iloc[-1]["Volume"], 2500.0)
         self.assertEqual(result.iloc[-1]["VolumeAvg20"], 1000.0)
         self.assertTrue(buy_statuses[0])
+        self.assertTrue(buy_statuses[1])
         self.assertTrue(buy_statuses[2])
         self.assertTrue(buy_statuses[3])
-        self.assertTrue(buy_statuses[4])
         self.assertFalse(sell_statuses[0])
 
 

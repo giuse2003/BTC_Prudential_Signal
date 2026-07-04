@@ -25,7 +25,6 @@ tecnici giornalieri, dashboard web e notifiche Telegram.
 ### BUY / ACQUISTA
 
 - Close above SMA200.
-- SMA50 above SMA200.
 - RSI(14) >= 40.
 - Close above the close of 7 days ago.
 - Daily volume above 20-day average volume.

@@ -33,10 +33,9 @@ corrente viene esclusa, per evitare segnali basati su dati parziali.
 Per generare `ACQUISTA` devono essere vere tutte queste condizioni:
 
 1. prezzo `Close` sopra `SMA200`;
-2. `SMA50` sopra `SMA200`;
-3. `RSI(14)` uguale o maggiore di `40`;
-4. prezzo `Close` sopra quello di 7 giorni prima;
-5. volume giornaliero sopra la media dei volumi a 20 giorni.
+2. `RSI(14)` uguale o maggiore di `40`;
+3. prezzo `Close` sopra quello di 7 giorni prima;
+4. volume giornaliero sopra la media dei volumi a 20 giorni.
 
 Nel codice queste regole sono in `strategy/signals.py`, funzione
 `compute_strict_signal`.
@@ -82,13 +81,16 @@ Bitcoin viene trattato come mercato aperto 7 giorni su 7:
 Il progetto calcola anche un punteggio tecnico e un livello di rischio, ma il
 segnale operativo e deciso dalle condizioni strette sopra descritte.
 
-Il punteggio aggiunge componenti per:
+Il punteggio informativo aggiunge componenti per:
 
 - prezzo sopra SMA200;
 - SMA50 sopra SMA200;
 - RSI;
 - volume sopra media;
 - distanza dalla SMA200.
+
+Nota: `SMA50 sopra SMA200` resta una componente del punteggio informativo, ma
+non e piu una condizione operativa obbligatoria per `ACQUISTA`.
 
 Il rischio informativo puo essere:
 

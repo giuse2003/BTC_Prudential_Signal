@@ -12,10 +12,9 @@ const CONDITIONS_MESSAGE = [
   "",
   "Per ACQUISTA devono essere vere tutte queste condizioni:",
   "1. prezzo sopra SMA200;",
-  "2. SMA50 sopra SMA200;",
-  "3. RSI uguale o maggiore di 40;",
-  "4. prezzo sopra quello di 7 giorni prima;",
-  "5. volume sopra media 20 giorni.",
+  "2. RSI uguale o maggiore di 40;",
+  "3. prezzo sopra quello di 7 giorni prima;",
+  "4. volume sopra media 20 giorni.",
   "",
   "Per VENDI deve essere vera questa condizione:",
   "1. prezzo sotto SMA50 per 2 giorni consecutivi.",
@@ -322,7 +321,6 @@ function buildLiveSnapshot(rows, market) {
 
   const buy = [
     { label: "prezzo sopra SMA200", passed: market.priceUsd > sma200 },
-    { label: "SMA50 sopra SMA200", passed: sma50 > sma200 },
     { label: "RSI uguale o maggiore di 40", passed: rsi >= 40 },
     {
       label: "prezzo sopra quello di 7 giorni prima",
@@ -461,7 +459,6 @@ function deriveConditionGroups(status) {
   return {
     buy: [
       { label: "prezzo sopra SMA200", passed: close > sma200 },
-      { label: "SMA50 sopra SMA200", passed: sma50 > sma200 },
       { label: "RSI uguale o maggiore di 40", passed: rsi >= 40 },
       {
         label: "prezzo sopra quello di 7 giorni prima",

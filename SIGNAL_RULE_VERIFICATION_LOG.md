@@ -12,7 +12,7 @@ capire perche le regole attuali sono state scelte e come replicare le prove.
 - Fonte dati: Yahoo Finance tramite `yfinance`.
 - Serie principale: `BTC-USD`.
 - Frequenza: candele giornaliere chiuse.
-- Periodo usato in questa verifica: dal `2015-01-01` al `2026-06-20`.
+- Periodo usato nella verifica piu recente: dal `2015-01-01` al `2026-07-03`.
 - Calendario: crypto a 365 giorni annui.
 - Backtest: il segnale calcolato sulla chiusura del giorno `t` viene applicato
   dal giorno successivo, per evitare look-ahead bias.
@@ -32,10 +32,9 @@ python -m unittest discover -s tests -v
 Il segnale `ACQUISTA` scatta solo se sono vere tutte queste condizioni:
 
 1. Close sopra SMA200.
-2. SMA50 sopra SMA200.
-3. RSI(14) maggiore o uguale a 40.
-4. Close sopra il Close di 7 giorni prima.
-5. Volume giornaliero sopra la media volume a 20 giorni.
+2. RSI(14) maggiore o uguale a 40.
+3. Close sopra il Close di 7 giorni prima.
+4. Volume giornaliero sopra la media volume a 20 giorni.
 
 ### VENDI
 
@@ -253,11 +252,79 @@ Interpretazione:
 - In trend rialzisti rapidi e continui il Buy & Hold puo temporaneamente fare
   meglio perche resta sempre esposto.
 
+## Verifica 10 - Rimozione della Golden Cross dall'acquisto
+
+Ipotesi testata: rimuovere dalla baseline il vincolo `SMA50 > SMA200`
+nell'acquisto, mantenendo inalterate tutte le altre condizioni:
+
+1. Close sopra SMA200.
+2. RSI(14) maggiore o uguale a 40.
+3. Close sopra il Close di 7 giorni prima.
+4. Volume giornaliero sopra la media volume a 20 giorni.
+
+La vendita resta invariata: Close sotto SMA50 per 2 giorni consecutivi.
+
+### Periodo completo 2015-01-01 / 2026-07-03
+
+| Strategia | Rendimento totale | Max drawdown | Sharpe | Operazioni | Win rate | Esposizione |
+|---|---:|---:|---:|---:|---:|---:|
+| Baseline con Golden Cross | +42.475,1% | -42,06% | 1,448 | 35 | 51,4% | 38,5% |
+| Senza Golden Cross | +76.073,6% | -48,77% | 1,519 | 40 | 52,5% | 45,0% |
+
+### Periodo recente 2022-01-01 / 2026-07-03
+
+| Strategia | Rendimento totale | Max drawdown | Sharpe | Operazioni | Win rate | Esposizione |
+|---|---:|---:|---:|---:|---:|---:|
+| Baseline con Golden Cross | +101,8% | -27,66% | 0,720 | 16 | 37,5% | 31,4% |
+| Senza Golden Cross | +215,6% | -29,76% | 1,039 | 18 | 44,4% | 37,7% |
+| Buy & Hold | +31,2% | -66,89% | n/d | n/d | n/d | 100,0% |
+
+### Test di robustezza effettuati
+
+- Sensibilita ai costi: la variante senza Golden Cross resta superiore anche
+  simulando costi per cambio esposizione da 5 a 200 bps.
+- Sensibilita alla data di partenza: partendo da ogni anno dal 2015 al 2025,
+  la variante senza Golden Cross batte la baseline sia per rendimento totale
+  sia per Sharpe.
+- Finestre rolling: sulle finestre mobili a 3 anni la variante batte la
+  baseline nel 74,3% dei casi per rendimento; sulle finestre a 5 anni nel
+  77,8% dei casi. Il drawdown e pero spesso peggiore, quindi il miglioramento
+  non e gratuito dal punto di vista prudenziale.
+- Attribuzione ingressi anticipati: la rimozione della Golden Cross aggiunge
+  130 giorni con segnale `ACQUISTA` nel periodo completo, ma solo 5 operazioni
+  effettive in piu. Dal 2022 aggiunge 55 giorni `ACQUISTA` e solo 2 operazioni
+  effettive in piu.
+
+### Variante prudenziale non implementata
+
+La candidata piu interessante non implementata e:
+
+`No Golden Cross + SMA50 rising 7d`
+
+Condizione aggiuntiva: la SMA50 deve essere superiore al valore di 7 giorni
+prima. Questa variante non richiede la Golden Cross, ma pretende che la media
+veloce stia gia risalendo.
+
+Risultato sul periodo completo:
+
+| Strategia | Rendimento totale | Max drawdown | Sharpe | Operazioni | Win rate |
+|---|---:|---:|---:|---:|---:|
+| Baseline con Golden Cross | +42.475,1% | -42,06% | 1,448 | 35 | 51,4% |
+| Senza Golden Cross | +76.073,6% | -48,77% | 1,519 | 40 | 52,5% |
+| No GC + SMA50 rising 7d | +66.937,3% | -42,25% | 1,517 | 31 | 61,3% |
+
+Motivo della mancata implementazione: la baseline scelta privilegia la
+semplicita e il maggiore rendimento storico della rimozione pura della Golden
+Cross. La variante `SMA50 rising 7d` resta il rimpiazzo preferito se in futuro
+si volesse tornare a un profilo piu prudenziale: conserva quasi tutto il
+controllo del drawdown della vecchia baseline, ma rinuncia a una parte del
+rendimento della rimozione pura.
+
 ## Decisione finale operativa
 
-La strategia implementata nel progetto resta:
+La strategia implementata nel progetto e:
 
-- `ACQUISTA` con le 5 condizioni rialziste complete.
+- `ACQUISTA` senza vincolo Golden Cross, con 4 condizioni rialziste.
 - RSI di acquisto `>= 40`, senza tetto massimo a 65.
 - `VENDI` se il prezzo chiude sotto SMA50 per 2 giorni consecutivi.
 - Nessuna vecchia condizione multipla di vendita.

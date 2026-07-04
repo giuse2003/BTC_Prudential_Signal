@@ -98,7 +98,6 @@ def compute_strict_signal(df: pd.DataFrame) -> pd.DataFrame:
 
     buy_cond = (
         (close > sma200) &
-        (sma50 > sma200) &
         (rsi >= 40) &
         (close > close_momentum) &
         (volume > volume_avg20)
@@ -260,7 +259,6 @@ def live_condition_statuses(
 
     buy_statuses = [
         bool(row["Close"] > row["SMA200"]),
-        bool(row["SMA50"] > row["SMA200"]),
         bool(row["RSI"] >= 40),
         bool(row["Close"] > row[momentum_col]),
         bool(row["Volume"] > row["VolumeAvg20"]),
@@ -337,7 +335,6 @@ def _buy_condition_statuses(df_with_signals: pd.DataFrame) -> list[bool]:
     momentum_col = f"Close_{CFG.momentum_days}d_ago"
     return [
         bool(row["Close"] > row["SMA200"]),
-        bool(row["SMA50"] > row["SMA200"]),
         bool(row["RSI"] >= 40),
         bool(row["Close"] > row[momentum_col]),
         bool(row["Volume"] > row["VolumeAvg20"]),

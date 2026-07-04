@@ -5,16 +5,16 @@
   "risk_level": "ALTO",
   "last_update": "2026-07-04 21:01:40",
   "status": "Attivo",
-  "rsi": 39.11559357087907,
-  "sma50": 68099.12140625,
-  "sma200": 75205.26369140625,
-  "atr": 2159.436150054113,
-  "volume": 37994319872.0,
-  "volume_avg20": 27730356355.45,
-  "close_7d_ago": 60995.1328125,
-  "close_last_candle": 60427.75,
-  "previous_close": 58558.859375,
-  "previous_sma50": 68500.11625,
+  "rsi": 47.844335463000206,
+  "sma50": 67364.66421875,
+  "sma200": 74950.31642578125,
+  "atr": 2242.8404606402264,
+  "volume": 26131813598.0,
+  "volume_avg20": 28846012723.25,
+  "close_7d_ago": 60016.4296875,
+  "close_last_candle": 62544.19921875,
+  "previous_close": 61485.30078125,
+  "previous_sma50": 67734.805234375,
   "below_sma50_2d": true,
   "condition_groups": {
     "buy": [
@@ -23,20 +23,16 @@
         "passed": false
       },
       {
-        "label": "SMA50 sopra SMA200",
-        "passed": false
-      },
-      {
         "label": "RSI uguale o maggiore di 40",
-        "passed": false
+        "passed": true
       },
       {
         "label": "prezzo sopra quello di 7 giorni prima",
-        "passed": false
+        "passed": true
       },
       {
         "label": "volume sopra media 20 giorni",
-        "passed": true
+        "passed": false
       }
     ],
     "sell": [

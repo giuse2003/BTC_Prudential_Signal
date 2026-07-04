@@ -17,10 +17,6 @@
         "passed": false
       },
       {
-        "label": "SMA50 live sopra SMA200 live",
-        "passed": false
-      },
-      {
         "label": "RSI live uguale o maggiore di 40",
         "passed": true
       },
