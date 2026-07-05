@@ -5,11 +5,40 @@ from unittest.mock import Mock, patch
 
 import requests
 
-from hourly_monitor import should_notify, broadcast_to_subscribers
+from hourly_monitor import (
+    broadcast_to_subscribers,
+    should_force_daily_download,
+    should_notify,
+)
 from state.state_store import MonitorState
 
 
 class HourlyMonitorNotificationTests(unittest.TestCase):
+    def test_forces_daily_download_until_expected_candle_is_processed(self) -> None:
+        self.assertTrue(
+            should_force_daily_download(
+                MonitorState(last_processed_candle_date="2026-07-03"),
+                expected_closed_candle_date="2026-07-04",
+            )
+        )
+
+    def test_uses_cache_after_expected_candle_is_processed(self) -> None:
+        self.assertFalse(
+            should_force_daily_download(
+                MonitorState(last_processed_candle_date="2026-07-04"),
+                expected_closed_candle_date="2026-07-04",
+            )
+        )
+
+    def test_manual_run_forces_daily_download_even_after_processing(self) -> None:
+        self.assertTrue(
+            should_force_daily_download(
+                MonitorState(last_processed_candle_date="2026-07-04"),
+                expected_closed_candle_date="2026-07-04",
+                is_manual_run=True,
+            )
+        )
+
     def test_first_run_saves_baseline_without_notification(self) -> None:
         must_notify, reason = should_notify(
             MonitorState(),

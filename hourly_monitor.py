@@ -58,6 +58,21 @@ def should_notify(state: MonitorState, signal: str, conditions_key: str) -> tupl
     return False, "segnale e condizioni invariati"
 
 
+def should_force_daily_download(
+    state: MonitorState,
+    expected_closed_candle_date: str,
+    is_manual_run: bool = False,
+) -> bool:
+    """
+    Forza Yahoo finche la candela giornaliera attesa non risulta processata.
+
+    I run schedulati avvengono ogni 10 minuti. Limitare il download al solo
+    minuto 30 puo lasciare dashboard e grafico bloccati se quel tentativo
+    fallisce o Yahoo non ha ancora pubblicato dati consistenti.
+    """
+    return is_manual_run or state.last_processed_candle_date != expected_closed_candle_date
+
+
 def _parse_iso_utc(value: str | None) -> datetime | None:
     if not value:
         return None
@@ -192,18 +207,13 @@ def main() -> None:
     # 1) Stato precedente
     state = load_state(state_path)
     expected_closed_candle_date = (now_utc.date() - timedelta(days=1)).isoformat()
-    should_poll_yahoo_now = now_utc.minute == 30 or is_manual_run
-    force_daily_download = (
-        state.last_processed_candle_date != expected_closed_candle_date
-        and should_poll_yahoo_now
+    force_daily_download = should_force_daily_download(
+        state,
+        expected_closed_candle_date,
+        is_manual_run=is_manual_run,
     )
     if force_daily_download:
         print(f"Controllo Yahoo per cercare la candela chiusa attesa: {expected_closed_candle_date}")
-    elif state.last_processed_candle_date != expected_closed_candle_date:
-        print(
-            f"Candela attesa {expected_closed_candle_date} non ancora processata. "
-            "Questo run aggiorna il LIVE; Yahoo verra forzato al minuto 30."
-        )
     else:
         print(
             f"Candela attesa {expected_closed_candle_date} gia processata. "

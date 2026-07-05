@@ -108,6 +108,10 @@ Controllare:
 - `.github/workflows/hourly-monitor.yml`
   - deve continuare a copiare `reports/status.json`,
     `reports/chart-data.json` e `reports/live-status.json` in `docs/`.
+  - se la candela daily attesa non e ancora processata, il monitor deve
+    ritentare il download Yahoo a ogni run schedulato fino a quando il daily
+    si aggiorna. Un prezzo live aggiornato con `chart-data.json` fermo indica
+    disallineamento tra dashboard e dati daily.
 - `.github/workflows/telegram-command.yml`
   - se cambia la lista dei comandi, aggiornare il menu Telegram.
 
