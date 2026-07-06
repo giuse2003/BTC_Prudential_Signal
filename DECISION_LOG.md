@@ -2,6 +2,26 @@
 
 Registro sintetico delle decisioni che influenzano segnali e metriche.
 
+## 2026-07-06 - Deduplica notifiche Telegram su chiave condizioni
+
+**Decisione:** le notifiche automatiche `DAILY` partono solo quando cambia la
+chiave condizioni `BUY:xxxx|SELL:x`.
+
+**Motivazione:** l'utente deve ricevere un nuovo messaggio solo quando cambia
+almeno una delle 4 condizioni di acquisto o l'unica condizione di vendita. Se
+la chiave resta uguale per piu giorni, l'ultimo messaggio Telegram rimane lo
+stato valido; l'utente puo comunque interrogare il bot con `/segnale`.
+
+**Impatto:**
+
+- primo stato senza chiave precedente: invia la prima notifica;
+- `BUY:1111|SELL:0` ripetuto: nessun nuovo invio;
+- `BUY:1111|SELL:0` -> `BUY:1101|SELL:0`: invia `MANTIENI`;
+- `BUY:1101|SELL:0` ripetuto: nessun nuovo invio;
+- `BUY:1101|SELL:0` -> `BUY:0000|SELL:1`: invia `VENDI`;
+- il workflow manuale `workflow_dispatch` e il comando `/segnale` restano
+  richieste esplicite e rispondono sempre.
+
 ## 2026-07-04 - Rimozione Golden Cross dalla baseline
 
 **Decisione:** rimuovere `SMA50 > SMA200` dalle condizioni operative di
@@ -73,7 +93,8 @@ iscrizioni in Supabase.
 - gruppi e supergruppi vengono ignorati;
 - il numero di cellulare non viene richiesto;
 - la service role resta nelle variabili protette del backend;
-- la notifica collettiva al cambio segnale o rischio resta nella Fase 4.
+- la notifica collettiva verra rifinita nella Fase 4; la regola corrente e
+  deduplicare sulla chiave condizioni `BUY:xxxx|SELL:x`.
 
 ## 2026-06-09 - Webhook Render attivato
 

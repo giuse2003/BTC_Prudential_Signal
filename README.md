@@ -71,8 +71,8 @@ costituiscono consulenza finanziaria.
 - Backtest della strategia rispetto al Buy & Hold.
 - Report testuale, CSV storico, serie equity e grafico.
 - Dashboard locale e dashboard pubblicabile con GitHub Pages.
-- Monitor schedulato con GitHub Actions e notifiche Telegram solo su cambio
-  segnale o cambio condizioni.
+- Monitor schedulato con GitHub Actions e notifiche Telegram solo quando
+  cambia la chiave condizioni `BUY:xxxx|SELL:x`.
 - Comando Telegram `/segnale` servito in tempo reale da Cloudflare Worker.
 - Iscrizioni Telegram persistenti su Supabase tramite `/iscrivimi` e
   `/disiscrivimi`.
@@ -180,8 +180,18 @@ Il workflow `.github/workflows/hourly-monitor.yml`:
 2. rimuove la candela giornaliera UTC ancora aperta;
 3. calcola segnale e rischio sull'ultima candela chiusa;
 4. aggiorna la dashboard;
-5. invia Telegram solo quando cambia il segnale o cambia almeno una condizione
-   operativa mostrata nel messaggio.
+5. invia Telegram solo quando cambia la chiave condizioni `BUY:xxxx|SELL:x`.
+
+Il monitor automatico non reinvia lo stesso stato ogni giorno. Esempio:
+
+- giorno 1 `BUY:1111|SELL:0`: invia `ACQUISTA`;
+- giorno 2 `BUY:1111|SELL:0`: non invia nulla;
+- giorno 3 `BUY:1101|SELL:0`: invia `MANTIENI`;
+- giorni successivi con `BUY:1101|SELL:0`: non invia nulla;
+- quando arriva `BUY:0000|SELL:1`: invia `VENDI`.
+
+Il comando manuale `/segnale` resta sempre disponibile e risponde anche se le
+condizioni non sono cambiate.
 
 La pianificazione GitHub Actions e best effort e puo subire ritardi.
 

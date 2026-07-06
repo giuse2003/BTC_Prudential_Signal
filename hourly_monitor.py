@@ -46,16 +46,13 @@ LIVE_ALERT_COOLDOWN_HOURS = 2
 
 
 def should_notify(state: MonitorState, signal: str, conditions_key: str) -> tuple[bool, str]:
-    if state.last_signal is None or state.last_conditions_key is None:
-        return False, "baseline iniziale salvata senza notifica"
-
-    if signal != state.last_signal:
-        return True, f"segnale cambiato: {state.last_signal} -> {signal}"
+    if state.last_conditions_key is None:
+        return True, f"prima notifica condizioni: {conditions_key}"
 
     if conditions_key != state.last_conditions_key:
         return True, "condizioni operative cambiate"
 
-    return False, "segnale e condizioni invariati"
+    return False, "condizioni operative invariate"
 
 
 def should_force_daily_download(
@@ -285,7 +282,7 @@ def main() -> None:
     # 4) Eventi:
     # - workflow manuale: invia sempre, come una richiesta esplicita /segnale
     # - workflow schedulato: processa una candela giornaliera una sola volta
-    #   e invia DAILY se cambia almeno una condizione o il segnale finale.
+    #   e invia DAILY solo se cambia la chiave condizioni BUY:xxxx|SELL:x.
     if new_candle_available:
         scheduled_notify, notify_reason = should_notify(state, signal, conditions_key)
     else:

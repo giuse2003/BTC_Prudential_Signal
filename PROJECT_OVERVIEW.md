@@ -411,8 +411,8 @@ Funzioni:
 4. genera `reports/status.json`;
 5. copia lo stato in `docs/status.json`;
 6. committa e pusha l'aggiornamento della dashboard;
-7. invia una notifica Telegram solo se cambia il segnale o cambia almeno una
-   condizione operativa mostrata nel messaggio;
+7. invia una notifica Telegram solo se cambia la chiave condizioni
+   `BUY:xxxx|SELL:x`;
 8. salva lo stato in cache `.state`.
 
 Nota: al momento le notifiche automatiche del monitor usano il secret
@@ -664,12 +664,14 @@ git push
   macroeconomici o fondamentali.
 - Il prezzo spot Coinbase serve per visualizzazione, non per decidere il
   segnale.
-- Le notifiche automatiche ignorano le oscillazioni del solo prezzo spot: il
-  messaggio parte solo se cambia `Segnale` oppure cambia il vero/falso di una
-  condizione ACQUISTA/VENDI.
-- Il broadcast automatico a tutti gli iscritti Supabase non e ancora
-  implementato; il monitor automatico usa il `TELEGRAM_CHAT_ID` configurato nei
-  GitHub Secrets.
+- Le notifiche automatiche ignorano le oscillazioni del solo prezzo spot e non
+  ripetono lo stesso stato ogni giorno: il messaggio parte solo se cambia la
+  chiave condizioni `BUY:xxxx|SELL:x`, composta da 4 condizioni di acquisto e
+  1 condizione di vendita.
+- Il comando manuale `/segnale` risponde sempre con lo stato corrente, anche se
+  la chiave condizioni non e cambiata.
+- Il broadcast automatico invia agli iscritti Supabase attivi ed esclude il
+  `TELEGRAM_CHAT_ID` amministratore quando e gia stato notificato direttamente.
 - Alcuni file legacy Render/FastAPI restano nel repository come fallback
   storico ma non rappresentano il deployment principale attuale.
 

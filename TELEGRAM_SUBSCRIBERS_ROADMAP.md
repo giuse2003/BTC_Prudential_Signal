@@ -27,7 +27,7 @@ Bot Telegram
 Database Supabase
         |
         v
-Notifica agli iscritti solo quando cambia segnale o rischio
+Notifica agli iscritti solo quando cambia `BUY:xxxx|SELL:x`
 ```
 
 ## Decisioni gia prese
@@ -38,7 +38,8 @@ Notifica agli iscritti solo quando cambia segnale o rischio
 - Il comando di iscrizione sara `/iscrivimi`.
 - Il comando di revoca sara `/disiscrivimi`.
 - `/segnale` continuera a mostrare il segnale corrente.
-- Le notifiche collettive partiranno solo al cambio di segnale o rischio.
+- Le notifiche collettive partiranno solo quando cambia la chiave condizioni
+  `BUY:xxxx|SELL:x`.
 - Non verra inviato un messaggio collettivo ogni ora senza variazioni.
 - Il database persistente previsto e Supabase.
 - Il progetto Supabase e condiviso anche con ETH ed e stato rinominato
@@ -68,7 +69,8 @@ Notifica agli iscritti solo quando cambia segnale o rischio
   aggiornare `/segnale`.
 - Implementare the repository degli iscritti.
 - Aggiungere il pulsante alla dashboard.
-- Modificare l'invio automatico al cambio di segnale o rischio.
+- Modificare l'invio automatico per deduplicare sulla chiave condizioni
+  `BUY:xxxx|SELL:x`.
 - Gestire utenti che bloccano il bot o chat non piu raggiungibili.
 - Aggiungere test automatici.
 - Aggiornare documentazione, file di contesto e questa roadmap.
@@ -138,7 +140,7 @@ La card deve contenere:
 ```text
 NOTIFICHE TELEGRAM
 
-Ricevi un avviso solo quando cambia il segnale BTC o il livello di rischio.
+Ricevi un avviso solo quando cambia una condizione operativa BTC.
 
 Iscritti attivi: <numero>
 
@@ -251,7 +253,8 @@ Non modificare:
 ### Fase 4 - Invio collettivo
 
 - [x] **4.1 Codex:** leggere gli iscritti attivi da Supabase.
-- [x] **4.2 Codex:** inviare notifiche solo al cambio di segnale o rischio.
+- [x] **4.2 Codex:** inviare notifiche solo al cambio della chiave condizioni
+  `BUY:xxxx|SELL:x`.
 - [x] **4.3 Codex:** mantenere la notifica amministratore compatibile.
 - [x] **4.4 Codex:** gestire rate limit Telegram e invii parzialmente falliti.
 - [x] **4.5 Codex:** disattivare iscritti che bloccano il bot.
@@ -338,7 +341,8 @@ La funzionalita sara considerata completata quando:
 
 - un visitatore apre il bot dalla dashboard;
 - `/iscrivimi` registra il consenso senza duplicati;
-- l'iscritto riceve una notifica quando cambia segnale o rischio;
+- l'iscritto riceve una notifica quando cambia la chiave condizioni
+  `BUY:xxxx|SELL:x`;
 - non riceve notifiche orarie senza variazioni;
 - `/disiscrivimi` interrompe gli invii;
 - il proprietario continua a ricevere e usare le funzioni amministrative;

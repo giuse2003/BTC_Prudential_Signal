@@ -118,6 +118,15 @@ Controllare:
 Dopo il push, verificare che il workflow `Hourly BTC monitor (Telegram)` non
 riporti errori e che pubblichi JSON coerenti.
 
+La deduplica delle notifiche automatiche deve restare basata esclusivamente
+sulla chiave condizioni `BUY:xxxx|SELL:x`:
+
+- primo stato senza chiave precedente: invia;
+- chiave invariata: non invia, anche se passa un altro giorno;
+- chiave variata: invia il nuovo `ACQUISTA`, `MANTIENI` o `VENDI`;
+- `/segnale` e `workflow_dispatch` restano richieste esplicite e rispondono
+  sempre.
+
 ## 6. Documentazione decisionale
 
 Aggiornare sempre:
@@ -145,7 +154,8 @@ Aggiornare o aggiungere test per:
 - webhook/command legacy in `tests/test_telegram_webhook.py` e
   `tests/test_telegram_commands.py`;
 - Worker Cloudflare in `tests/test_cloudflare_worker_conditions.py`;
-- eventuali chiavi condizioni tipo `BUY:0000|SELL:1` nei test dello stato.
+- chiavi condizioni tipo `BUY:0000|SELL:1` nei test dello stato e della
+  deduplica notifiche.
 
 Comandi utili:
 

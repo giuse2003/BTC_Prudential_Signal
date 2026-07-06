@@ -328,8 +328,10 @@ La strategia implementata nel progetto e:
 - RSI di acquisto `>= 40`, senza tetto massimo a 65.
 - `VENDI` se il prezzo chiude sotto SMA50 per 2 giorni consecutivi.
 - Nessuna vecchia condizione multipla di vendita.
-- Notifiche automatiche Telegram solo quando cambia il segnale o cambia lo
-  stato delle condizioni; `/segnale` resta sempre disponibile su richiesta.
+- Notifiche automatiche Telegram solo quando cambia la chiave condizioni
+  `BUY:xxxx|SELL:x`, cioe il vero/falso delle 4 condizioni di acquisto o
+  dell'unica condizione di vendita; `/segnale` resta sempre disponibile su
+  richiesta.
 
 Questa configurazione e stata scelta perche, nei test storici effettuati, ha
 offerto il miglior equilibrio tra rendimento, controllo del drawdown, numero di

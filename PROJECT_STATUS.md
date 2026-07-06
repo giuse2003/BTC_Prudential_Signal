@@ -19,6 +19,8 @@ dashboard e notificare variazioni rilevanti tramite Telegram.
   riepilogativa.
 - Avvio manuale GitHub Actions configurato per inviare un'anteprima reale
   della notifica operativa.
+- Notifiche automatiche DAILY inviate solo quando cambia la chiave condizioni
+  `BUY:xxxx|SELL:x`; `/segnale` resta sempre interrogabile manualmente.
 - Webhook FastAPI pubblicato e operativo su Render:
   `https://btc-prudential-signal.onrender.com`.
 - Webhook Telegram registrato su
@@ -49,7 +51,8 @@ dashboard e notificare variazioni rilevanti tramite Telegram.
   informativo, ma non decide piu il segnale operativo di acquisto.
 - `VENDI` resta invariato: Close sotto SMA50 per 2 giorni consecutivi.
 - Dashboard, Telegram, Cloudflare Worker e JSON di stato mostrano 4 condizioni
-  di acquisto.
+  di acquisto e 1 condizione di vendita. La stessa chiave `BUY:xxxx|SELL:x`
+  decide se inviare una nuova notifica automatica.
 - La variante prudenziale `No Golden Cross + SMA50 rising 7d` e documentata in
   `SIGNAL_RULE_VERIFICATION_LOG.md` come possibile rimpiazzo futuro.
 
