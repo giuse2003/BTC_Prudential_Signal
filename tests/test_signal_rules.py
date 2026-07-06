@@ -4,7 +4,12 @@ import unittest
 
 import pandas as pd
 
-from strategy.signals import build_live_signal_frame, compute_signals, live_condition_statuses
+from strategy.signals import (
+    build_live_signal_frame,
+    compute_signals,
+    condition_state_key,
+    live_condition_statuses,
+)
 
 
 class SignalRulesTests(unittest.TestCase):
@@ -58,6 +63,25 @@ class SignalRulesTests(unittest.TestCase):
         result = compute_signals(df)
 
         self.assertEqual(result.iloc[-1]["Segnale"], "MANTIENI")
+
+    def test_condition_state_key_tracks_four_buy_conditions_and_one_sell_condition(self) -> None:
+        df = pd.DataFrame(
+            {
+                "Close": [120.0, 119.0],
+                "SMA50": [130.0, 128.0],
+                "SMA200": [100.0, 100.0],
+                "RSI": [55.0, 56.0],
+                "Volume": [800.0, 850.0],
+                "VolumeAvg20": [1000.0, 1000.0],
+                "Close_7d_ago": [110.0, 111.0],
+            }
+        )
+
+        result = compute_signals(df)
+        key = condition_state_key(result)
+
+        self.assertRegex(key, r"^BUY:[01]{4}\|SELL:[01]$")
+        self.assertEqual(key, "BUY:1110|SELL:1")
 
     def test_live_signal_recomputes_indicators_with_live_price_and_volume(self) -> None:
         dates = pd.date_range("2026-01-01", periods=210, freq="D")

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import unittest
+from pathlib import Path
 from unittest.mock import Mock, patch
 
 import requests
@@ -120,6 +121,34 @@ class BroadcastToSubscribersTests(unittest.TestCase):
 
     @patch("hourly_monitor.SupabaseSubscriberStore")
     @patch("hourly_monitor.send_telegram_message")
+    def test_broadcast_skips_excluded_chat_id(
+        self,
+        mock_send: Mock,
+        mock_store_cls: Mock,
+    ) -> None:
+        mock_store = Mock()
+        mock_store_cls.return_value = mock_store
+
+        from telegram_subscribers import TelegramSubscriber
+        mock_store.get_active_subscribers.return_value = [
+            TelegramSubscriber(telegram_chat_id=111, telegram_user_id=1, telegram_username="admin", telegram_first_name="A", telegram_language_code="it"),
+            TelegramSubscriber(telegram_chat_id=222, telegram_user_id=2, telegram_username="u2", telegram_first_name="B", telegram_language_code="it"),
+        ]
+
+        broadcast_to_subscribers(
+            "bot-token",
+            "https://url.supabase.co",
+            "key",
+            "Hello world",
+            excluded_chat_ids={"111"},
+        )
+
+        self.assertEqual(mock_send.call_count, 1)
+        self.assertEqual(mock_send.call_args[0][0].chat_id, "222")
+        mock_store.update_delivery_status.assert_called_once_with(222, success=True)
+
+    @patch("hourly_monitor.SupabaseSubscriberStore")
+    @patch("hourly_monitor.send_telegram_message")
     def test_broadcast_handles_blocked_user_and_general_error(
         self,
         mock_send: Mock,
@@ -158,6 +187,21 @@ class BroadcastToSubscribersTests(unittest.TestCase):
         mock_store.update_delivery_status.assert_any_call(
             333, success=False, error_msg="Network issue", block_detected=False
         )
+
+
+class WorkflowConcurrencyTests(unittest.TestCase):
+    def test_hourly_monitor_workflow_serializes_runs(self) -> None:
+        workflow = (
+            Path(__file__)
+            .resolve()
+            .parents[1]
+            .joinpath(".github", "workflows", "hourly-monitor.yml")
+            .read_text(encoding="utf-8")
+        )
+
+        self.assertIn("concurrency:", workflow)
+        self.assertIn("group: btc-signal-guard-monitor", workflow)
+        self.assertIn("cancel-in-progress: false", workflow)
 
 
 if __name__ == "__main__":

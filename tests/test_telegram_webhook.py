@@ -115,8 +115,8 @@ class TelegramWebhookTests(unittest.TestCase):
         self.assertTrue(message.startswith("BTC Signal Guard DAILY!"))
         self.assertIn("Segnale: MANTIENI", message)
         self.assertIn("54.169 EUR", message)
-        self.assertIn("âœ… 3.", message)
-        self.assertIn("VENDI:\nâœ… 1.", message)
+        self.assertIn("✅ 3.", message)
+        self.assertIn("VENDI:\n✅ 1.", message)
         self.assertNotIn("Rischio", message)
         self.assertNotIn("USD", message)
 
@@ -142,10 +142,10 @@ class TelegramWebhookTests(unittest.TestCase):
         self.assertTrue(message.startswith("BTC Signal Guard LIVE!"))
         self.assertIn("Segnale: ACQUISTA", message)
         self.assertIn("130 EUR", message)
-        self.assertIn("âœ… 1.", message)
-        self.assertIn("âœ… 2.", message)
-        self.assertIn("âœ… 3.", message)
-        self.assertIn("âœ… 4.", message)
+        self.assertIn("✅ 1.", message)
+        self.assertIn("✅ 2.", message)
+        self.assertIn("✅ 3.", message)
+        self.assertIn("✅ 4.", message)
 
     @patch("telegram_webhook.requests.get")
     def test_fetches_status_from_mandatory_github_raw_url(self, mock_get: Mock) -> None:

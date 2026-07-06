@@ -133,6 +133,7 @@ def broadcast_to_subscribers(
     supabase_url: str,
     supabase_key: str,
     text: str,
+    excluded_chat_ids: set[str] | None = None,
 ) -> None:
     """
     Invia il messaggio a tutti gli iscritti attivi memorizzati su Supabase.
@@ -147,16 +148,24 @@ def broadcast_to_subscribers(
 
     print(f"Avvio broadcast a {len(subscribers)} iscritti attivi...")
 
-    for i, sub in enumerate(subscribers):
+    excluded_chat_ids = excluded_chat_ids or set()
+    sent_count = 0
+
+    for sub in subscribers:
         sub_chat_id = sub.telegram_chat_id
+        if str(sub_chat_id) in excluded_chat_ids:
+            print(f"Salto chat_id {sub_chat_id}: gia notificato direttamente.")
+            continue
+
         cfg = TelegramConfig(bot_token=bot_token, chat_id=str(sub_chat_id))
         
         # Ritardo per non superare il rate limit (max 30 msg/sec)
-        if i > 0:
+        if sent_count > 0:
             time.sleep(0.05)
             
         try:
             send_telegram_message(cfg, text)
+            sent_count += 1
             print(f"Notifica inviata con successo a chat_id {sub_chat_id}")
             try:
                 store.update_delivery_status(sub_chat_id, success=True)
@@ -301,7 +310,13 @@ def main() -> None:
 
         if supabase_url and supabase_key:
             try:
-                broadcast_to_subscribers(bot_token, supabase_url, supabase_key, msg)
+                broadcast_to_subscribers(
+                    bot_token,
+                    supabase_url,
+                    supabase_key,
+                    msg,
+                    excluded_chat_ids={str(chat_id)},
+                )
             except Exception as e:
                 print(f"Errore durante il broadcast DAILY: {e}")
         else:
@@ -370,7 +385,13 @@ def main() -> None:
 
                 if supabase_url and supabase_key:
                     try:
-                        broadcast_to_subscribers(bot_token, supabase_url, supabase_key, live_msg)
+                        broadcast_to_subscribers(
+                            bot_token,
+                            supabase_url,
+                            supabase_key,
+                            live_msg,
+                            excluded_chat_ids={str(chat_id)},
+                        )
                     except Exception as e:
                         print(f"Errore durante il broadcast LIVE: {e}")
                 else:
