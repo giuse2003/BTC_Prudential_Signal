@@ -1,14 +1,14 @@
 {
   "signal": "VENDI",
-  "price_usd": 62028.0,
-  "price_eur": 54314.0,
-  "volume_24h_usd": 29062806830.0,
-  "last_update": "2026-07-08 17:58:33 UTC",
+  "price_usd": 62200.0,
+  "price_eur": 54428.0,
+  "volume_24h_usd": 28331139999.0,
+  "last_update": "2026-07-08 19:40:06 UTC",
   "status": "Attivo",
-  "rsi": 45.44152060846898,
-  "sma50": 65917.165234375,
-  "sma200": 74350.61125,
-  "atr": 2098.0064319080643,
+  "rsi": 46.04898997832936,
+  "sma50": 65920.605234375,
+  "sma200": 74351.47125,
+  "atr": 2085.72071762235,
   "risk_level": "ALTO",
   "condition_groups": {
     "buy": [
@@ -26,7 +26,7 @@
       },
       {
         "label": "volume 24h live sopra media 20 giorni",
-        "passed": true
+        "passed": false
       }
     ],
     "sell": [
