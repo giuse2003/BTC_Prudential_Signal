@@ -1,20 +1,20 @@
 {
-  "price_usd": 64515.875,
-  "price_eur": 56294.73,
+  "price_usd": 64655.74,
+  "price_eur": 56381.775,
   "signal": "MANTIENI",
   "risk_level": "ALTO",
-  "last_update": "2026-07-16 04:21:15",
+  "last_update": "2026-07-16 06:41:23",
   "status": "Attivo",
-  "rsi": 56.202136204604784,
-  "sma50": 64334.879921875,
-  "sma200": 73628.7684765625,
-  "atr": 2019.394102310381,
-  "volume": 29841287318.0,
-  "volume_avg20": 28376132583.2,
-  "close_7d_ago": 63297.39453125,
-  "close_last_candle": 64956.11328125,
-  "previous_close": 62239.12109375,
-  "previous_sma50": 64581.35625,
+  "rsi": 55.16612148634716,
+  "sma50": 64112.612734375,
+  "sma200": 73513.3195703125,
+  "atr": 1951.2069119667824,
+  "volume": 27029791676.0,
+  "volume_avg20": 27696370931.1,
+  "close_7d_ago": 62257.57421875,
+  "close_last_candle": 64712.375,
+  "previous_close": 64956.11328125,
+  "previous_sma50": 64334.879921875,
   "below_sma50_2d": false,
   "condition_groups": {
     "buy": [
@@ -32,7 +32,7 @@
       },
       {
         "label": "volume sopra media 20 giorni",
-        "passed": true
+        "passed": false
       }
     ],
     "sell": [
