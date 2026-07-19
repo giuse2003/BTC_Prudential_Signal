@@ -2,6 +2,21 @@
 
 Registro sintetico delle decisioni che influenzano segnali e metriche.
 
+## 2026-07-19 - Grafico dashboard a candele giornaliere
+
+**Decisione:** sostituire la linea prezzo con candele OHLC rosse e verdi,
+mantenendo SMA50, SMA200, RSI e volumi.
+
+**Fonti e priorita:**
+
+- Yahoo Finance fornisce tutte le candele giornaliere ufficialmente chiuse;
+- Coinbase Exchange fornisce la candela UTC corrente e copre l'eventuale
+  ritardo di pubblicazione Yahoo;
+- a parita di data prevale sempre Yahoo e la candela Coinbase viene rimossa.
+
+**Impatto:** la candela provvisoria e solo visuale, viene mostrata con bordo
+tratteggiato e non modifica baseline, indicatori, segnali o backtest.
+
 ## 2026-07-19 - Dismissione definitiva di Render
 
 **Decisione:** usare Cloudflare Worker come unico backend pubblico e rimuovere

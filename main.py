@@ -35,6 +35,7 @@ from live.coinbase import fetch_spot_price
 from reports.generate import (
     plot_price_and_sma_with_signals,
     save_historical_csv,
+    save_chart_data_json,
     save_text_report,
     save_status_json,
 )
@@ -129,6 +130,8 @@ def main() -> None:
     # Salva status.json per la dashboard
     status_json_path = out_reports / "status.json"
     save_status_json(df_signals, price_eur=spot_eur, price_usd=spot_usd, out_path=status_json_path)
+    chart_data_path = out_reports / "chart-data.json"
+    save_chart_data_json(df_signals, out_path=chart_data_path)
 
     chart_path = out_reports / "price_sma_signals.png"
     plot_price_and_sma_with_signals(df_signals, chart_path)
@@ -166,6 +169,7 @@ def main() -> None:
     print("")
     print(f"Report: {report_path}")
     print(f"CSV storico: {latest_csv}")
+    print(f"Dati grafico: {chart_data_path}")
     print(f"Grafico: {chart_path}")
 
     if args.open and os.name == "nt":

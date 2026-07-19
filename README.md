@@ -64,12 +64,14 @@ costituiscono consulenza finanziaria.
 ## Funzionalita
 
 - Download dei dati giornalieri `BTC-USD` e `BTC-EUR` tramite Yahoo Finance.
-- Prezzi spot USD ed EUR tramite endpoint pubblico Coinbase.
+- Prezzi spot USD/EUR e candela OHLC UTC corrente tramite endpoint pubblici
+  Coinbase.
 - Calcolo di SMA50, SMA200, RSI(14), ATR(14), volume medio e massimo/minimo
   delle ultime 52 settimane.
 - Generazione di segnale, punteggio tecnico e livello di rischio.
 - Backtest della strategia rispetto al Buy & Hold.
-- Report testuale, CSV storico, serie equity e grafico.
+- Report testuale, CSV storico, serie equity e grafico a candele con SMA50,
+  SMA200, RSI e volumi.
 - Dashboard locale e dashboard pubblicabile con GitHub Pages.
 - Monitor schedulato con GitHub Actions e notifiche Telegram solo quando
   cambia la chiave condizioni `BUY:xxxx|SELL:x`.

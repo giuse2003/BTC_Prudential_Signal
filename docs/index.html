@@ -9,7 +9,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="./style.css?v=7" />
+    <link rel="stylesheet" href="./style.css?v=8" />
   </head>
   <body>
     <main class="container">
@@ -73,8 +73,9 @@
             <div class="label">Prezzo + indicatori</div>
             <h2 id="priceChartTitle">Andamento Bitcoin con SMA50, SMA200, RSI e volume</h2>
             <p>
-              Il grafico mostra le candele giornaliere chiuse usate dal modello:
-              prezzo BTC-USD, medie mobili, RSI e volume sullo stesso periodo storico.
+              Le candele chiuse provengono da Yahoo Finance. L'ultima candela
+              segue la giornata UTC in corso con dati Coinbase e resta separata
+              dal calcolo del segnale fino alla chiusura ufficiale.
             </p>
           </div>
           <div class="chart-controls" aria-label="Periodo grafico">
@@ -84,7 +85,9 @@
           </div>
         </div>
         <div class="chart-legend" aria-hidden="true">
-          <span><i class="legend-price"></i>Prezzo BTC</span>
+          <span><i class="legend-candle-up"></i>Rialzo</span>
+          <span><i class="legend-candle-down"></i>Ribasso</span>
+          <span><i class="legend-candle-live"></i>In corso</span>
           <span><i class="legend-sma50"></i>SMA50</span>
           <span><i class="legend-sma200"></i>SMA200</span>
           <span><i class="legend-rsi"></i>RSI</span>
@@ -96,7 +99,7 @@
           <div class="chart-loading" id="chartLoading">Caricamento grafico...</div>
         </div>
         <p class="chart-note" id="chartNote">
-          Dati storici BTC-USD da Yahoo Finance. Le medie mobili sono calcolate su candele giornaliere chiuse.
+          Dati storici BTC-USD da Yahoo Finance; candela UTC corrente da Coinbase.
         </p>
       </section>
 
@@ -298,6 +301,6 @@
       </footer>
     </main>
 
-    <script src="./app.js?v=7"></script>
+    <script src="./app.js?v=8"></script>
   </body>
 </html>

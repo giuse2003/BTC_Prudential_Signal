@@ -11,6 +11,9 @@ dashboard e notificare variazioni rilevanti tramite Telegram.
 
 - Pipeline dati Yahoo Finance operativa per `BTC-USD` e `BTC-EUR`.
 - Prezzi spot Coinbase disponibili in USD ed EUR.
+- Grafico dashboard a candele giornaliere: storico chiuso Yahoo Finance e
+  candela UTC corrente provvisoria Coinbase, sostituita dal dato Yahoo alla
+  pubblicazione della chiusura ufficiale.
 - Indicatori, strategia, rischio, report e dashboard implementati.
 - Monitor GitHub Actions e notifiche Telegram operativi.
 - GitHub Pages alimentata da `docs/status.json`.
@@ -108,7 +111,7 @@ python -m unittest discover -s tests -v
 Risultato al momento dell'ultimo aggiornamento:
 
 ```text
-Ran 51 tests
+Ran 52 tests
 OK
 ```
 

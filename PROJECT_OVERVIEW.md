@@ -141,6 +141,17 @@ I prezzi spot live servono per mostrare un prezzo aggiornato nel report e nel
 bot Telegram, ma i segnali tecnici continuano a usare l'ultima candela
 giornaliera chiusa.
 
+### Candela corrente della dashboard
+
+Il grafico usa OHLC giornalieri Yahoo Finance per tutte le date ufficialmente
+chiuse. La dashboard interroga inoltre l'endpoint pubblico Coinbase Exchange
+`/products/BTC-USD/candles` per mostrare la candela UTC corrente e le eventuali
+giornate non ancora pubblicate da Yahoo.
+
+Le righe Coinbase sono solo provvisorie e non alimentano baseline, indicatori
+o notifiche. Quando Yahoo rende disponibile la stessa data, la riga ufficiale
+ha priorita e sostituisce automaticamente quella Coinbase.
+
 ## Backtest
 
 Il motore di backtest e in `backtest/backtest.py`.
@@ -217,6 +228,8 @@ vengono generati:
 - `reports/equity_timeseries.csv`: equity line strategia vs Buy & Hold;
 - `reports/price_sma_signals.png`: grafico prezzo/SMA/segnali;
 - `reports/status.json`: stato corrente per dashboard e bot.
+- `reports/chart-data.json`: OHLC chiusi, SMA50, SMA200, RSI e volumi per il
+  grafico dashboard.
 
 Per pubblicare lo stato nella dashboard GitHub Pages, `reports/status.json`
 viene copiato in:
@@ -451,7 +464,7 @@ Usato via `yfinance` per dati storici giornalieri:
 
 ### Coinbase
 
-Usato per prezzo spot live:
+Usato per prezzo spot live e candela grafica UTC corrente:
 
 - `BTC-USD`;
 - `BTC-EUR`.

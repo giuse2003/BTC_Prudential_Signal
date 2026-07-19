@@ -2,8 +2,11 @@ const STATUS_ENDPOINT = "./live-status.json";
 const CHART_DATA_ENDPOINT = "./chart-data.json";
 const COINBASE_EUR_ENDPOINT = "https://api.coinbase.com/v2/prices/BTC-EUR/spot";
 const COINBASE_USD_ENDPOINT = "https://api.coinbase.com/v2/prices/BTC-USD/spot";
+const COINBASE_CANDLES_ENDPOINT =
+  "https://api.exchange.coinbase.com/products/BTC-USD/candles";
 const SUBSCRIBER_COUNT_ENDPOINT =
   "https://btc-prudential-signal.giuse2003.workers.dev/subscribers/count";
+const CHART_HISTORY_REFRESH_MS = 10 * 60 * 1000;
 
 const els = {
   signalVal: document.getElementById("signalVal"),
@@ -40,8 +43,11 @@ const els = {
 let botData = null;
 let intervalId = null;
 let inFlight = false;
+let officialChartRows = [];
 let chartRows = [];
 let chartRange = "365";
+let lastChartHistoryFetchAt = 0;
+let liveCandleSource = null;
 
 // Custom currency formatting for Italian locale
 function formatCurrency(value, currency) {
@@ -183,18 +189,26 @@ async function loadChartData() {
     const rows = await response.json();
     if (!Array.isArray(rows)) throw new Error("Formato grafico non valido");
 
-    chartRows = rows
+    officialChartRows = rows
       .map((row) => ({
         date: row.date,
+        open: nullableNumber(row.open) ?? Number(row.close),
+        high: nullableNumber(row.high) ?? Number(row.close),
+        low: nullableNumber(row.low) ?? Number(row.close),
         close: Number(row.close),
         sma50: nullableNumber(row.sma50),
         sma200: nullableNumber(row.sma200),
         rsi: nullableNumber(row.rsi),
         volume: nullableNumber(row.volume),
         volumeAvg20: nullableNumber(row.volume_avg20),
+        provisional: false,
       }))
-      .filter((row) => row.date && Number.isFinite(row.close));
+      .filter((row) =>
+        row.date && [row.open, row.high, row.low, row.close].every(Number.isFinite)
+      );
 
+    chartRows = [...officialChartRows];
+    lastChartHistoryFetchAt = Date.now();
     drawTrendChart();
   } catch (error) {
     console.warn("Grafico storico non disponibile:", error.message);
@@ -205,7 +219,86 @@ async function loadChartData() {
   }
 }
 
+function utcDateKey(date) {
+  return date.toISOString().slice(0, 10);
+}
+
+async function fetchRecentCoinbaseCandles() {
+  const end = new Date();
+  const start = new Date(end.getTime() - 3 * 24 * 60 * 60 * 1000);
+  const params = new URLSearchParams({
+    granularity: "86400",
+    start: start.toISOString(),
+    end: end.toISOString(),
+  });
+  const response = await fetch(`${COINBASE_CANDLES_ENDPOINT}?${params}`, {
+    cache: "no-store",
+    headers: { Accept: "application/json" },
+  });
+  if (!response.ok) throw new Error(`Coinbase candles HTTP ${response.status}`);
+
+  const payload = await response.json();
+  if (!Array.isArray(payload)) throw new Error("Formato candele Coinbase non valido");
+
+  return payload
+    .filter((candle) => Array.isArray(candle) && candle.length >= 6)
+    .map(([time, low, high, open, close]) => ({
+      date: utcDateKey(new Date(Number(time) * 1000)),
+      open: Number(open),
+      high: Number(high),
+      low: Number(low),
+      close: Number(close),
+      sma50: null,
+      sma200: null,
+      rsi: null,
+      volume: null,
+      volumeAvg20: null,
+      provisional: true,
+    }))
+    .filter((row) => [row.open, row.high, row.low, row.close].every(Number.isFinite))
+    .sort((a, b) => a.date.localeCompare(b.date));
+}
+
+async function refreshLiveChartCandles() {
+  if (!officialChartRows.length) return;
+
+  const latestOfficialDate = officialChartRows[officialChartRows.length - 1].date;
+  const provisionalRows = (await fetchRecentCoinbaseCandles()).filter(
+    (row) => row.date > latestOfficialDate
+  );
+  chartRows = [...officialChartRows, ...provisionalRows];
+  liveCandleSource = provisionalRows.length ? "coinbase" : null;
+  drawTrendChart();
+}
+
+function updateLiveChartWithSpot(priceUSD) {
+  if (!officialChartRows.length || !Number.isFinite(priceUSD)) return;
+
+  const today = utcDateKey(new Date());
+  const existing = chartRows.find((row) => row.provisional && row.date === today);
+  const previous = chartRows.filter((row) => row.date < today).at(-1);
+  const open = existing?.open ?? previous?.close ?? priceUSD;
+  const liveRow = {
+    date: today,
+    open,
+    high: Math.max(existing?.high ?? open, priceUSD),
+    low: Math.min(existing?.low ?? open, priceUSD),
+    close: priceUSD,
+    sma50: null,
+    sma200: null,
+    rsi: null,
+    volume: null,
+    volumeAvg20: null,
+    provisional: true,
+  };
+  chartRows = [...chartRows.filter((row) => row.date !== today), liveRow]
+    .sort((a, b) => a.date.localeCompare(b.date));
+  liveCandleSource = "spot";
+  drawTrendChart();
+}
+
 function nullableNumber(value) {
+  if (value === null || value === undefined || value === "") return null;
   const number = Number(value);
   return Number.isFinite(number) ? number : null;
 }
@@ -244,9 +337,11 @@ function drawTrendChart() {
   const volumePanel = { top: rsiPanel.top + rsiPanel.height + gap, height: volumeHeight };
 
   const xFor = (index) =>
-    padding.left + (rows.length <= 1 ? 0 : (index / (rows.length - 1)) * chartWidth);
+    padding.left + ((index + 0.5) / Math.max(1, rows.length)) * chartWidth;
 
-  const priceValues = rows.flatMap((row) => [row.close, row.sma50, row.sma200]).filter(Number.isFinite);
+  const priceValues = rows
+    .flatMap((row) => [row.low, row.high, row.sma50, row.sma200])
+    .filter(Number.isFinite);
   const minValue = Math.min(...priceValues);
   const maxValue = Math.max(...priceValues);
   const priceRange = maxValue - minValue || 1;
@@ -274,21 +369,71 @@ function drawTrendChart() {
     priceMax,
     volumeMax,
   });
-  drawLine(ctx, rows, "close", xFor, priceYFor, "#f7931a", 2.3);
+  const candleWidth = Math.max(1, Math.min(10, (chartWidth / rows.length) * 0.68));
+  drawCandlesticks(ctx, rows, xFor, priceYFor, candleWidth);
   drawLine(ctx, rows, "sma50", xFor, priceYFor, "#38bdf8", 1.8);
   drawLine(ctx, rows, "sma200", xFor, priceYFor, "#22c55e", 1.8);
   drawLine(ctx, rows, "rsi", xFor, rsiYFor, "#f7931a", 1.8);
-  drawLine(ctx, rows, "volume", xFor, volumeYFor, "rgba(247,147,26,0.38)", 1.2);
+  drawVolumeBars(ctx, rows, xFor, volumeYFor, volumePanel, candleWidth);
   drawLine(ctx, rows, "volumeAvg20", xFor, volumeYFor, "#38bdf8", 1.8);
 
   const first = rows[0];
   const last = rows[rows.length - 1];
   if (els.chartLoading) els.chartLoading.style.display = "none";
   if (els.chartNote) {
+    const liveNote = last.provisional
+      ? ` Candela UTC in corso da Coinbase (${liveCandleSource === "spot" ? "fallback spot" : "OHLC"}), ancora provvisoria.`
+      : "";
     els.chartNote.textContent =
       `Periodo mostrato: ${formatDateShort(first.date)} - ${formatDateShort(last.date)}. ` +
-      `Ultimo close BTC-USD: ${formatCurrency(last.close, "USD")}.`;
+      `Ultimo prezzo BTC-USD: ${formatCurrency(last.close, "USD")}.${liveNote}`;
   }
+}
+
+function drawCandlesticks(ctx, rows, xFor, yFor, candleWidth) {
+  rows.forEach((row, index) => {
+    if (![row.open, row.high, row.low, row.close].every(Number.isFinite)) return;
+
+    const rising = row.close >= row.open;
+    const color = rising ? "#22c55e" : "#ef5b66";
+    const x = xFor(index);
+    const openY = yFor(row.open);
+    const closeY = yFor(row.close);
+    const highY = yFor(row.high);
+    const lowY = yFor(row.low);
+    const bodyTop = Math.min(openY, closeY);
+    const bodyHeight = Math.max(1, Math.abs(closeY - openY));
+
+    ctx.save();
+    ctx.strokeStyle = color;
+    ctx.fillStyle = row.provisional ? "rgba(0,0,0,0.18)" : color;
+    ctx.lineWidth = row.provisional ? 1.4 : 1;
+    if (row.provisional) ctx.setLineDash([3, 2]);
+    ctx.beginPath();
+    ctx.moveTo(x, highY);
+    ctx.lineTo(x, lowY);
+    ctx.stroke();
+    ctx.fillRect(x - candleWidth / 2, bodyTop, candleWidth, bodyHeight);
+    if (row.provisional) {
+      ctx.strokeRect(x - candleWidth / 2, bodyTop, candleWidth, bodyHeight);
+    }
+    ctx.restore();
+  });
+}
+
+function drawVolumeBars(ctx, rows, xFor, yFor, panel, candleWidth) {
+  rows.forEach((row, index) => {
+    if (!Number.isFinite(row.volume)) return;
+    const rising = row.close >= row.open;
+    const y = yFor(row.volume);
+    ctx.fillStyle = rising ? "rgba(34,197,94,0.36)" : "rgba(239,91,102,0.36)";
+    ctx.fillRect(
+      xFor(index) - candleWidth / 2,
+      y,
+      candleWidth,
+      Math.max(1, panel.top + panel.height - y)
+    );
+  });
 }
 
 function drawCompositeGrid(ctx, rows, xFor, width, height, padding, scale) {
@@ -416,9 +561,22 @@ async function tick() {
     // 1. Carica prima lo stato del bot locale
     await loadBotStatus();
 
+    if (Date.now() - lastChartHistoryFetchAt >= CHART_HISTORY_REFRESH_MS) {
+      await loadChartData();
+    }
+
     // 2. Recupera i prezzi live in tempo reale da Coinbase
-    const priceEUR = await fetchLiveCoinbasePrice(COINBASE_EUR_ENDPOINT);
-    const priceUSD = await fetchLiveCoinbasePrice(COINBASE_USD_ENDPOINT);
+    const [priceEUR, priceUSD] = await Promise.all([
+      fetchLiveCoinbasePrice(COINBASE_EUR_ENDPOINT),
+      fetchLiveCoinbasePrice(COINBASE_USD_ENDPOINT),
+    ]);
+
+    try {
+      await refreshLiveChartCandles();
+    } catch (chartError) {
+      console.warn("Candela Coinbase non disponibile:", chartError.message);
+      updateLiveChartWithSpot(priceUSD);
+    }
 
     // Aggiorna prezzi in USD
     els.priceUSD.textContent = formatCurrency(priceUSD, "USD");
@@ -475,8 +633,12 @@ window.addEventListener("resize", () => {
   window.requestAnimationFrame(drawTrendChart);
 });
 
+async function bootstrap() {
+  await loadChartData();
+  await tick();
+  start();
+}
+
 // Avvio
-start();
-tick();
 loadSubscriberCount();
-loadChartData();
+bootstrap();

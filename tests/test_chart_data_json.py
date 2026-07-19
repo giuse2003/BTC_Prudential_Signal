@@ -14,6 +14,9 @@ class ChartDataJsonTests(unittest.TestCase):
     def test_saves_compact_chart_rows(self) -> None:
         df = pd.DataFrame(
             {
+                "Open": [95.0],
+                "High": [105.0],
+                "Low": [92.0],
                 "Close": [100.0],
                 "SMA50": [90.0],
                 "SMA200": [80.0],
@@ -35,6 +38,9 @@ class ChartDataJsonTests(unittest.TestCase):
             [
                 {
                     "date": "2026-06-21",
+                    "open": 95.0,
+                    "high": 105.0,
+                    "low": 92.0,
                     "close": 100.0,
                     "sma50": 90.0,
                     "sma200": 80.0,

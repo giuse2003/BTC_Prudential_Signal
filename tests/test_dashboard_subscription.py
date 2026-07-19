@@ -42,6 +42,15 @@ class DashboardSubscriptionTests(unittest.TestCase):
         for name in forbidden_names:
             self.assertNotIn(name, public_code)
 
+    def test_dashboard_renders_daily_ohlc_candles_with_live_coinbase_row(self) -> None:
+        self.assertIn("api.exchange.coinbase.com/products/BTC-USD/candles", self.javascript)
+        self.assertIn("function drawCandlesticks", self.javascript)
+        self.assertIn("provisional: true", self.javascript)
+        self.assertIn("legend-candle-up", self.html)
+        self.assertIn("legend-candle-down", self.html)
+        self.assertIn("legend-candle-live", self.html)
+        self.assertNotIn('drawLine(ctx, rows, "close"', self.javascript)
+
 
 if __name__ == "__main__":
     unittest.main()

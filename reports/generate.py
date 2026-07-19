@@ -83,6 +83,9 @@ def save_chart_data_json(df: pd.DataFrame, out_path: str | Path) -> Path:
         rows.append(
             {
                 "date": pd.Timestamp(date).strftime("%Y-%m-%d"),
+                "open": _json_float(row.get("Open")),
+                "high": _json_float(row.get("High")),
+                "low": _json_float(row.get("Low")),
                 "close": _json_float(row.get("Close")),
                 "sma50": _json_float(row.get("SMA50")),
                 "sma200": _json_float(row.get("SMA200")),

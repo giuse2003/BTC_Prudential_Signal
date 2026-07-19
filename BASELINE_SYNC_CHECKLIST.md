@@ -38,9 +38,13 @@ Aggiornare:
     rendimento, drawdown, Sharpe e barre comparative
 - `docs/app.js`
   - rendering condizioni, se cambia la struttura JSON
+  - candele OHLC rosse/verdi e candela Coinbase provvisoria
 - `docs/status.json`
 - `docs/live-status.json`
 - `docs/chart-data.json`
+  - deve contenere `open`, `high`, `low`, `close`, SMA50, SMA200, RSI e volumi
+  - l'ultima data Yahoo chiusa deve sostituire qualsiasi candela Coinbase
+    provvisoria della stessa giornata
 
 Rigenerare gli artefatti con il monitor o con una run locale equivalente:
 

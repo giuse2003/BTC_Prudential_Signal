@@ -437,7 +437,19 @@ h1 {
   border-radius: 999px;
 }
 
-.legend-price { background: #f7931a; }
+.chart-legend .legend-candle-up,
+.chart-legend .legend-candle-down,
+.chart-legend .legend-candle-live {
+  width: 9px;
+  height: 13px;
+  border-radius: 1px;
+}
+.legend-candle-up { background: #22c55e; }
+.legend-candle-down { background: #ef5b66; }
+.legend-candle-live {
+  border: 1px dashed #f8fafc;
+  background: transparent;
+}
 .legend-sma50 { background: #38bdf8; }
 .legend-sma200 { background: #22c55e; }
 .legend-rsi { background: #f7931a; opacity: 0.65; }
