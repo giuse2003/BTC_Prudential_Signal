@@ -1,6 +1,6 @@
 # Project Status
 
-Ultimo aggiornamento: 4 luglio 2026
+Ultimo aggiornamento: 19 luglio 2026
 
 ## Obiettivo
 
@@ -21,10 +21,8 @@ dashboard e notificare variazioni rilevanti tramite Telegram.
   della notifica operativa.
 - Notifiche automatiche DAILY inviate solo quando cambia la chiave condizioni
   `BUY:xxxx|SELL:x`; `/segnale` resta sempre interrogabile manualmente.
-- Webhook FastAPI pubblicato e operativo su Render:
-  `https://btc-prudential-signal.onrender.com`.
-- Webhook Telegram registrato su
-  `https://btc-prudential-signal.onrender.com/webhook`.
+- Webhook Telegram e API pubbliche serviti esclusivamente da Cloudflare
+  Worker: `https://btc-prudential-signal.giuse2003.workers.dev`.
 - Comando `/segnale` disponibile in ogni chat privata con il bot.
 - Database Supabase degli iscritti creato e verificato con RLS forzata.
 - Il progetto Supabase e ora condiviso con ETH ed e stato rinominato
@@ -33,7 +31,7 @@ dashboard e notificare variazioni rilevanti tramite Telegram.
   ETH usa `public.telegram_subscribers_eth`.
 - Comandi `/iscrivimi`, `/disiscrivimi` e `/privacy` implementati.
 - Dashboard Telegram con deep link e contatore aggregato implementata.
-- Dashboard e contatore verificati pubblicamente su GitHub Pages e Render.
+- Dashboard e contatore collegati a GitHub Pages e Cloudflare Worker.
 - Lettura diretta di `docs/status.json` da GitHub Raw, senza copie locali.
 - Workflow `Telegram command listener` mantenuto soltanto come fallback e
   disabilitato durante l'uso del webhook.
@@ -74,18 +72,18 @@ dashboard e notificare variazioni rilevanti tramite Telegram.
 - Il win rate usa come denominatore soltanto i trade chiusi.
 - Le posizioni ancora aperte non vengono considerate concluse.
 
-### Webhook Telegram
+### Cloudflare Worker
 
-- Servizio Render in stato `Live`.
-- Health check pubblico verificato con risposta `{"status":"ok"}`.
-- Registrazione Telegram verificata tramite `getWebhookInfo`.
+- Health check pubblico disponibile su `GET /`.
+- Webhook Telegram disponibile su `POST /webhook`.
 - Comandi disponibili nelle chat private; i gruppi vengono ignorati.
 - Richieste autenticate con `TELEGRAM_WEBHOOK_SECRET`.
 - `/segnale`, `/start`, `/help`, `/privacy`, `/iscrivimi` e
-  `/disiscrivimi` gestiti da FastAPI.
+  `/disiscrivimi` gestiti dal Worker.
 - Iscrizioni persistenti su Supabase senza duplicati.
 - Endpoint pubblico `GET /subscribers/count` senza dati personali.
 - CORS limitato all'origine GitHub Pages e agli indirizzi locali di test.
+- Il precedente servizio Render e il webhook FastAPI sono stati rimossi.
 
 ### Supabase condiviso con ETH
 
@@ -110,7 +108,7 @@ python -m unittest discover -s tests -v
 Risultato al momento dell'ultimo aggiornamento:
 
 ```text
-Ran 32 tests
+Ran 51 tests
 OK
 ```
 
@@ -122,9 +120,8 @@ OK
 - `backtest/backtest.py`: esposizione e metriche.
 - `hourly_monitor.py`: esecuzione cloud e Telegram.
 - `telegram_command.py`: listener polling mantenuto come fallback.
-- `telegram_webhook.py`: endpoint FastAPI per i comandi Telegram.
 - `telegram_subscribers.py`: accesso server-side agli iscritti Supabase.
-- `render.yaml`: configurazione di deploy Render.
+- `cloudflare-worker/src/worker.js`: webhook, comandi e API pubbliche.
 - `reports/generate.py`: report e stato dashboard.
 
 ## Ambito rinviato

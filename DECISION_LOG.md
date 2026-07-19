@@ -2,6 +2,24 @@
 
 Registro sintetico delle decisioni che influenzano segnali e metriche.
 
+## 2026-07-19 - Dismissione definitiva di Render
+
+**Decisione:** usare Cloudflare Worker come unico backend pubblico e rimuovere
+dal repository il precedente deployment Render/FastAPI.
+
+**Motivazione:** webhook Telegram, comandi e contatore iscritti sono gia
+operativi sul Worker; mantenere un secondo backend inattivo aggiungeva deploy,
+dipendenze e notifiche di errore senza fornire una funzione necessaria.
+
+**Impatto:**
+
+- rimossi `render.yaml`, `RENDER_DEPLOYMENT.md` e `telegram_webhook.py`;
+- rimossi i test del webhook FastAPI e le dipendenze `fastapi` e `uvicorn`;
+- eliminato il Web Service `BTC_Prudential_Signal` dal pannello Render;
+- la dashboard usa esclusivamente il Worker per `GET /subscribers/count`;
+- Telegram usa esclusivamente il Worker per `POST /webhook`;
+- GitHub Actions, GitHub Pages e Supabase restano invariati.
+
 ## 2026-07-06 - Deduplica notifiche Telegram su chiave condizioni
 
 **Decisione:** le notifiche automatiche `DAILY` partono solo quando cambia la
@@ -76,7 +94,7 @@ link e numero aggregato degli iscritti attivi.
 - `/start iscrivimi` viene trattato come `/iscrivimi`;
 - `GET /subscribers/count` conta server-side soltanto le righe attive;
 - nessun dato personale viene restituito dal nuovo endpoint;
-- la dashboard mostra un fallback neutro se Render non risponde;
+- la dashboard mostra un fallback neutro se il Worker non risponde;
 - CORS accetta soltanto GitHub Pages e gli indirizzi locali di sviluppo;
 - nessun secret Supabase o Telegram e presente nel frontend.
 
@@ -98,7 +116,8 @@ iscrizioni in Supabase.
 
 ## 2026-06-09 - Webhook Render attivato
 
-**Stato:** operativo e verificato.
+**Stato storico:** sostituito da Cloudflare Worker e dismesso il 19 luglio
+2026.
 
 **Configurazione:**
 
@@ -118,6 +137,8 @@ iscrizioni in Supabase.
   `deleteWebhook`.
 
 ## 2026-06-09 - Webhook Telegram FastAPI
+
+**Stato storico:** implementazione rimossa il 19 luglio 2026.
 
 **Decisione:** aggiungere un servizio FastAPI separato, distribuibile su
 Render, per ricevere direttamente gli update Telegram.

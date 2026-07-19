@@ -61,8 +61,6 @@ Aggiornare:
   - `format_telegram_message`
 - `telegram_command.py`
   - fallback legacy polling
-- `telegram_webhook.py`
-  - fallback legacy FastAPI
 - `cloudflare-worker/src/worker.js`
   - `CONDITIONS_MESSAGE`
   - `buildLiveSnapshot`
@@ -80,6 +78,8 @@ Verificare manualmente dopo il deploy:
 
 Il bot Telegram principale usa il Worker. Dopo ogni modifica a
 `cloudflare-worker/src/worker.js`, il push GitHub non basta: serve deploy.
+Cloudflare Worker e l'unico backend pubblico: non devono essere reintrodotti
+servizi Render, webhook FastAPI o relativi endpoint nella dashboard.
 
 Comandi:
 
@@ -151,8 +151,7 @@ Aggiornare o aggiungere test per:
 
 - logica segnale in `tests/test_signal_rules.py`;
 - messaggi Telegram in `tests/test_telegram_message.py`;
-- webhook/command legacy in `tests/test_telegram_webhook.py` e
-  `tests/test_telegram_commands.py`;
+- comando legacy polling in `tests/test_telegram_commands.py`;
 - Worker Cloudflare in `tests/test_cloudflare_worker_conditions.py`;
 - chiavi condizioni tipo `BUY:0000|SELL:1` nei test dello stato e della
   deduplica notifiche.
@@ -170,12 +169,14 @@ Eseguire:
 
 ```powershell
 rg "SMA50 sopra SMA200|SMA50 above SMA200|SMA50 live sopra" README.md PROJECT_OVERVIEW.md PROJECT_STATUS.md SIGNAL_RULE_VERIFICATION_LOG.md DECISION_LOG.md strategy reports tests cloudflare-worker docs
+rg "onrender.com|render.yaml|telegram_webhook.py" README.md PROJECT_OVERVIEW.md PROJECT_STATUS.md BASELINE_SYNC_CHECKLIST.md cloudflare-worker docs
 git status --short
 git diff --check
 ```
 
 Le occorrenze rimaste devono essere intenzionali, per esempio storico
-decisionale o scoring informativo, non condizioni operative attive.
+decisionale o scoring informativo, non condizioni operative attive. Il secondo
+controllo non deve trovare riferimenti operativi a Render.
 
 Poi:
 

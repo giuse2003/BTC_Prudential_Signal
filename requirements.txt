@@ -3,5 +3,3 @@ numpy
 matplotlib
 yfinance
 requests
-fastapi
-uvicorn

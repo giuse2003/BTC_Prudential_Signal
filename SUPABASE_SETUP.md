@@ -135,8 +135,8 @@ al fatto che i secret non siano mai esposti nel frontend.
 
 ## 6. Cosa non fare ancora
 
-Non aggiungere ancora le credenziali a Render o GitHub. Questo avverra nella
-Fase 5, dopo l'implementazione e i test del client Supabase.
+Non aggiungere ancora le credenziali a Cloudflare Worker o GitHub. Questo
+avverra nella Fase 5, dopo l'implementazione e i test del client Supabase.
 
 Non inserire manualmente righe nella tabella. La prima iscrizione verra creata
 dal comando `/iscrivimi`.

@@ -1,8 +1,8 @@
 # Telegram Subscribers Roadmap
 
-Ultimo aggiornamento: 4 luglio 2026
+Ultimo aggiornamento: 19 luglio 2026
 
-Stato generale: `FASE 4 COMPLETATA - FASE 5 DA COMPLETARE`
+Stato generale: `BACKEND CLOUDFLARE WORKER OPERATIVO - RENDER DISMESSO`
 
 ## Obiettivo
 
@@ -57,7 +57,7 @@ Notifica agli iscritti solo quando cambia `BUY:xxxx|SELL:x`
 - Creare o configurare il progetto Supabase.
 - Eseguire lo script SQL fornito nel pannello Supabase.
 - Recuperare le credenziali Supabase senza condividerle in chat.
-- Inserire le variabili protette su Render.
+- Inserire i secret protetti nel Cloudflare Worker.
 - Inserire i secret richiesti su GitHub Actions.
 - Eseguire le prove Telegram finali dal proprio account.
 
@@ -93,7 +93,7 @@ Notifica agli iscritti solo quando cambia `BUY:xxxx|SELL:x`
 
 ### Fase 2 - Webhook Telegram
 
-- [x] **2.1 Codex:** aggiungere client Supabase al servizio FastAPI.
+- [x] **2.1 Codex:** aggiungere il client Supabase al backend del bot.
 - [x] **2.2 Codex:** implementare `/iscrivimi`.
 - [x] **2.3 Codex:** implementare `/disiscrivimi`.
 - [x] **2.4 Codex:** aggiornare `/start` e `/help`.
@@ -109,7 +109,7 @@ Notifica agli iscritti solo quando cambia `BUY:xxxx|SELL:x`
 - [x] **3.2 Codex:** aggiungere pulsante "Ricevi segnali su Telegram".
 - [x] **3.3 Codex:** collegare il pulsante al deep link del bot.
 - [x] **3.4 Codex:** aggiungere breve testo su consenso e disiscrizione.
-- [x] **3.5 Codex:** aggiungere `GET /subscribers/count` al servizio FastAPI.
+- [x] **3.5 Codex:** aggiungere `GET /subscribers/count` al Worker.
 - [x] **3.6 Codex:** mostrare nella dashboard il numero di iscritti attivi.
 - [x] **3.7 Codex:** configurare CORS per l'origine GitHub Pages.
 - [x] **3.8 Test:** verificare endpoint, fallback, dashboard desktop e mobile.
@@ -167,7 +167,7 @@ una costante JavaScript o una configurazione pubblica priva di secret.
 
 ##### Contatore pubblico degli iscritti
 
-Implementare sul servizio FastAPI esistente:
+Implementare sul Cloudflare Worker:
 
 ```text
 GET /subscribers/count
@@ -192,7 +192,7 @@ L'endpoint deve:
 Il JavaScript della dashboard deve interrogare:
 
 ```text
-https://btc-prudential-signal.onrender.com/subscribers/count
+https://btc-prudential-signal.giuse2003.workers.dev/subscribers/count
 ```
 
 Se il servizio non e disponibile, mostrare:
@@ -206,7 +206,7 @@ della dashboard.
 
 ##### CORS
 
-Configurare FastAPI, se necessario, per consentire l'origine:
+Configurare il Worker per consentire l'origine:
 
 ```text
 https://giuse2003.github.io
@@ -225,8 +225,7 @@ Il frontend pubblico non deve contenere:
 - altri secret del backend.
 
 La dashboard non deve interrogare direttamente Supabase con chiavi
-privilegiate. Tutte le operazioni sul database devono passare dal backend
-FastAPI.
+privilegiate. Tutte le operazioni sul database devono passare dal Worker.
 
 ##### Vincoli
 
@@ -242,7 +241,7 @@ Non modificare:
 
 ##### Deliverable Fase 3
 
-- endpoint FastAPI per il conteggio degli iscritti attivi;
+- endpoint Worker per il conteggio degli iscritti attivi;
 - card Telegram nella dashboard;
 - integrazione JavaScript del contatore;
 - configurazione CORS minima;
@@ -263,9 +262,9 @@ Non modificare:
 
 ### Fase 5 - Configurazione protetta
 
-- [x] **5.1 Utente:** aggiungere su Render `SUPABASE_URL`.
-- [x] **5.2 Utente:** aggiungere su Render `SUPABASE_SERVICE_ROLE_KEY`.
-- [ ] **5.3 Utente:** aggiungere su Render `TELEGRAM_ADMIN_CHAT_ID`.
+- [x] **5.1 Utente:** aggiungere al Worker `SUPABASE_URL`.
+- [x] **5.2 Utente:** aggiungere al Worker `SUPABASE_SERVICE_ROLE_KEY`.
+- [x] **5.3 Utente:** configurare nel Worker i secret Telegram richiesti.
 - [ ] **5.4 Utente:** aggiungere su GitHub Actions i secret necessari.
 - [x] **5.5 Codex:** mantenere compatibilita temporanea con
   `TELEGRAM_CHAT_ID`, se necessaria.
@@ -288,11 +287,10 @@ Non modificare:
 
 ## Variabili previste
 
-### Render
+### Cloudflare Worker
 
 ```text
 TELEGRAM_BOT_TOKEN
-TELEGRAM_ADMIN_CHAT_ID
 TELEGRAM_WEBHOOK_SECRET
 SUPABASE_URL
 SUPABASE_SERVICE_ROLE_KEY
@@ -373,6 +371,7 @@ La funzionalita sara considerata completata quando:
 | 2026-06-11 | Verifica CORS e privacy | Completato | Origine GitHub Pages autorizzata; risposta limitata a `active_subscribers`. |
 | 2026-06-24 | Supabase condiviso con ETH | Completato | Progetto rinominato `crypto-prudential-signal`; BTC usa `telegram_subscribers`, ETH usa `telegram_subscribers_eth`. |
 | 2026-07-04 | Fase 4 - Invio collettivo | Completato | Implementato broadcast automatico a tutti gli iscritti attivi con gestione rate limit, disattivazione automatica di blocchi e report su Supabase. |
+| 2026-07-19 | Dismissione Render | Completato | Cloudflare Worker confermato come unico backend; rimossi servizio legacy, configurazione, codice FastAPI e dipendenze. |
 
 ## Prossimo passo
 

@@ -20,8 +20,8 @@ segnali:
 - `VENDI`: il prezzo ha chiuso sotto SMA50 per due giorni consecutivi.
 
 Il sistema pubblica lo stato su una dashboard GitHub Pages e risponde via bot
-Telegram ai comandi manuali. Il webhook Telegram e servito da Cloudflare
-Worker per evitare il cold start del vecchio servizio Render.
+Telegram ai comandi manuali. Il webhook Telegram e le API pubbliche sono
+serviti esclusivamente da Cloudflare Worker.
 
 ## Regole della strategia
 
@@ -463,7 +463,7 @@ Usato per:
 - webhook Telegram;
 - health check;
 - conteggio iscritti;
-- eliminare il cold start del vecchio Render.
+- risposta immediata ai comandi Telegram.
 
 ### Telegram Bot API
 
@@ -478,13 +478,6 @@ Usata per:
 ### Supabase
 
 Usato come database per gli iscritti Telegram.
-
-### Render
-
-Render era usato in precedenza per il webhook FastAPI. Il progetto e stato
-migrato a Cloudflare Worker. I file legacy `telegram_webhook.py`,
-`render.yaml` e `RENDER_DEPLOYMENT.md` possono restare come riferimento o
-fallback storico, ma il servizio operativo attuale e Cloudflare Worker.
 
 ## Secret e variabili
 
@@ -672,8 +665,7 @@ git push
   la chiave condizioni non e cambiata.
 - Il broadcast automatico invia agli iscritti Supabase attivi ed esclude il
   `TELEGRAM_CHAT_ID` amministratore quando e gia stato notificato direttamente.
-- Alcuni file legacy Render/FastAPI restano nel repository come fallback
-  storico ma non rappresentano il deployment principale attuale.
+- Cloudflare Worker e l'unico backend pubblico del bot e della dashboard.
 
 ## File principali
 

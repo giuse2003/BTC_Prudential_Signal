@@ -285,8 +285,7 @@ state/          stato persistente del monitor
 strategy/       punteggio, segnale e rischio
 tests/          test automatici
 docs/           dashboard GitHub Pages
-telegram_webhook.py  fallback legacy FastAPI per i comandi Telegram
-render.yaml          configurazione legacy Render
+cloudflare-worker/   webhook, comandi Telegram e API pubbliche
 ```
 
 Per lo stato corrente e le decisioni progettuali:
