@@ -45,7 +45,7 @@ let intervalId = null;
 let inFlight = false;
 let officialChartRows = [];
 let chartRows = [];
-let chartRange = "365";
+let chartRange = "180";
 let lastChartHistoryFetchAt = 0;
 let liveCandleSource = null;
 
@@ -623,7 +623,7 @@ els.refreshSelect.addEventListener("change", () => {
 
 els.chartRanges.forEach((button) => {
   button.addEventListener("click", () => {
-    chartRange = button.dataset.range || "365";
+    chartRange = button.dataset.range || "180";
     els.chartRanges.forEach((item) => item.classList.toggle("active", item === button));
     drawTrendChart();
   });

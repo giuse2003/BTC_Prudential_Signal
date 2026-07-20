@@ -51,6 +51,10 @@ class DashboardSubscriptionTests(unittest.TestCase):
         self.assertIn("legend-candle-live", self.html)
         self.assertNotIn('drawLine(ctx, rows, "close"', self.javascript)
 
+    def test_dashboard_defaults_to_six_month_chart_range(self) -> None:
+        self.assertIn('data-range="180">6 mesi', self.html)
+        self.assertIn('let chartRange = "180"', self.javascript)
+
 
 if __name__ == "__main__":
     unittest.main()
