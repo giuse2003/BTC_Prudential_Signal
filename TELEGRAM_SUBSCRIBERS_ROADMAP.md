@@ -1,6 +1,6 @@
 # Telegram Subscribers Roadmap
 
-Ultimo aggiornamento: 19 luglio 2026
+Ultimo aggiornamento: 22 luglio 2026
 
 Stato generale: `BACKEND CLOUDFLARE WORKER OPERATIVO - RENDER DISMESSO`
 
@@ -27,7 +27,7 @@ Bot Telegram
 Database Supabase
         |
         v
-Notifica agli iscritti solo quando cambia `BUY:xxxx|SELL:x`
+Notifica agli iscritti solo quando cambia la chiave LIVE `BUY:xxxx|SELL:x`
 ```
 
 ## Decisioni gia prese
@@ -37,9 +37,9 @@ Notifica agli iscritti solo quando cambia `BUY:xxxx|SELL:x`
 - L'utente dovra aprire volontariamente il bot e interagire con esso.
 - Il comando di iscrizione sara `/iscrivimi`.
 - Il comando di revoca sara `/disiscrivimi`.
-- `/segnale` continuera a mostrare il segnale corrente.
+- `/segnale` continuera a mostrare esclusivamente il segnale LIVE corrente.
 - Le notifiche collettive partiranno solo quando cambia la chiave condizioni
-  `BUY:xxxx|SELL:x`.
+  LIVE `BUY:xxxx|SELL:x`.
 - Non verra inviato un messaggio collettivo ogni ora senza variazioni.
 - Il database persistente previsto e Supabase.
 - Il progetto Supabase e condiviso anche con ETH ed e stato rinominato
@@ -69,8 +69,8 @@ Notifica agli iscritti solo quando cambia `BUY:xxxx|SELL:x`
   aggiornare `/segnale`.
 - Implementare the repository degli iscritti.
 - Aggiungere il pulsante alla dashboard.
-- Modificare l'invio automatico per deduplicare sulla chiave condizioni
-  `BUY:xxxx|SELL:x`.
+- Modificare l'invio automatico per deduplicare sulla chiave condizioni LIVE
+  `BUY:xxxx|SELL:x`, senza invii DAILY.
 - Gestire utenti che bloccano il bot o chat non piu raggiungibili.
 - Aggiungere test automatici.
 - Aggiornare documentazione, file di contesto e questa roadmap.
@@ -140,7 +140,7 @@ La card deve contenere:
 ```text
 NOTIFICHE TELEGRAM
 
-Ricevi un avviso solo quando cambia una condizione operativa BTC.
+Ricevi un avviso solo quando varia una delle 5 condizioni LIVE BTC.
 
 Iscritti attivi: <numero>
 
@@ -253,7 +253,7 @@ Non modificare:
 
 - [x] **4.1 Codex:** leggere gli iscritti attivi da Supabase.
 - [x] **4.2 Codex:** inviare notifiche solo al cambio della chiave condizioni
-  `BUY:xxxx|SELL:x`.
+  LIVE `BUY:xxxx|SELL:x`, senza invii DAILY.
 - [x] **4.3 Codex:** mantenere la notifica amministratore compatibile.
 - [x] **4.4 Codex:** gestire rate limit Telegram e invii parzialmente falliti.
 - [x] **4.5 Codex:** disattivare iscritti che bloccano il bot.
@@ -339,7 +339,7 @@ La funzionalita sara considerata completata quando:
 
 - un visitatore apre il bot dalla dashboard;
 - `/iscrivimi` registra il consenso senza duplicati;
-- l'iscritto riceve una notifica quando cambia la chiave condizioni
+- l'iscritto riceve una notifica quando cambia la chiave condizioni LIVE
   `BUY:xxxx|SELL:x`;
 - non riceve notifiche orarie senza variazioni;
 - `/disiscrivimi` interrompe gli invii;

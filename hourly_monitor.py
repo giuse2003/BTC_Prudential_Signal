@@ -5,8 +5,8 @@ Comportamento:
 - Scarica/aggiorna dati giornalieri BTC-USD (Yahoo Finance) e calcola indicatori giornalieri.
 - Calcola segnale "di regime" (prudente).
 - Legge prezzo spot "live" da Coinbase in EUR.
-- Invia DAILY su nuova candela se cambia il segnale.
 - Invia LIVE se le condizioni aggregate CoinGecko restano variate per almeno 10 minuti.
+- Non invia notifiche DAILY; il giornaliero alimenta soltanto dashboard e backtest.
 """
 
 from __future__ import annotations
@@ -31,9 +31,7 @@ from strategy.signals import (
     build_live_signal_frame,
     compute_signals,
     condition_key_from_statuses,
-    condition_state_key,
     format_condition_message,
-    format_telegram_message,
     live_condition_statuses,
     signal_from_condition_statuses,
 )
@@ -43,16 +41,6 @@ from reports.generate import save_chart_data_json, save_live_status_json, save_s
 
 LIVE_STABILITY_MINUTES = 10
 LIVE_ALERT_COOLDOWN_HOURS = 2
-
-
-def should_notify(state: MonitorState, signal: str, conditions_key: str) -> tuple[bool, str]:
-    if state.last_conditions_key is None:
-        return True, f"prima notifica condizioni: {conditions_key}"
-
-    if conditions_key != state.last_conditions_key:
-        return True, "condizioni operative cambiate"
-
-    return False, "condizioni operative invariate"
 
 
 def should_force_daily_download(
@@ -252,11 +240,9 @@ def main() -> None:
     latest_candle_date = df_sig.index[-1].strftime("%Y-%m-%d")
     signal = str(latest["Segnale"])
     risk_level = str(latest.get("Livello_Rischio", "MEDIO"))
-    conditions_key = condition_state_key(df_sig)
     print(f"Ultima candela giornaliera chiusa: {latest_candle_date}")
     print(f"Segnale calcolato: {signal}")
     print(f"Rischio calcolato: {risk_level}")
-    print(f"Condizioni calcolate: {conditions_key}")
     new_candle_available = latest_candle_date != state.last_processed_candle_date
     if new_candle_available:
         print(
@@ -279,47 +265,9 @@ def main() -> None:
         print("ATTENZIONE: Impossibile recuperare il prezzo spot BTC-USD live.")
         spot_usd = None
 
-    # 4) Eventi:
-    # - workflow manuale: invia sempre, come una richiesta esplicita /segnale
-    # - workflow schedulato: processa una candela giornaliera una sola volta
-    #   e invia DAILY solo se cambia la chiave condizioni BUY:xxxx|SELL:x.
-    if new_candle_available:
-        scheduled_notify, notify_reason = should_notify(state, signal, conditions_key)
-    else:
-        scheduled_notify, notify_reason = False, "candela gia processata"
-    must_notify = is_manual_run or scheduled_notify
-    notification_sent = False
-    if is_manual_run:
-        notify_reason = "richiesta manuale workflow_dispatch"
-    print(f"Motivo decisione Telegram: {notify_reason}")
-
-    # 5) Invio Telegram
-    if must_notify:
-        cfg = TelegramConfig(bot_token=bot_token, chat_id=chat_id)
-        msg = format_telegram_message(df_sig, price_eur=spot_eur, title="BTC Signal Guard DAILY!")
-        try:
-            send_telegram_message(cfg, msg)
-            notification_sent = True
-            print("Notifica Telegram all'amministratore inviata con successo.")
-        except Exception as e:
-            print(f"Errore nell'invio della notifica Telegram all'amministratore: {e}")
-            print("Lo stato notificato non verra aggiornato; il prossimo run riprovera.")
-
-        if supabase_url and supabase_key:
-            try:
-                broadcast_to_subscribers(
-                    bot_token,
-                    supabase_url,
-                    supabase_key,
-                    msg,
-                    excluded_chat_ids={str(chat_id)},
-                )
-            except Exception as e:
-                print(f"Errore durante il broadcast DAILY: {e}")
-        else:
-            print("Supabase non configurato. Salto il broadcast DAILY.")
-    else:
-        print("Nessuna notifica necessaria.")
+    # 4) Telegram e' esclusivamente LIVE. Il workflow manuale aggiorna i dati
+    # ma non simula /segnale e non invia messaggi DAILY.
+    print("Notifiche DAILY disabilitate: Telegram usa esclusivamente il segnale LIVE.")
 
     try:
         live_market = fetch_btc_market(timeout_s=10)
@@ -398,28 +346,14 @@ def main() -> None:
     except Exception as e:
         print(f"LIVE non calcolabile con dati aggregati CoinGecko: {e}")
 
-    # 6) Salva status.json per la dashboard
+    # 5) Salva status.json per la dashboard
     status_json_path = project_root / "reports" / "status.json"
     save_status_json(df_sig, price_eur=spot_eur, price_usd=spot_usd, out_path=status_json_path)
     save_chart_data_json(df_sig, out_path=project_root / "reports" / "chart-data.json")
 
-    # 7) Salvataggio stato
+    # 6) Salvataggio stato
     if new_candle_available:
-        state.last_computed_signal = signal
-        state.last_computed_conditions_key = conditions_key
-        state.last_computed_risk_level = risk_level
-
-    candle_processed = new_candle_available and (not must_notify or notification_sent)
-
-    if candle_processed:
         state.last_processed_candle_date = latest_candle_date
-
-    if candle_processed:
-        state.last_signal = signal
-        state.last_conditions_key = conditions_key
-        state.last_risk_level = risk_level
-    if spot_eur is not None:
-        state.last_spot_price = float(spot_eur)
     save_state(state_path, state)
     print("Stato aggiornato e salvato.")
 

@@ -41,7 +41,6 @@ from reports.generate import (
 )
 from strategy.signals import compute_signals
 from backtest.backtest import run_backtest
-from notifications.telegram import TelegramConfig, send_telegram_message
 
 
 def parse_args() -> argparse.Namespace:
@@ -138,17 +137,6 @@ def main() -> None:
 
     latest = df_signals.iloc[-1]
     day = df_signals.index[-1].strftime("%Y-%m-%d")
-
-    # Invia notifica Telegram se avviato manualmente ed esistono credenziali
-    bot_token = os.environ.get("TELEGRAM_BOT_TOKEN", "").strip()
-    chat_id = os.environ.get("TELEGRAM_CHAT_ID", "").strip()
-    if bot_token and chat_id:
-        try:
-            cfg = TelegramConfig(bot_token=bot_token, chat_id=chat_id)
-            send_telegram_message(cfg, "BTC Monitor attivo e funzionante.")
-            print("Notifica Telegram inviata con successo (avvio manuale).")
-        except Exception as e:
-            print(f"ATTENZIONE: Impossibile inviare la notifica Telegram: {e}")
 
     print("Operazione completata.")
     print("")

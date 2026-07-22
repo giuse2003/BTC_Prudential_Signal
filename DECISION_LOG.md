@@ -2,6 +2,25 @@
 
 Registro sintetico delle decisioni che influenzano segnali e metriche.
 
+## 2026-07-22 - Telegram esclusivamente LIVE
+
+**Decisione operativa:** eliminare ogni invio Telegram del segnale DAILY e
+mantenere soltanto il segnale LIVE.
+
+**Comportamento approvato:**
+
+- il monitor continua ad aggiornare dati giornalieri, dashboard e backtest,
+  ma la nuova candela chiusa non genera notifiche Telegram;
+- amministratore e iscritti Supabase ricevono soltanto variazioni delle 5
+  condizioni LIVE, dopo la stabilizzazione gia prevista di 10 minuti;
+- `workflow_dispatch` aggiorna i dati senza inviare anteprime DAILY;
+- `main.py` non invia piu il messaggio di servizio all'avvio locale;
+- `/segnale` usa esclusivamente `live-status.json`, senza codice o fallback
+  DAILY.
+
+**Baseline:** invariata. Le quattro condizioni `ACQUISTA`, l'unica condizione
+`VENDI`, le soglie e la gestione della posizione non sono state modificate.
+
 ## 2026-07-19 - Grafico dashboard a candele giornaliere
 
 **Decisione:** sostituire la linea prezzo con candele OHLC rosse e verdi,

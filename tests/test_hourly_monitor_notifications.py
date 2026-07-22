@@ -9,7 +9,6 @@ import requests
 from hourly_monitor import (
     broadcast_to_subscribers,
     should_force_daily_download,
-    should_notify,
 )
 from state.state_store import MonitorState
 
@@ -40,67 +39,31 @@ class HourlyMonitorNotificationTests(unittest.TestCase):
             )
         )
 
-    def test_first_run_sends_first_condition_notification(self) -> None:
-        must_notify, reason = should_notify(
-            MonitorState(),
-            signal="ACQUISTA",
-            conditions_key="BUY:1111|SELL:0",
+    def test_monitor_has_no_daily_telegram_send_path(self) -> None:
+        source = (
+            Path(__file__)
+            .resolve()
+            .parents[1]
+            .joinpath("hourly_monitor.py")
+            .read_text(encoding="utf-8")
         )
 
-        self.assertTrue(must_notify)
-        self.assertEqual(reason, "prima notifica condizioni: BUY:1111|SELL:0")
+        self.assertNotIn("should_notify", source)
+        self.assertNotIn("BTC Signal Guard DAILY!", source)
+        self.assertNotIn("broadcast DAILY", source)
+        self.assertEqual(source.count("send_telegram_message(cfg, live_msg)"), 1)
 
-    def test_unchanged_signal_and_conditions_do_not_notify(self) -> None:
-        must_notify, reason = should_notify(
-            MonitorState(
-                last_signal="MANTIENI",
-                last_conditions_key="BUY:1101|SELL:0",
-            ),
-            signal="MANTIENI",
-            conditions_key="BUY:1101|SELL:0",
+    def test_local_analysis_does_not_send_telegram_messages(self) -> None:
+        source = (
+            Path(__file__)
+            .resolve()
+            .parents[1]
+            .joinpath("main.py")
+            .read_text(encoding="utf-8")
         )
 
-        self.assertFalse(must_notify)
-        self.assertEqual(reason, "condizioni operative invariate")
-
-    def test_condition_change_notifies_even_when_signal_is_unchanged(self) -> None:
-        must_notify, reason = should_notify(
-            MonitorState(
-                last_signal="MANTIENI",
-                last_conditions_key="BUY:1111|SELL:0",
-            ),
-            signal="MANTIENI",
-            conditions_key="BUY:1101|SELL:0",
-        )
-
-        self.assertTrue(must_notify)
-        self.assertEqual(reason, "condizioni operative cambiate")
-
-    def test_signal_change_notifies_only_when_conditions_change(self) -> None:
-        must_notify, reason = should_notify(
-            MonitorState(
-                last_signal="MANTIENI",
-                last_conditions_key="BUY:0000|SELL:1",
-            ),
-            signal="VENDI",
-            conditions_key="BUY:0000|SELL:1",
-        )
-
-        self.assertFalse(must_notify)
-        self.assertEqual(reason, "condizioni operative invariate")
-
-    def test_sell_condition_change_notifies(self) -> None:
-        must_notify, reason = should_notify(
-            MonitorState(
-                last_signal="MANTIENI",
-                last_conditions_key="BUY:1101|SELL:0",
-            ),
-            signal="VENDI",
-            conditions_key="BUY:0000|SELL:1",
-        )
-
-        self.assertTrue(must_notify)
-        self.assertEqual(reason, "condizioni operative cambiate")
+        self.assertNotIn("send_telegram_message", source)
+        self.assertNotIn("TELEGRAM_BOT_TOKEN", source)
 
 
 class BroadcastToSubscribersTests(unittest.TestCase):

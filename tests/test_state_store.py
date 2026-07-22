@@ -14,7 +14,6 @@ class StateStoreTests(unittest.TestCase):
             save_state(
                 path,
                 MonitorState(
-                    last_signal="VENDI",
                     last_processed_candle_date="2026-06-21",
                     last_live_conditions_key="BUY:0000|SELL:1",
                     live_pending_conditions_key="BUY:0001|SELL:1",
@@ -26,7 +25,6 @@ class StateStoreTests(unittest.TestCase):
 
             state = load_state(path)
 
-        self.assertEqual(state.last_signal, "VENDI")
         self.assertEqual(state.last_processed_candle_date, "2026-06-21")
         self.assertEqual(state.last_live_conditions_key, "BUY:0000|SELL:1")
         self.assertEqual(state.live_pending_conditions_key, "BUY:0001|SELL:1")

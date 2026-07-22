@@ -73,9 +73,10 @@ costituiscono consulenza finanziaria.
 - Report testuale, CSV storico, serie equity e grafico a candele con SMA50,
   SMA200, RSI e volumi.
 - Dashboard locale e dashboard pubblicabile con GitHub Pages.
-- Monitor schedulato con GitHub Actions e notifiche Telegram solo quando
-  cambia la chiave condizioni `BUY:xxxx|SELL:x`.
-- Comando Telegram `/segnale` servito in tempo reale da Cloudflare Worker.
+- Monitor schedulato con GitHub Actions e notifiche Telegram esclusivamente
+  LIVE quando varia almeno una delle 5 condizioni operative.
+- Comando Telegram `/segnale` servito da Cloudflare Worker usando
+  esclusivamente l'ultimo stato LIVE pubblicato.
 - Iscrizioni Telegram persistenti su Supabase tramite `/iscrivimi` e
   `/disiscrivimi`.
 - Card pubblica per aprire il bot e visualizzare il numero aggregato degli
@@ -182,18 +183,13 @@ Il workflow `.github/workflows/hourly-monitor.yml`:
 2. rimuove la candela giornaliera UTC ancora aperta;
 3. calcola segnale e rischio sull'ultima candela chiusa;
 4. aggiorna la dashboard;
-5. invia Telegram solo quando cambia la chiave condizioni `BUY:xxxx|SELL:x`.
+5. non invia segnali DAILY;
+6. verifica le 5 condizioni LIVE e invia Telegram solo quando una variazione
+   resta stabile per almeno 10 minuti.
 
-Il monitor automatico non reinvia lo stesso stato ogni giorno. Esempio:
-
-- giorno 1 `BUY:1111|SELL:0`: invia `ACQUISTA`;
-- giorno 2 `BUY:1111|SELL:0`: non invia nulla;
-- giorno 3 `BUY:1101|SELL:0`: invia `MANTIENI`;
-- giorni successivi con `BUY:1101|SELL:0`: non invia nulla;
-- quando arriva `BUY:0000|SELL:1`: invia `VENDI`.
-
-Il comando manuale `/segnale` resta sempre disponibile e risponde anche se le
-condizioni non sono cambiate.
+Il monitor automatico non invia segnali DAILY. Il comando `/segnale` resta
+sempre disponibile e risponde con l'ultimo stato LIVE anche se le condizioni
+non sono cambiate.
 
 La pianificazione GitHub Actions e best effort e puo subire ritardi.
 
@@ -214,11 +210,13 @@ https://btc-prudential-signal.giuse2003.workers.dev
 Il webhook:
 
 - riceve `POST /webhook` da Telegram;
-- scarica sempre `docs/status.json` dal GitHub Raw URL pubblico;
+- scarica `docs/live-status.json` dal GitHub Raw URL pubblico;
 - non salva copie locali e non modifica il monitor;
 - usa il formatter Telegram gia esistente.
 - risponde solo alla chat privata dell'utente che ha inviato il comando.
-- risponde con segnale, prezzo EUR e stato sintetico delle condizioni.
+- risponde con segnale LIVE, prezzo EUR e stato sintetico delle 5 condizioni;
+- se lo stato LIVE non e disponibile, restituisce un errore temporaneo senza
+  ripiegare sul segnale DAILY.
 
 Sono disponibili anche `/start` e `/help`.
 
@@ -258,7 +256,7 @@ Guida completa: [CLOUDFLARE_WORKER_DEPLOYMENT.md](CLOUDFLARE_WORKER_DEPLOYMENT.m
 
 Il workflow `Telegram command menu` serve solo ad aggiornare il menu dei
 comandi Telegram. Il workflow `Hourly BTC monitor (Telegram)` deve restare
-attivo per aggiornare `docs/status.json` e inviare i cambi automatici.
+attivo per aggiornare i JSON pubblici e inviare esclusivamente i cambi LIVE.
 
 ## Test
 

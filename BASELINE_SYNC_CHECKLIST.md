@@ -78,6 +78,9 @@ Verificare manualmente dopo il deploy:
 /segnale
 ```
 
+`/segnale` deve usare soltanto `live-status.json` e non deve avere fallback
+DAILY.
+
 ## 4. Cloudflare Worker
 
 Il bot Telegram principale usa il Worker. Dopo ogni modifica a
@@ -123,13 +126,14 @@ Dopo il push, verificare che il workflow `Hourly BTC monitor (Telegram)` non
 riporti errori e che pubblichi JSON coerenti.
 
 La deduplica delle notifiche automatiche deve restare basata esclusivamente
-sulla chiave condizioni `BUY:xxxx|SELL:x`:
+sulla chiave condizioni LIVE `BUY:xxxx|SELL:x`:
 
-- primo stato senza chiave precedente: invia;
+- primo stato senza chiave precedente: salva la baseline senza inviare;
 - chiave invariata: non invia, anche se passa un altro giorno;
 - chiave variata: invia il nuovo `ACQUISTA`, `MANTIENI` o `VENDI`;
-- `/segnale` e `workflow_dispatch` restano richieste esplicite e rispondono
-  sempre.
+- `/segnale` risponde sempre con lo stato LIVE;
+- `workflow_dispatch` aggiorna i dati senza inviare Telegram;
+- nessuna nuova candela daily deve generare notifiche.
 
 ## 6. Documentazione decisionale
 

@@ -2,7 +2,7 @@ name: Hourly BTC monitor (Telegram)
 
 on:
   schedule:
-    - cron: "*/10 * * * *" # LIVE ogni 10 minuti; DAILY ritenta Yahoo finche manca la candela attesa
+    - cron: "*/10 * * * *" # LIVE ogni 10 minuti; Yahoo ritenta finche manca la candela daily attesa
   workflow_dispatch: {}
 
 permissions:

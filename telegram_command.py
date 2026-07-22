@@ -17,22 +17,12 @@ from notifications.telegram import (
     get_telegram_updates,
     send_telegram_message,
 )
-from strategy.signals import format_condition_message
 from strategy.signals import (
     build_live_signal_frame,
+    format_condition_message,
     live_condition_statuses,
     signal_from_condition_statuses,
 )
-
-
-def load_published_status(project_root: Path) -> dict:
-    for path in (
-        project_root / "docs" / "status.json",
-        project_root / "reports" / "status.json",
-    ):
-        if path.exists():
-            return json.loads(path.read_text(encoding="utf-8"))
-    raise FileNotFoundError("Nessun status.json pubblicato disponibile.")
 
 
 def load_published_chart_data(project_root: Path) -> list[dict]:
@@ -63,33 +53,6 @@ def _chart_rows_to_daily_frame(rows: list[dict]) -> pd.DataFrame:
     frame["High"] = frame["Close"]
     frame["Low"] = frame["Close"]
     return frame.set_index("Date")[["Open", "High", "Low", "Close", "Volume"]]
-
-
-def _condition_statuses_from_status(status: dict) -> tuple[list[bool], list[bool]]:
-    groups = status.get("condition_groups")
-    if not isinstance(groups, dict):
-        return [], []
-
-    buy = groups.get("buy")
-    sell = groups.get("sell")
-    if not isinstance(buy, list) or not isinstance(sell, list):
-        return [], []
-
-    return (
-        [bool(item.get("passed")) for item in buy if isinstance(item, dict)],
-        [bool(item.get("passed")) for item in sell if isinstance(item, dict)],
-    )
-
-
-def build_signal_message(status: dict, price_eur: float | None = None) -> str:
-    buy_statuses, sell_statuses = _condition_statuses_from_status(status)
-    return format_condition_message(
-        signal=str(status.get("signal", "MANTIENI")),
-        price_eur=price_eur,
-        buy_statuses=buy_statuses,
-        sell_statuses=sell_statuses,
-        title="BTC Signal Guard DAILY!",
-    )
 
 
 def build_live_signal_message(chart_rows: list[dict]) -> str:

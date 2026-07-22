@@ -3,7 +3,7 @@ const HELP_MESSAGE = [
   "",
   "/segnale - mostra il segnale BTC corrente",
   "/conditions - mostra le condizioni di acquisto e vendita",
-  "/iscrivimi - ricevi notifiche quando cambia segnale o rischio",
+  "/iscrivimi - ricevi notifiche quando varia una condizione LIVE",
   "/disiscrivimi - interrompi le notifiche automatiche",
   "/privacy - informazioni sui dati memorizzati",
 ].join("\n");
@@ -30,7 +30,7 @@ const PRIVACY_MESSAGE = [
 const SUBSCRIBED_MESSAGE = [
   "Iscrizione attiva.",
   "",
-  "Riceverai un messaggio soltanto quando cambia il segnale BTC o il livello di rischio.",
+  "Riceverai un messaggio soltanto quando varia una delle 5 condizioni LIVE.",
   "Puoi annullare l'iscrizione con /disiscrivimi.",
 ].join("\n");
 
@@ -200,27 +200,6 @@ async function processCommand(request, env) {
   await sendTelegramMessage(env, request.chatId, message);
 }
 
-async function fetchGithubStatus(env) {
-  const statusUrl =
-    env.STATUS_JSON_URL ||
-    "https://raw.githubusercontent.com/giuse2003/BTC_Prudential_Signal/main/docs/status.json";
-  const separator = statusUrl.includes("?") ? "&" : "?";
-  const response = await fetch(`${statusUrl}${separator}t=${Date.now()}`, {
-    headers: {
-      Accept: "application/json",
-      "Cache-Control": "no-cache",
-    },
-  });
-  if (!response.ok) {
-    throw new Error(`GitHub status HTTP ${response.status}`);
-  }
-  const status = await response.json();
-  if (!status || typeof status !== "object" || Array.isArray(status)) {
-    throw new Error("status.json non contiene un oggetto JSON.");
-  }
-  return status;
-}
-
 async function fetchGithubChartData(env) {
   const statusUrl =
     env.STATUS_JSON_URL ||
@@ -276,21 +255,6 @@ async function buildLiveSignalMessage(env) {
     Number(live.price_eur),
     live.condition_groups,
     "BTC MONITOR LIVE!",
-  );
-}
-
-function buildDailySignalMessage(status) {
-  const signal = String(status.signal || "MANTIENI");
-  const priceEur =
-    status.price_eur === null || status.price_eur === undefined
-      ? null
-      : Number(status.price_eur);
-
-  return formatMonitorMessage(
-    signal,
-    priceEur,
-    status.condition_groups || deriveConditionGroups(status),
-    "BTC MONITOR DAILY!",
   );
 }
 
@@ -429,57 +393,6 @@ function formatSignalConditions(conditionGroups) {
     "VENDI:",
     ...formatConditionGroup(conditionGroups.sell),
   ];
-}
-
-function deriveConditionGroups(status) {
-  const close = Number(status.close_last_candle ?? status.price_usd);
-  const sma50 = Number(status.sma50);
-  const sma200 = Number(status.sma200);
-  const rsi = Number(status.rsi);
-  const volume = Number(status.volume);
-  const volumeAvg20 = Number(status.volume_avg20);
-  const close7dAgo = Number(status.close_7d_ago);
-  const previousClose = Number(status.previous_close);
-  const previousSma50 = Number(status.previous_sma50);
-
-  if (
-    ![
-      close,
-      sma50,
-      sma200,
-      rsi,
-      volume,
-      volumeAvg20,
-      close7dAgo,
-    ].every(Number.isFinite)
-  ) {
-    return null;
-  }
-
-  return {
-    buy: [
-      { label: "prezzo sopra SMA200", passed: close > sma200 },
-      { label: "RSI uguale o maggiore di 40", passed: rsi >= 40 },
-      {
-        label: "prezzo sopra quello di 7 giorni prima",
-        passed: close > close7dAgo,
-      },
-      { label: "volume sopra media 20 giorni", passed: volume > volumeAvg20 },
-    ],
-    sell: [
-      {
-        label: "prezzo sotto SMA50 per 2 giorni consecutivi",
-        passed:
-          typeof status.below_sma50_2d === "boolean"
-            ? status.below_sma50_2d
-            :
-          close < sma50 &&
-          Number.isFinite(previousClose) &&
-          Number.isFinite(previousSma50) &&
-          previousClose < previousSma50,
-      },
-    ],
-  };
 }
 
 function formatConditionGroup(conditions) {

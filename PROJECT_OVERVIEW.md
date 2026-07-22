@@ -315,10 +315,10 @@ Non vengono inviati a tutti gli iscritti.
 
 ### Messaggio `/segnale`
 
-Il messaggio e volutamente compatto:
+Il messaggio e volutamente compatto e usa esclusivamente lo stato LIVE:
 
 ```text
-BTC Signal Guard
+BTC Signal Guard LIVE!
 
 Segnale: VENDI
 
@@ -413,8 +413,8 @@ Workflow:
 
 Trigger:
 
-- ogni ora (`cron: "0 * * * *"`);
-- manuale (`workflow_dispatch`).
+- ogni 10 minuti (`cron: "*/10 * * * *"`);
+- manuale (`workflow_dispatch`) per aggiornare i dati, senza invio Telegram.
 
 Funzioni:
 
@@ -424,14 +424,15 @@ Funzioni:
 4. genera `reports/status.json`;
 5. copia lo stato in `docs/status.json`;
 6. committa e pusha l'aggiornamento della dashboard;
-7. invia una notifica Telegram solo se cambia la chiave condizioni
-   `BUY:xxxx|SELL:x`;
-8. salva lo stato in cache `.state`.
+7. non invia segnali DAILY;
+8. salva `live-status.json` e invia una notifica ad amministratore e iscritti
+   soltanto quando varia una delle 5 condizioni LIVE e la variazione resta
+   stabile per 10 minuti;
+9. salva lo stato in cache `.state`.
 
-Nota: al momento le notifiche automatiche del monitor usano il secret
-`TELEGRAM_CHAT_ID`, quindi sono legate a un destinatario configurato in
-GitHub Actions. Gli iscritti Supabase sono gestiti dal bot, ma il broadcast
-automatico a tutti gli iscritti non e ancora implementato.
+Il monitor notifica direttamente `TELEGRAM_CHAT_ID` e trasmette lo stesso
+messaggio LIVE agli iscritti Supabase attivi, escludendo l'amministratore dal
+broadcast quando e gia stato notificato direttamente.
 
 ### Telegram command menu
 
@@ -670,12 +671,11 @@ git push
   macroeconomici o fondamentali.
 - Il prezzo spot Coinbase serve per visualizzazione, non per decidere il
   segnale.
-- Le notifiche automatiche ignorano le oscillazioni del solo prezzo spot e non
-  ripetono lo stesso stato ogni giorno: il messaggio parte solo se cambia la
-  chiave condizioni `BUY:xxxx|SELL:x`, composta da 4 condizioni di acquisto e
-  1 condizione di vendita.
-- Il comando manuale `/segnale` risponde sempre con lo stato corrente, anche se
-  la chiave condizioni non e cambiata.
+- Telegram non invia segnali DAILY. Il messaggio automatico parte solo se
+  cambia la chiave LIVE `BUY:xxxx|SELL:x`, composta da 4 condizioni di
+  acquisto e 1 condizione di vendita, dopo la stabilizzazione prevista.
+- Il comando manuale `/segnale` risponde sempre con lo stato LIVE corrente,
+  anche se la chiave condizioni non e cambiata.
 - Il broadcast automatico invia agli iscritti Supabase attivi ed esclude il
   `TELEGRAM_CHAT_ID` amministratore quando e gia stato notificato direttamente.
 - Cloudflare Worker e l'unico backend pubblico del bot e della dashboard.
