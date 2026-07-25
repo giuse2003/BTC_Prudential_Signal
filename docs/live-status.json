@@ -1,14 +1,14 @@
 {
   "signal": "MANTIENI",
-  "price_usd": 64354.0,
-  "price_eur": 56558.0,
-  "volume_24h_usd": 15546961359.0,
-  "last_update": "2026-07-25 18:33:51 UTC",
+  "price_usd": 64344.0,
+  "price_eur": 56547.0,
+  "volume_24h_usd": 15270739266.0,
+  "last_update": "2026-07-25 19:50:28 UTC",
   "status": "Attivo",
-  "rsi": 50.751449091063584,
-  "sma50": 63175.793984375,
-  "sma200": 72259.7771875,
-  "atr": 1640.3579865503116,
+  "rsi": 50.70714908266182,
+  "sma50": 63175.593984375,
+  "sma200": 72259.7271875,
+  "atr": 1639.6437008360258,
   "risk_level": "ALTO",
   "condition_groups": {
     "buy": [
