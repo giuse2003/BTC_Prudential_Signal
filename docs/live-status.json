@@ -1,19 +1,26 @@
 {
-  "signal": "MANTIENI",
-  "price_usd": 65072.0,
-  "price_eur": 57140.0,
-  "volume_24h_usd": 20818397574.0,
-  "last_update": "2026-07-27 11:59:50 UTC",
+  "run_id": "20260727T120105Z-08fd2f62",
+  "generated_at_utc": "2026-07-27T12:01:05.262317+00:00",
+  "project": "BTC-USD Signal",
+  "model_version": "1.0",
+  "data_source": "Coinbase Advanced Trade",
+  "market": "BTC-USD",
+  "timezone": "UTC",
+  "mode": "LIVE PREVIEW",
+  "action": "MANTIENI STATO ATTUALE",
+  "price_usd": 65064.93,
+  "price_eur": 57150.88,
+  "volume_24h_btc": 3230.78604725,
   "status": "Attivo",
-  "rsi": 53.68484156582512,
-  "sma50": 63301.057578125,
-  "sma200": 71999.95185546875,
-  "atr": 1541.062068691887,
+  "rsi": 53.6297257017472,
+  "sma50": 63294.9348,
+  "sma200": 72001.147,
+  "atr": 1577.822669130962,
   "risk_level": "ALTO",
   "condition_groups": {
     "buy": [
       {
-        "label": "prezzo live sopra SMA200 live",
+        "label": "prezzo live sopra SMA200",
         "passed": false
       },
       {
@@ -25,13 +32,13 @@
         "passed": false
       },
       {
-        "label": "volume 24h live sopra media 20 giorni",
+        "label": "volume BTC-USD live sopra media 20 giorni",
         "passed": false
       }
     ],
     "sell": [
       {
-        "label": "prezzo live sotto SMA50 live per 2 giorni consecutivi",
+        "label": "prezzo live sotto SMA50 per 2 giorni consecutivi",
         "passed": false
       }
     ]

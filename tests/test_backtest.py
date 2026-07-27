@@ -15,7 +15,7 @@ class BacktestMetricsTests(unittest.TestCase):
             [100.0 * (2.0 ** (i / 365.0)) for i in range(366)],
             index=index,
         )
-        df = pd.DataFrame({"Close": close, "Segnale": "MANTIENI"})
+        df = pd.DataFrame({"Close": close, "Segnale": "MANTIENI STATO ATTUALE"})
 
         _, _, metrics_bh = run_backtest(df)
 
@@ -29,14 +29,14 @@ class BacktestMetricsTests(unittest.TestCase):
                 "Close": [100, 100, 110, 110, 100, 90, 90, 100, 110],
                 "Segnale": [
                     "ACQUISTA",
-                    "MANTIENI",
+                    "MANTIENI STATO ATTUALE",
                     "VENDI",
                     "ACQUISTA",
-                    "MANTIENI",
+                    "MANTIENI STATO ATTUALE",
                     "VENDI",
                     "ACQUISTA",
-                    "MANTIENI",
-                    "MANTIENI",
+                    "MANTIENI STATO ATTUALE",
+                    "MANTIENI STATO ATTUALE",
                 ],
             },
             index=index,
@@ -52,7 +52,7 @@ class BacktestMetricsTests(unittest.TestCase):
         df = pd.DataFrame(
             {
                 "Close": [100, 105, 110, 115],
-                "Segnale": ["ACQUISTA", "MANTIENI", "MANTIENI", "MANTIENI"],
+                "Segnale": ["ACQUISTA", "MANTIENI STATO ATTUALE", "MANTIENI STATO ATTUALE", "MANTIENI STATO ATTUALE"],
             },
             index=index,
         )

@@ -14,7 +14,7 @@ def keep_closed_daily_candles(
     """
     Mantiene solo le candele giornaliere concluse.
 
-    Yahoo identifica la candela con la data UTC di apertura. La riga con data
+    Coinbase identifica la candela con la data UTC di apertura. La riga con data
     odierna e' ancora in formazione e non deve contribuire ai segnali.
     """
     if not isinstance(df.index, pd.DatetimeIndex):

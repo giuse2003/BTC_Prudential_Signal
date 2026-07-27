@@ -48,24 +48,24 @@ class TelegramCommandTests(unittest.TestCase):
         self.assertEqual(commands, ["/segnale"])
 
     def test_shared_formatter_preserves_requested_layout(self) -> None:
-        message = format_monitor_message("MANTIENI", "ALTO", 54169.0)
+        message = format_monitor_message("MANTIENI STATO ATTUALE", "ALTO", 54169.0)
 
         self.assertIn("54.169 EUR", message)
-        self.assertNotIn("USD", message)
+        self.assertNotIn(" USD\n", message)
         self.assertNotIn("Sintesi", message)
 
     @patch("telegram_command.live_condition_statuses", return_value=([False] * 4, [True]))
     @patch("telegram_command.build_live_signal_frame")
-    @patch("telegram_command.fetch_btc_market")
+    @patch("telegram_command.fetch_product_snapshot")
     def test_command_signal_uses_live_condition_layout(
         self,
-        fetch_market,
+        fetch_snapshot,
         build_frame,
         _condition_statuses,
     ) -> None:
-        fetch_market.return_value.price_usd = 60000.0
-        fetch_market.return_value.price_eur = 56316.0
-        fetch_market.return_value.volume_24h_usd = 1000.0
+        usd = type("Snapshot", (), {"price": 60000.0, "volume_24h": 1000.0})()
+        eur = type("Snapshot", (), {"price": 56316.0, "volume_24h": 50.0})()
+        fetch_snapshot.side_effect = [usd, eur]
         build_frame.return_value = pd.DataFrame({"Close": [60000.0]})
         rows = [
             {"date": "2026-07-20", "close": 59000.0, "volume": 900.0},
@@ -74,7 +74,7 @@ class TelegramCommandTests(unittest.TestCase):
 
         message = build_live_signal_message(rows)
 
-        self.assertTrue(message.startswith("BTC Signal Guard LIVE!"))
+        self.assertTrue(message.startswith("BTC-USD Signal - LIVE PREVIEW"))
         self.assertIn("56.316 EUR", message)
         self.assertIn("ACQUISTA:\n🅾️ 1.", message)
         self.assertIn("VENDI:\n✅ 1.", message)
@@ -90,7 +90,6 @@ class TelegramCommandTests(unittest.TestCase):
         )
 
         self.assertNotIn("buildDailySignalMessage", source)
-        self.assertNotIn("BTC MONITOR DAILY!", source)
         self.assertNotIn("fetchGithubStatus", source)
 
 

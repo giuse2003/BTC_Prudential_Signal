@@ -46,7 +46,7 @@ def format_monitor_message(
         [
             CFG.model_name,
             "",
-            f"Segnale: {signal}",
+            f"Azione: {signal}",
             f"Rischio: {risk_level}",
             "",
             "Prezzo:",

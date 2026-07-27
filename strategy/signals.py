@@ -1,13 +1,10 @@
 """
-Strategia prudente basata su:
-- Trend principale/secondario (SMA200 e SMA50)
-- RSI (14)
-- Volume relativo (Volume vs VolumeAvg20)
-- Distanza dalla SMA200
+Strategia BTC-USD basata sulle quattro condizioni di acquisto e sull'unica
+condizione di vendita pubblicate.
 
 Output:
 - punteggio 0..100
-- classificazione (ACQUISTA / MANTIENI / VENDI)
+- classificazione (ACQUISTA / MANTIENI STATO ATTUALE / VENDI)
 - livello di rischio informativo (BASSO / MEDIO / ALTO)
 """
 
@@ -17,6 +14,7 @@ import numpy as np
 import pandas as pd
 
 from config import CFG
+from strategy.rules import ACTION_BUY, ACTION_HOLD, ACTION_SELL, action_from_conditions
 
 
 def _distance_from_sma200_pct(close: pd.Series, sma200: pd.Series) -> pd.Series:
@@ -35,7 +33,6 @@ def score_rowwise(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
 
     close = df["Close"]
-    sma50 = df["SMA50"]
     sma200 = df["SMA200"]
     rsi = df["RSI"]
     volume = df["Volume"]
@@ -44,36 +41,18 @@ def score_rowwise(df: pd.DataFrame) -> pd.DataFrame:
     distance_pct = _distance_from_sma200_pct(close, sma200)
     df["DistanceFromSMA200_Pct"] = distance_pct
 
-    # Trend principale
-    trend_main = (close > sma200).astype(float) * 25.0
-
-    # Trend secondario
-    trend_secondary = (sma50 > sma200).astype(float) * 25.0
-
-    # RSI scoring (spec)
-    # >= 40: +15
-    # 30-40: +10
-    # RSI < 30: 0
-    rsi_score = np.zeros(len(df), dtype=float)
-    rsi_score[rsi >= 40] = 15.0
-    rsi_score[(rsi >= 30) & (rsi < 40)] = 10.0
-    df["RSI_Score"] = rsi_score
-
-    # Volume scoring (spec: volume odierno > volume medio 20 giorni)
-    volume_score = (volume > volume_avg20).astype(float) * 15.0
-    df["Volume_Score"] = volume_score
-
-    # Distanza dalla SMA200 (spec)
-    # 0% .. 20% => +20
-    # > 40% => 0
-    # (20% .. 40% => 0 implicito)
-    dist_score = np.zeros(len(df), dtype=float)
-    dist_score[(distance_pct >= 0) & (distance_pct <= 20)] = 20.0
-    # dist_score[distance_pct > 40] resta 0
-    df["Distance_Score"] = dist_score
-
-    total = trend_main + trend_secondary + df["RSI_Score"] + df["Volume_Score"] + df["Distance_Score"]
-    df["Punteggio"] = total
+    conditions = pd.DataFrame(
+        {
+            "Score_PriceAboveSMA200": close > sma200,
+            "Score_RSIAtLeast40": rsi >= 40,
+            "Score_Momentum7d": close > df[f"Close_{CFG.momentum_days}d_ago"],
+            "Score_VolumeAboveAvg20": volume > volume_avg20,
+        },
+        index=df.index,
+    )
+    for column in conditions:
+        df[column] = conditions[column].astype(float) * 25.0
+    df["Punteggio"] = conditions.sum(axis=1).astype(float) * 25.0
 
     return df
 
@@ -83,7 +62,7 @@ def compute_strict_signal(df: pd.DataFrame) -> pd.DataFrame:
     Classificazione stretta:
     ACQUISTA se TUTTE le condizioni rialziste sono vere.
     VENDI se il prezzo chiude sotto SMA50 per due giorni consecutivi.
-    Altrimenti MANTIENI.
+    Altrimenti MANTIENI STATO ATTUALE.
     """
     df = df.copy()
 
@@ -106,9 +85,9 @@ def compute_strict_signal(df: pd.DataFrame) -> pd.DataFrame:
     below_sma50 = close < sma50
     sell_cond = below_sma50 & below_sma50.shift(1).fillna(False)
 
-    signal = np.full(len(df), "MANTIENI", dtype=object)
-    signal[buy_cond] = "ACQUISTA"
-    signal[sell_cond] = "VENDI"
+    signal = pd.Series(ACTION_HOLD, index=df.index, dtype=object)
+    signal.loc[buy_cond] = ACTION_BUY
+    signal.loc[sell_cond] = ACTION_SELL
     
     df["Segnale"] = signal
     return df
@@ -119,7 +98,6 @@ def compute_risk_level(df: pd.DataFrame) -> pd.Series:
     Calcola il livello di rischio (BASSO, MEDIO, ALTO) come informazione ausiliaria.
     """
     close = df["Close"]
-    sma50 = df["SMA50"]
     sma200 = df["SMA200"]
     rsi = df["RSI"]
     distance_pct = df["DistanceFromSMA200_Pct"]
@@ -129,7 +107,7 @@ def compute_risk_level(df: pd.DataFrame) -> pd.Series:
     
     # Condizioni per ALTO
     alto_cond = (
-        ((close < sma200) & (sma50 < sma200)) |
+        (close < sma200) |
         (rsi > 70) |
         (distance_pct > 40.0)
     )
@@ -137,7 +115,6 @@ def compute_risk_level(df: pd.DataFrame) -> pd.Series:
     # Condizioni per BASSO
     basso_cond = (
         (close > sma200) &
-        (sma50 > sma200) &
         (rsi <= 60) &
         (distance_pct <= 20.0)
     )
@@ -146,7 +123,7 @@ def compute_risk_level(df: pd.DataFrame) -> pd.Series:
     risk[basso_cond] = "BASSO"
     
     # Gestione valori mancanti
-    nan_mask = close.isna() | sma50.isna() | sma200.isna() | rsi.isna()
+    nan_mask = close.isna() | sma200.isna() | rsi.isna()
     risk[nan_mask] = "MEDIO"
     
     return risk
@@ -184,7 +161,7 @@ def format_condition_message(
         [
             title,
             "",
-            f"Segnale: {signal}",
+            f"Azione: {signal}",
             "",
             "Prezzo:",
             price_text,
@@ -243,11 +220,7 @@ def condition_key_from_statuses(buy_statuses: list[bool], sell_statuses: list[bo
 
 
 def signal_from_condition_statuses(buy_statuses: list[bool], sell_statuses: list[bool]) -> str:
-    if all(buy_statuses):
-        return "ACQUISTA"
-    if any(sell_statuses):
-        return "VENDI"
-    return "MANTIENI"
+    return action_from_conditions(buy_statuses, sell_statuses)
 
 
 def live_condition_statuses(
@@ -284,7 +257,7 @@ def build_live_signal_frame(
 
     La riga LIVE usa:
     - Close provvisorio = prezzo live aggregato
-    - Volume provvisorio = volume aggregato rolling 24h
+    - Volume provvisorio = volume Coinbase BTC-USD rolling 24h (in BTC)
     - VolumeAvg20 = media dei 20 volumi delle candele chiuse precedenti
 
     La dashboard continua a usare solo il frame DAILY chiuso.
@@ -395,16 +368,16 @@ def explain_latest_row(
         f"Trend lungo periodo {trend_lungo_txt}.",
         f"RSI {rsi_zone}.",
     ]
-    if segnale == "ACQUISTA":
+    if segnale == ACTION_BUY:
         sintesi_lines.append("Tutte le conferme rialziste sono allineate.")
-    elif segnale == "VENDI":
+    elif segnale == ACTION_SELL:
         sintesi_lines.append("Debolezza tecnica o uscita protettiva confermata.")
     else:
         sintesi_lines.append("Nessuna conferma sufficiente per acquistare.")
 
-    if segnale == "ACQUISTA":
+    if segnale == ACTION_BUY:
         indicazione = "Accumulare o acquistare posizioni."
-    elif segnale == "VENDI":
+    elif segnale == ACTION_SELL:
         indicazione = "Valutare la riduzione del rischio o vendita."
     else:
         indicazione = "Attendere. Nessuna nuova operazione consigliata."
@@ -412,7 +385,7 @@ def explain_latest_row(
     lines = [
         CFG.model_name,
         "",
-        f"Segnale: {segnale}",
+        f"Azione: {segnale}",
         f"Rischio: {rischio}",
         "",
         "Prezzo:",

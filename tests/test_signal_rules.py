@@ -13,7 +13,7 @@ from strategy.signals import (
 
 
 class SignalRulesTests(unittest.TestCase):
-    def test_buy_ignores_golden_cross_and_allows_rsi_above_65(self) -> None:
+    def test_buy_uses_exactly_the_four_published_conditions(self) -> None:
         df = pd.DataFrame(
             {
                 "Close": [120.0],
@@ -62,7 +62,22 @@ class SignalRulesTests(unittest.TestCase):
 
         result = compute_signals(df)
 
-        self.assertEqual(result.iloc[-1]["Segnale"], "MANTIENI")
+        self.assertEqual(result.iloc[-1]["Segnale"], "MANTIENI STATO ATTUALE")
+
+    def test_sell_has_precedence_over_buy(self) -> None:
+        df = pd.DataFrame(
+            {
+                "Close": [80.0, 90.0],
+                "SMA50": [100.0, 100.0],
+                "SMA200": [70.0, 70.0],
+                "RSI": [50.0, 50.0],
+                "Volume": [2000.0, 2000.0],
+                "VolumeAvg20": [1000.0, 1000.0],
+                "Close_7d_ago": [60.0, 60.0],
+            }
+        )
+        result = compute_signals(df)
+        self.assertEqual(result.iloc[-1]["Segnale"], "VENDI")
 
     def test_condition_state_key_tracks_four_buy_conditions_and_one_sell_condition(self) -> None:
         df = pd.DataFrame(

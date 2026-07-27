@@ -51,6 +51,12 @@ class DashboardSubscriptionTests(unittest.TestCase):
         self.assertIn("legend-candle-live", self.html)
         self.assertNotIn('drawLine(ctx, rows, "close"', self.javascript)
 
+    def test_dashboard_reads_action_and_metrics_from_coherent_bundle(self) -> None:
+        self.assertIn('data.action || "MANTIENI STATO ATTUALE"', self.javascript)
+        self.assertIn('const MANIFEST_ENDPOINT = "./manifest.json"', self.javascript)
+        self.assertIn("payload.run_id", self.javascript)
+        self.assertNotIn("76.073,58%", self.html)
+
     def test_dashboard_defaults_to_six_month_chart_range(self) -> None:
         self.assertIn('data-range="180">6 mesi', self.html)
         self.assertIn('let chartRange = "180"', self.javascript)

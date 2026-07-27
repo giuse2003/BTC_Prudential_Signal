@@ -14,8 +14,8 @@ from state.state_store import MonitorState
 
 
 class HourlyMonitorNotificationTests(unittest.TestCase):
-    def test_forces_daily_download_until_expected_candle_is_processed(self) -> None:
-        self.assertTrue(
+    def test_scheduled_run_refreshes_incrementally(self) -> None:
+        self.assertFalse(
             should_force_daily_download(
                 MonitorState(last_processed_candle_date="2026-07-03"),
                 expected_closed_candle_date="2026-07-04",
@@ -49,9 +49,9 @@ class HourlyMonitorNotificationTests(unittest.TestCase):
         )
 
         self.assertNotIn("should_notify", source)
-        self.assertNotIn("BTC Signal Guard DAILY!", source)
+        self.assertNotIn("DAILY!", source)
         self.assertNotIn("broadcast DAILY", source)
-        self.assertEqual(source.count("send_telegram_message(cfg, live_msg)"), 1)
+        self.assertEqual(source.count("send_telegram_message("), 2)
 
     def test_local_analysis_does_not_send_telegram_messages(self) -> None:
         source = (
@@ -176,7 +176,7 @@ class WorkflowConcurrencyTests(unittest.TestCase):
         )
 
         self.assertIn("concurrency:", workflow)
-        self.assertIn("group: btc-signal-guard-monitor", workflow)
+        self.assertIn("group: btc-usd-signal-monitor", workflow)
         self.assertIn("cancel-in-progress: false", workflow)
 
 

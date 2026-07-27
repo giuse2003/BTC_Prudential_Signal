@@ -1,0 +1,79 @@
+{
+  "run_id": "20260727T120105Z-08fd2f62",
+  "generated_at_utc": "2026-07-27T12:01:05.262317+00:00",
+  "project": "BTC-USD Signal",
+  "model_version": "1.0",
+  "data_source": "Coinbase Advanced Trade",
+  "market": "BTC-USD",
+  "timezone": "UTC",
+  "period": {
+    "coinbase_history_start": "2015-07-20",
+    "warmup_end": "2016-02-03",
+    "evaluation_start": "2016-02-04",
+    "evaluation_end": "2026-07-26",
+    "calendar_days": 3826
+  },
+  "rules": {
+    "buy": [
+      "Close > SMA200",
+      "RSI14 >= 40",
+      "Close > Close 7 giorni prima",
+      "Volume BTC-USD > media 20 giorni"
+    ],
+    "sell": [
+      "Close < SMA50 per due candele giornaliere consecutive"
+    ],
+    "sell_precedence": true,
+    "execution_delay_days": 1,
+    "exposure": "0% o 100%; MANTIENI STATO ATTUALE conserva l'esposizione",
+    "fees_and_slippage": "non inclusi"
+  },
+  "metrics": {
+    "strategy": {
+      "total_return": 367.38206612273154,
+      "annualized_return": 0.7574728032150253,
+      "max_drawdown": -0.48310296740433956,
+      "num_operations": 37,
+      "win_rate": 0.4864864864864865,
+      "sharpe_ratio": 1.4871041352161907
+    },
+    "buy_and_hold": {
+      "total_return": 167.40916002989766,
+      "annualized_return": 0.6309873177708405,
+      "max_drawdown": -0.8380153496105092,
+      "num_operations": 0,
+      "win_rate": 0.0,
+      "sharpe_ratio": 1.0670612579898533
+    }
+  },
+  "artifacts": {
+    "status.json": {
+      "sha256": "7a2ac09e9572ad35e371062417d995c9c02a507e9c9590e4a76212c13dbdb7b0",
+      "bytes": 1254
+    },
+    "live-status.json": {
+      "sha256": "39329f445e90435640fefd1a6678deb543060831c45721e95d136a262167de1d",
+      "bytes": 1150
+    },
+    "chart-data.json": {
+      "sha256": "9139ce12fe96700eae0d0cc486a495832b911e79c99d26311b9d7d8d16af4110",
+      "bytes": 885270
+    },
+    "historical_signals.csv": {
+      "sha256": "b17daceb5210ada924fc4ebd70a3eceb70401b03d001c3ea5c075f66caf362fd",
+      "bytes": 640930
+    },
+    "equity_timeseries.csv": {
+      "sha256": "dc979ee76c77f5ac1ab3512727fdb95f271558538268e1ce6ee4afac522e2e09",
+      "bytes": 331316
+    },
+    "report.txt": {
+      "sha256": "da659b44e91ccc868942b7c919ed003e8a60fd2af626a5e78e3be1955c259277",
+      "bytes": 1043
+    },
+    "price_sma_signals.png": {
+      "sha256": "f3b2a4371f7af2335b3d19af506a053aa31e535d9fe7538f9d78fadc971f63e7",
+      "bytes": 211530
+    }
+  }
+}

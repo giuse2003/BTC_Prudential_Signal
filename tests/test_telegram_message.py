@@ -19,15 +19,15 @@ class TelegramMessageTests(unittest.TestCase):
                 "Volume": [900.0, 800.0],
                 "VolumeAvg20": [1000.0, 1000.0],
                 "Close_7d_ago": [110.0, 95.0],
-                "Segnale": ["MANTIENI", "VENDI"],
+                "Segnale": ["MANTIENI STATO ATTUALE", "VENDI"],
                 "Livello_Rischio": ["MEDIO", "ALTO"],
             }
         )
 
         message = format_telegram_message(df, price_eur=54169.0)
 
-        self.assertTrue(message.startswith("BTC Signal Guard"))
-        self.assertIn("Segnale: VENDI", message)
+        self.assertTrue(message.startswith("BTC-USD Signal"))
+        self.assertIn("Azione: VENDI", message)
         self.assertIn("54.169 EUR", message)
         self.assertIn("(per le condizioni: /conditions)", message)
         self.assertIn("ACQUISTA:", message)
@@ -37,7 +37,7 @@ class TelegramMessageTests(unittest.TestCase):
         self.assertIn("3.", message)
         self.assertIn("4.", message)
         self.assertNotIn("5.", message)
-        self.assertNotIn("USD", message)
+        self.assertNotIn(" USD\n", message)
         self.assertNotIn("Sintesi", message)
         self.assertNotIn("Rischio", message)
         self.assertNotIn("Indicazione", message)
@@ -73,14 +73,14 @@ class TelegramMessageTests(unittest.TestCase):
                 "Volume": [900.0, 800.0],
                 "VolumeAvg20": [1000.0, 1000.0],
                 "Close_7d_ago": [110.0, 95.0],
-                "Segnale": ["MANTIENI", "VENDI"],
+                "Segnale": ["MANTIENI STATO ATTUALE", "VENDI"],
                 "Livello_Rischio": ["MEDIO", "ALTO"],
             }
         )
 
-        message = format_telegram_message(df, price_eur=50000.0, title="BTC Signal Guard LIVE!")
+        message = format_telegram_message(df, price_eur=50000.0, title="BTC-USD Signal - LIVE PREVIEW")
 
-        self.assertTrue(message.startswith("BTC Signal Guard LIVE!"))
+        self.assertTrue(message.startswith("BTC-USD Signal - LIVE PREVIEW"))
 
 if __name__ == "__main__":
     unittest.main()

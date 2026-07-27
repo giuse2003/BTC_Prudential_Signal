@@ -10,7 +10,8 @@ from pathlib import Path
 
 import pandas as pd
 
-from live.coingecko import fetch_btc_market
+from config import CFG
+from data.coinbase import fetch_product_snapshot
 from notifications.telegram import (
     TelegramConfig,
     extract_authorized_commands,
@@ -32,8 +33,8 @@ def load_published_chart_data(project_root: Path) -> list[dict]:
     ):
         if path.exists():
             payload = json.loads(path.read_text(encoding="utf-8"))
-            if isinstance(payload, list):
-                return payload
+            if isinstance(payload, dict) and isinstance(payload.get("rows"), list):
+                return payload["rows"]
     raise FileNotFoundError("Nessun chart-data.json pubblicato disponibile.")
 
 
@@ -56,20 +57,23 @@ def _chart_rows_to_daily_frame(rows: list[dict]) -> pd.DataFrame:
 
 
 def build_live_signal_message(chart_rows: list[dict]) -> str:
-    market = fetch_btc_market(timeout_s=10)
+    market_usd = fetch_product_snapshot(CFG.product_id, timeout_s=10)
+    market_eur = fetch_product_snapshot(CFG.informational_product_id, timeout_s=10)
+    if market_usd.volume_24h is None:
+        raise ValueError("Volume 24h Coinbase non disponibile.")
     live_frame = build_live_signal_frame(
         _chart_rows_to_daily_frame(chart_rows),
-        live_price_usd=market.price_usd,
-        live_volume_24h=market.volume_24h_usd,
+        live_price_usd=market_usd.price,
+        live_volume_24h=market_usd.volume_24h,
         live_time_utc=pd.Timestamp.now(tz="UTC"),
     )
     buy_statuses, sell_statuses = live_condition_statuses(live_frame)
     return format_condition_message(
         signal=signal_from_condition_statuses(buy_statuses, sell_statuses),
-        price_eur=market.price_eur,
+        price_eur=market_eur.price,
         buy_statuses=buy_statuses,
         sell_statuses=sell_statuses,
-        title="BTC Signal Guard LIVE!",
+        title="BTC-USD Signal - LIVE PREVIEW",
     )
 
 

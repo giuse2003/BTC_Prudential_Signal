@@ -1,15 +1,15 @@
-name: Hourly BTC monitor (Telegram)
+name: BTC-USD Signal monitor
 
 on:
   schedule:
-    - cron: "*/10 * * * *" # LIVE ogni 10 minuti; Yahoo ritenta finche manca la candela daily attesa
+    - cron: "*/10 * * * *" # aggiorna Coinbase e pubblica un pacchetto coerente
   workflow_dispatch: {}
 
 permissions:
   contents: write
 
 concurrency:
-  group: btc-signal-guard-monitor
+  group: btc-usd-signal-monitor
   cancel-in-progress: false
 
 jobs:
@@ -32,8 +32,7 @@ jobs:
         with:
           path: |
             .state
-            data/BTC-USD_daily.csv
-            data/BTC-EUR_daily.csv
+            data/BTC-USD_coinbase_daily.csv
           key: state-${{ github.run_id }}
           restore-keys: |
             state-
@@ -57,12 +56,12 @@ jobs:
           mkdir -p docs
           cp reports/status.json docs/status.json
           cp reports/chart-data.json docs/chart-data.json
-          test ! -f reports/live-status.json || cp reports/live-status.json docs/live-status.json
+          cp reports/live-status.json docs/live-status.json
+          cp reports/manifest.json docs/manifest.json
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add docs/status.json docs/chart-data.json
-          test ! -f docs/live-status.json || git add docs/live-status.json
-          git diff --cached --quiet || git commit -m "Aggiorna status dashboard"
+          git add docs/status.json docs/chart-data.json docs/live-status.json docs/manifest.json
+          git diff --cached --quiet || git commit -m "Aggiorna pacchetto BTC-USD Signal"
           git push
 
       - name: Save monitor state (cache)
@@ -70,7 +69,6 @@ jobs:
         with:
           path: |
             .state
-            data/BTC-USD_daily.csv
-            data/BTC-EUR_daily.csv
+            data/BTC-USD_coinbase_daily.csv
           key: state-${{ github.run_id }}
 

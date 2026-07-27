@@ -1,5 +1,6 @@
 const STATUS_ENDPOINT = "./live-status.json";
 const CHART_DATA_ENDPOINT = "./chart-data.json";
+const MANIFEST_ENDPOINT = "./manifest.json";
 const COINBASE_EUR_ENDPOINT = "https://api.coinbase.com/v2/prices/BTC-EUR/spot";
 const COINBASE_USD_ENDPOINT = "https://api.coinbase.com/v2/prices/BTC-USD/spot";
 const COINBASE_CANDLES_ENDPOINT =
@@ -48,6 +49,7 @@ let chartRows = [];
 let chartRange = "180";
 let lastChartHistoryFetchAt = 0;
 let liveCandleSource = null;
+let chartRunId = null;
 
 // Custom currency formatting for Italian locale
 function formatCurrency(value, currency) {
@@ -99,6 +101,9 @@ async function loadBotStatus() {
     
     botData = await res.ok ? await res.json() : null;
     if (botData) {
+      if (chartRunId && botData.run_id !== chartRunId) {
+        throw new Error("Pacchetto dati in aggiornamento; run_id non allineato");
+      }
       updateBotUI(botData);
       if (els.corsHelper) els.corsHelper.style.display = "none";
     }
@@ -112,14 +117,13 @@ async function loadBotStatus() {
 }
 
 function updateBotUI(data) {
-  // Update operational signal card
-  const signal = data.signal || "MANTIENI";
-  els.signalVal.textContent = signal;
+  const action = data.action || "MANTIENI STATO ATTUALE";
+  els.signalVal.textContent = action;
   els.signalCard.className = "metric highlight-card"; // reset classes
   
-  const isSellSignal = signal.toUpperCase().startsWith("VENDI");
+  const isSellSignal = action === "VENDI";
 
-  if (signal === "ACQUISTA") {
+  if (action === "ACQUISTA") {
     els.signalCard.classList.add("signal-buy");
     els.signalHint.textContent = "Allineamento tecnico favorevole.";
   } else if (isSellSignal) {
@@ -155,7 +159,7 @@ function updateBotUI(data) {
   updateConditionList(els.sellConditions, data.condition_groups?.sell);
 
   // Last update time
-  els.lastUpdate.textContent = data.last_update || "N/D";
+  els.lastUpdate.textContent = data.generated_at_utc || "N/D";
   els.monitorStatus.textContent = data.status || "Attivo";
   els.monitorStatus.className = "info-val monitor-active";
 }
@@ -186,8 +190,10 @@ async function loadChartData() {
   try {
     const response = await fetch(CHART_DATA_ENDPOINT, { cache: "no-store" });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const rows = await response.json();
+    const payload = await response.json();
+    const rows = payload.rows;
     if (!Array.isArray(rows)) throw new Error("Formato grafico non valido");
+    chartRunId = payload.run_id || null;
 
     officialChartRows = rows
       .map((row) => ({
@@ -217,6 +223,37 @@ async function loadChartData() {
       els.chartLoading.style.display = "grid";
     }
   }
+}
+
+function formatPercent(value) {
+  return new Intl.NumberFormat("it-IT", {
+    style: "percent",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(Number(value));
+}
+
+async function loadManifest() {
+  const response = await fetch(MANIFEST_ENDPOINT, { cache: "no-store" });
+  if (!response.ok) throw new Error(`Manifest HTTP ${response.status}`);
+  const manifest = await response.json();
+  const strategy = manifest.metrics?.strategy;
+  const buyHold = manifest.metrics?.buy_and_hold;
+  const period = manifest.period;
+  if (!strategy || !buyHold || !period) throw new Error("Manifest incompleto");
+
+  document.getElementById("backtestPeriod").textContent =
+    `Backtest ${period.evaluation_start} - ${period.evaluation_end}`;
+  document.getElementById("strategyReturn").textContent = formatPercent(strategy.total_return);
+  document.getElementById("strategyDrawdown").textContent = formatPercent(strategy.max_drawdown);
+  document.getElementById("buyHoldDrawdown").textContent =
+    `Contro ${formatPercent(buyHold.max_drawdown)} del Buy & Hold`;
+  document.getElementById("strategySharpe").textContent =
+    Number(strategy.sharpe_ratio).toFixed(3).replace(".", ",");
+  document.getElementById("strategyReturnComparison").textContent =
+    `Rendimento totale ${formatPercent(strategy.total_return)}`;
+  document.getElementById("buyHoldReturnComparison").textContent =
+    `Rendimento totale ${formatPercent(buyHold.total_return)}`;
 }
 
 function utcDateKey(date) {
@@ -634,7 +671,7 @@ window.addEventListener("resize", () => {
 });
 
 async function bootstrap() {
-  await loadChartData();
+  await Promise.all([loadChartData(), loadManifest()]);
   await tick();
   start();
 }

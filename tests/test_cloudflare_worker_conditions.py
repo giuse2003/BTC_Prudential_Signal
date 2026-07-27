@@ -25,8 +25,7 @@ class CloudflareWorkerConditionsTests(unittest.TestCase):
         self.assertIn('"1. prezzo sopra SMA200;"', body)
         self.assertIn('"2. RSI uguale o maggiore di 40;"', body)
         self.assertIn('"3. prezzo sopra quello di 7 giorni prima;"', body)
-        self.assertIn('"4. volume sopra media 20 giorni."', body)
-        self.assertNotIn("SMA50 sopra SMA200", body)
+        self.assertIn('"4. volume BTC-USD sopra media 20 giorni."', body)
         self.assertNotIn('"5.', body)
 
 

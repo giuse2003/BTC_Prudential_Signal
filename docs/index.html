@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>BTC Signal Guard — Dashboard</title>
+    <title>BTC-USD Signal - Dashboard</title>
     <link rel="icon" href="data:," />
     <!-- Google Fonts for premium typography -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -15,8 +15,8 @@
     <main class="container">
       <header class="header">
         <div>
-          <h1>BTC Signal Guard <span class="badge">Live</span></h1>
-          <p class="subtitle">Metodo algoritmico Bitcoin con segnali operativi e controllo del drawdown</p>
+          <h1>BTC-USD Signal <span class="badge">v1</span></h1>
+          <p class="subtitle">Strategia BTC-USD su candele giornaliere Coinbase</p>
         </div>
         <div class="status" id="status">
           <span class="dot" aria-hidden="true"></span>
@@ -47,7 +47,7 @@
 
         <div class="live-panel card">
           <div class="metric highlight-card" id="signalCard">
-            <div class="label">Segnale attuale</div>
+            <div class="label">Azione LIVE PREVIEW</div>
             <div class="value" id="signalVal">—</div>
             <div class="hint" id="signalHint">In attesa dell'ultimo run...</div>
           </div>
@@ -73,9 +73,8 @@
             <div class="label">Prezzo + indicatori</div>
             <h2 id="priceChartTitle">Andamento Bitcoin con SMA50, SMA200, RSI e volume</h2>
             <p>
-              Le candele chiuse provengono da Yahoo Finance. L'ultima candela
-              segue la giornata UTC in corso con dati Coinbase e resta separata
-              dal calcolo del segnale fino alla chiusura ufficiale.
+              Le candele chiuse provengono dal mercato Coinbase BTC-USD. La
+              giornata UTC in corso resta una preview separata dal DAILY.
             </p>
           </div>
           <div class="chart-controls" aria-label="Periodo grafico">
@@ -100,13 +99,13 @@
           <div class="chart-loading" id="chartLoading">Caricamento grafico...</div>
         </div>
         <p class="chart-note" id="chartNote">
-          Dati storici BTC-USD da Yahoo Finance; candela UTC corrente da Coinbase.
+          Dati storici e preview BTC-USD da Coinbase; solo candele DAILY UTC chiuse nel modello ufficiale.
         </p>
       </section>
 
       <section class="results card" aria-labelledby="resultsTitle">
         <div class="section-heading">
-          <div class="label">Backtest 2015 - oggi</div>
+          <div class="label" id="backtestPeriod">Backtest Coinbase</div>
           <h2 id="resultsTitle">Cosa sarebbe successo seguendo il metodo</h2>
           <p>
             Il test storico applica i segnali alla chiusura giornaliera
@@ -117,17 +116,17 @@
         <div class="stats-grid">
           <div class="stat-card">
             <span class="stat-label">Rendimento strategia</span>
-            <strong>+76.073,58%</strong>
+            <strong id="strategyReturn">—</strong>
             <span>Totale storico</span>
           </div>
           <div class="stat-card">
             <span class="stat-label">Drawdown massimo</span>
-            <strong>-48,77%</strong>
-            <span>Contro -83,40% del Buy & Hold</span>
+            <strong id="strategyDrawdown">—</strong>
+            <span id="buyHoldDrawdown">Confronto Buy & Hold</span>
           </div>
           <div class="stat-card">
             <span class="stat-label">Sharpe ratio</span>
-            <strong>1,519</strong>
+            <strong id="strategySharpe">—</strong>
             <span>Su calendario crypto 365 giorni</span>
           </div>
         </div>
@@ -135,15 +134,15 @@
         <div class="comparison">
           <div class="comparison-row">
             <div>
-              <strong>BTC Signal Guard</strong>
-              <span>Rendimento totale +76.073,58%</span>
+              <strong>BTC-USD Signal</strong>
+              <span id="strategyReturnComparison">Rendimento in caricamento</span>
             </div>
             <div class="bar"><span style="width: 100%"></span></div>
           </div>
           <div class="comparison-row muted-row">
             <div>
               <strong>Buy & Hold Bitcoin</strong>
-              <span>Rendimento totale +19.802,75%</span>
+              <span id="buyHoldReturnComparison">Rendimento in caricamento</span>
             </div>
             <div class="bar"><span style="width: 26%"></span></div>
           </div>
@@ -191,8 +190,8 @@
             di usare informazioni non ancora disponibili.
           </p>
           <ul class="check-list">
-            <li>Dati storici BTC-USD da Yahoo Finance</li>
-            <li>Periodo dal 2015 a oggi</li>
+            <li>Dati storici Coinbase BTC-USD, candele DAILY UTC chiuse</li>
+            <li>Warm-up SMA200 escluso dal periodo valutato</li>
             <li>Confronto con Buy & Hold</li>
             <li>Esclusi costi, spread, slippage e imposte</li>
           </ul>
@@ -297,7 +296,7 @@
 
       <footer>
         <p class="footnote">
-          Nota: BTC Monitor è uno strumento algoritmico informativo. Non costituisce sollecitazione al pubblico risparmio né consulenza finanziaria.
+          Nota: BTC-USD Signal è uno strumento algoritmico informativo. Non costituisce sollecitazione al pubblico risparmio né consulenza finanziaria.
         </p>
       </footer>
     </main>
