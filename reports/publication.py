@@ -3,9 +3,12 @@
 from __future__ import annotations
 
 import hashlib
+import importlib.metadata
 import json
 import os
+import platform
 import shutil
+import subprocess
 import tempfile
 import uuid
 from contextlib import contextmanager
@@ -22,11 +25,45 @@ def new_run_metadata() -> dict[str, str]:
     return {
         "run_id": f"{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')}-{uuid.uuid4().hex[:8]}",
         "generated_at_utc": datetime.now(timezone.utc).isoformat(),
+        "run_type": "operational-latest",
         "project": CFG.model_name,
         "model_version": CFG.model_version,
         "data_source": CFG.data_source,
         "market": CFG.product_id,
         "timezone": "UTC",
+    }
+
+
+def operational_provenance(candles, project_root: str | Path) -> dict:
+    root = Path(project_root)
+    normalized = candles.copy().sort_index()
+    normalized.index.name = "Date"
+    raw_bytes = normalized.to_csv(index=True, lineterminator="\n").encode("utf-8")
+    try:
+        commit = subprocess.check_output(
+            ["git", "rev-parse", "HEAD"],
+            cwd=root,
+            text=True,
+            stderr=subprocess.DEVNULL,
+        ).strip()
+    except (OSError, subprocess.CalledProcessError):
+        commit = None
+    dependencies = {
+        name: importlib.metadata.version(name)
+        for name in ("numpy", "pandas", "matplotlib", "requests")
+    }
+    lock_path = root / "requirements.lock"
+    return {
+        "source_commit": commit,
+        "python": platform.python_version(),
+        "dependencies": dependencies,
+        "requirements_lock_sha256": _sha256(lock_path) if lock_path.exists() else None,
+        "input_candles_sha256": hashlib.sha256(raw_bytes).hexdigest(),
+        "input_observations": int(len(normalized)),
+        "input_first_candle": normalized.index[0].strftime("%Y-%m-%d"),
+        "input_last_candle": normalized.index[-1].strftime("%Y-%m-%d"),
+        "historical_cache_allowed": True,
+        "frozen_baseline_manifest": "runs/baseline-v1-2026-07-26/manifest.json",
     }
 
 
@@ -52,11 +89,16 @@ def write_manifest(
     *,
     period: dict,
     metrics: dict,
+    provenance: dict,
     artifact_names: list[str],
 ) -> Path:
     staging = Path(staging_dir)
     artifacts = {
-        name: {"sha256": _sha256(staging / name), "bytes": (staging / name).stat().st_size}
+        name: {
+            "path": name,
+            "sha256": _sha256(staging / name),
+            "bytes": (staging / name).stat().st_size,
+        }
         for name in artifact_names
     }
     payload = {
@@ -76,10 +118,11 @@ def write_manifest(
             "fees_and_slippage": "non inclusi",
         },
         "metrics": metrics,
+        "provenance": provenance,
         "artifacts": artifacts,
     }
     path = staging / "manifest.json"
-    path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+    path.write_bytes(json.dumps(payload, indent=2).encode("utf-8"))
     return path
 
 

@@ -22,6 +22,7 @@ class PublicationBundleTests(unittest.TestCase):
                 {"run_id": "run-a"},
                 period={},
                 metrics={},
+                provenance={},
                 artifact_names=["status.json", "live-status.json", "chart-data.json"],
             )
             with self.assertRaisesRegex(ValueError, "run_id incoerente"):
@@ -37,6 +38,7 @@ class PublicationBundleTests(unittest.TestCase):
                 {"run_id": "run-a"},
                 period={},
                 metrics={},
+                provenance={},
                 artifact_names=["status.json", "live-status.json", "chart-data.json"],
             )
             validate_bundle(root)

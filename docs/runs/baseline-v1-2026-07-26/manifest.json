@@ -1,0 +1,146 @@
+{
+  "run_id": "baseline-v1-2026-07-26",
+  "run_type": "frozen-baseline",
+  "as_of": "2026-07-26",
+  "project": "BTC-USD Signal",
+  "model_version": "1.0",
+  "data_source": "Coinbase Advanced Trade",
+  "market": "BTC-USD",
+  "timezone": "UTC",
+  "source": {
+    "repository": "https://github.com/giuse2003/BTC_Prudential_Signal",
+    "tag": "baseline-v1-2026-07-26",
+    "identity": "Git tag plus SHA-256 hashes of model source files normalized to LF",
+    "files": {
+      "config.py": "498a8f0e5e8aaca76290f35de34ec649a05efc5fd97a3fdcc075ed1fb1983ed5",
+      "backtest/backtest.py": "5311bdc1cdbcf803c0138bd107616ee51f1162cd36f3997bed854a6af305cbe4",
+      "data/coinbase.py": "206104fb141178019c1c60c2297be3514a345780b1848c1d111efb4809d368ea",
+      "indicators/technical_indicators.py": "10e98a7b9cf37ce1f88935aacfc30be7d9cbc9e5c0db831e320a9f065cb42ba3",
+      "pipeline.py": "5de8829f246ee7ba18db1e05db4427c337c48f0acd1fee945854fd4e9922eaa1",
+      "reports/generate.py": "204e498361e5edad677c26fb00061351b711707219844d7093529c4e49298206",
+      "reproducibility.py": "1497334010d832bf6c34e5c28841acb6046a30d35bffacfe5f9de60e5b31d1ce",
+      "strategy/rules.py": "3319ddf5d326f4bb2b197aa9505cb264b4a3f58583dbbcdaa019a898058e48b7",
+      "strategy/signals.py": "43afa96e6f0851c966a8af9ac241226e85f9bd4b1f751cd7402cb2282adfc116"
+    }
+  },
+  "environment": {
+    "python": "3.13.0",
+    "dependencies": {
+      "certifi": "2026.7.22",
+      "charset-normalizer": "3.4.9",
+      "contourpy": "1.3.3",
+      "cycler": "0.12.1",
+      "fonttools": "4.63.0",
+      "idna": "3.18",
+      "kiwisolver": "1.5.0",
+      "packaging": "26.2",
+      "pillow": "12.3.0",
+      "pyparsing": "3.3.2",
+      "python-dateutil": "2.9.0.post0",
+      "six": "1.17.0",
+      "tzdata": "2026.3",
+      "urllib3": "2.7.0",
+      "numpy": "2.4.6",
+      "pandas": "3.0.3",
+      "matplotlib": "3.10.9",
+      "requests": "2.34.2"
+    },
+    "requirements_lock": "../../../requirements.lock",
+    "requirements_lock_sha256": "fab3e8cfa60b28ba3c8d3999d5a78c1077b20eb8b2066e74811d9b4ddd39073b"
+  },
+  "input": {
+    "snapshot": "raw_candles.csv",
+    "snapshot_sha256": "03d0c98966af842f4686a54f60e854ebc5de80287b5c5da83a403dd825ac6204",
+    "api_base_url": "https://api.coinbase.com/api/v3/brokerage/market",
+    "endpoint": "/products/BTC-USD/candles",
+    "granularity": "ONE_DAY",
+    "requested_start": "2015-01-01",
+    "inclusive_end": "2026-07-26",
+    "cache_used_for_reproduction": false
+  },
+  "period": {
+    "coinbase_history_start": "2015-07-20",
+    "warmup_end": "2016-02-03",
+    "evaluation_start": "2016-02-04",
+    "evaluation_end": "2026-07-26",
+    "calendar_days": 3826,
+    "observations": 3826
+  },
+  "formulas": {
+    "indicators": {
+      "sma50_sma200": "rolling arithmetic mean; min_periods equals window",
+      "rsi14": "delta; gains/losses clipped at zero; ewm alpha=1/14, adjust=false, min_periods=14",
+      "volume_avg20": "rolling arithmetic mean; min_periods=20; Coinbase base volume in BTC",
+      "atr14": "max(H-L, abs(H-prevClose), abs(L-prevClose)); ewm alpha=1/14, adjust=false, min_periods=14",
+      "momentum7": "Close.shift(7)"
+    },
+    "actions": {
+      "buy": "Close>SMA200 and RSI14>=40 and Close>Close.shift(7) and Volume>VolumeAvg20",
+      "sell": "Close<SMA50 for the current and immediately previous daily candle",
+      "precedence": "sell, then buy, otherwise MANTIENI STATO ATTUALE"
+    },
+    "backtest": {
+      "desired_exposure": "ACQUISTA=1; VENDI=0; hold=forward-fill previous exposure; initial=0",
+      "effective_exposure": "desired_exposure.shift(1); initial=0",
+      "btc_return": "Close.pct_change()",
+      "strategy_return": "effective_exposure * btc_return",
+      "equity": "cumprod(1 + daily_return)",
+      "buy_and_hold": "Close / first Close on the evaluation period",
+      "annualized_return": "(final_equity/initial_equity) ** (365/(observations-1)) - 1",
+      "max_drawdown": "min(equity/equity.cummax() - 1)",
+      "sharpe": "sqrt(365) * mean(daily_return) / sample_std(daily_return, ddof=1); risk-free=0",
+      "trades": "only completed 0-to-long-to-0 positions; open final position excluded",
+      "fees_slippage_taxes": "excluded"
+    }
+  },
+  "metrics": {
+    "strategy": {
+      "total_return": 367.38206612273154,
+      "annualized_return": 0.7574728032150253,
+      "max_drawdown": -0.48310296740433956,
+      "num_operations": 37,
+      "win_rate": 0.4864864864864865,
+      "sharpe_ratio": 1.4871041352161907
+    },
+    "buy_and_hold": {
+      "total_return": 167.40916002989766,
+      "annualized_return": 0.6309873177708405,
+      "max_drawdown": -0.8380153496105092,
+      "num_operations": 0,
+      "win_rate": 0.0,
+      "sharpe_ratio": 1.0670612579898533
+    }
+  },
+  "artifacts": {
+    "raw_candles.csv": {
+      "path": "raw_candles.csv",
+      "sha256": "03d0c98966af842f4686a54f60e854ebc5de80287b5c5da83a403dd825ac6204",
+      "bytes": 235027
+    },
+    "status.json": {
+      "path": "status.json",
+      "sha256": "82387e7409a16a2d21caa31ce8e6d78a4c1b35ef3bb81fcbd5109ec88a1f52c4",
+      "bytes": 1202
+    },
+    "chart-data.json": {
+      "path": "chart-data.json",
+      "sha256": "73bdaf909fa791a3bcfa202cfeefe9d34536547f5a40f2437730bbb8087d6641",
+      "bytes": 885263
+    },
+    "historical_signals.csv": {
+      "path": "historical_signals.csv",
+      "sha256": "6925814c2281875e18a1494f6d13805c5f8a035d720e28c2c41431238fa68f03",
+      "bytes": 637103
+    },
+    "equity_timeseries.csv": {
+      "path": "equity_timeseries.csv",
+      "sha256": "453224c83d49f12faf88a8274500976bbfb27cd21e1bbdf5a6a984ff27b8710a",
+      "bytes": 327489
+    },
+    "report.txt": {
+      "path": "report.txt",
+      "sha256": "55a2b861821c9c5b3830b32eb9d81e64737f130487b5a4e7666c6dd426dc4380",
+      "bytes": 1015
+    }
+  }
+}

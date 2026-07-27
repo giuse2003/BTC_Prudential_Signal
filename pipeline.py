@@ -13,6 +13,7 @@ from data.coinbase import fetch_daily_candles, fetch_product_snapshot
 from indicators.technical_indicators import compute_all_indicators
 from reports.generate import (
     plot_price_and_sma_with_signals,
+    save_dataframe_csv,
     save_chart_data_json,
     save_historical_csv,
     save_live_status_json,
@@ -21,6 +22,7 @@ from reports.generate import (
 )
 from reports.publication import (
     new_run_metadata,
+    operational_provenance,
     publish_bundle,
     staged_run,
     validate_bundle,
@@ -29,6 +31,7 @@ from reports.publication import (
 from strategy.signals import build_live_signal_frame, compute_signals, live_condition_statuses
 
 ARTIFACT_NAMES = [
+    "raw_candles.csv",
     "status.json",
     "live-status.json",
     "chart-data.json",
@@ -61,7 +64,7 @@ def _metrics_payload(metrics: BacktestMetrics) -> dict:
     return asdict(metrics)
 
 
-def _evaluation_frame(frame: pd.DataFrame) -> pd.DataFrame:
+def evaluation_frame(frame: pd.DataFrame) -> pd.DataFrame:
     required = ["SMA200", "SMA50", "RSI", "VolumeAvg20", f"Close_{CFG.momentum_days}d_ago"]
     evaluated = frame.dropna(subset=required).copy()
     if evaluated.empty:
@@ -80,8 +83,9 @@ def run_pipeline(
     metadata = new_run_metadata()
 
     candles = fetch_daily_candles(refresh_all=refresh_all, now_utc=now_utc)
+    provenance = operational_provenance(candles, Path(__file__).resolve().parent)
     signals_all = compute_signals(compute_all_indicators(candles))
-    evaluated = _evaluation_frame(signals_all)
+    evaluated = evaluation_frame(signals_all)
 
     equity, strategy_metrics, buy_hold_metrics = run_backtest(
         evaluated[["Close", "Segnale"]],
@@ -119,6 +123,9 @@ def run_pipeline(
     }
 
     with staged_run(output_dir) as staging:
+        raw_candles = candles.copy().sort_index()
+        raw_candles.index.name = "Date"
+        save_dataframe_csv(raw_candles, staging / "raw_candles.csv", index=True)
         save_status_json(
             evaluated,
             metadata=metadata,
@@ -141,7 +148,7 @@ def run_pipeline(
         )
         save_chart_data_json(evaluated, staging / "chart-data.json", metadata)
         save_historical_csv(evaluated, staging / "historical_signals.csv")
-        equity.to_csv(staging / "equity_timeseries.csv", index=True)
+        save_dataframe_csv(equity, staging / "equity_timeseries.csv", index=True)
         save_text_report(
             evaluated,
             strategy_metrics,
@@ -156,6 +163,7 @@ def run_pipeline(
             metadata,
             period=period,
             metrics=metrics,
+            provenance=provenance,
             artifact_names=ARTIFACT_NAMES,
         )
         validate_bundle(staging)

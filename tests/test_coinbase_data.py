@@ -53,6 +53,20 @@ class CoinbaseDataTests(unittest.TestCase):
                 )
         self.assertEqual(result.index[-1], pd.Timestamp("2026-07-21"))
 
+    def test_as_of_excludes_candles_after_requested_day(self) -> None:
+        downloaded = candle_frame(["2026-07-20", "2026-07-21"])
+        cached = candle_frame(["2026-07-20", "2026-07-21", "2026-07-22"])
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            path = Path(tmp_dir) / "cache.csv"
+            cached.rename_axis("Date").to_csv(path)
+            with patch("data.coinbase._download_candles", return_value=downloaded):
+                result = fetch_daily_candles(
+                    cache_path=path,
+                    start_date="2026-07-20",
+                    as_of="2026-07-21",
+                )
+        self.assertEqual(list(result.index), list(pd.to_datetime(["2026-07-20", "2026-07-21"])))
+
 
 if __name__ == "__main__":
     unittest.main()

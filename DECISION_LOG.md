@@ -18,3 +18,14 @@
 
 Il codice precedente alla revisione resta identificabile dal tag Git
 `pre-coherence-v1`; non viene presentato come versione operativa o baseline.
+
+## 2026-07-27 - Baseline v1 riproducibile
+
+- La baseline ufficiale viene congelata all'ultima candela del 2026-07-26.
+- Lo snapshot OHLCV Coinbase diventa parte del pacchetto versionato.
+- Python 3.13.0 e tutte le dipendenze sono bloccati con hash.
+- Il manifest registra formule, periodo, metriche, sorgenti e artefatti.
+- `reproduce.py` ricalcola offline e richiede output canonici byte-identici.
+- Il run operativo resta separato e pubblica il proprio input grezzo.
+- Un nuovo intervallo temporale richiedera una nuova baseline e un nuovo tag,
+  senza modificare retroattivamente `baseline-v1-2026-07-26`.

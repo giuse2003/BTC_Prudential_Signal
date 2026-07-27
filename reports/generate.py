@@ -13,6 +13,24 @@ from config import CFG
 from strategy.signals import explain_latest_row, live_condition_statuses
 
 
+def write_utf8_text(out_path: str | Path, content: str) -> Path:
+    """Scrive testo con byte e terminatori di riga uguali su ogni piattaforma."""
+    path = Path(out_path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(content.replace("\r\n", "\n").encode("utf-8"))
+    return path
+
+
+def save_dataframe_csv(
+    frame: pd.DataFrame,
+    out_path: str | Path,
+    *,
+    index: bool,
+) -> Path:
+    content = frame.to_csv(index=index, lineterminator="\n")
+    return write_utf8_text(out_path, content)
+
+
 def _json_float(value) -> float | None:
     if value is None or pd.isna(value):
         return None
@@ -51,8 +69,7 @@ def save_historical_csv(df: pd.DataFrame, out_path: str | Path) -> Path:
         "Data", "Open", "High", "Low", "Close", "BTC-USD", "SMA50", "SMA200",
         "RSI", "ATR", "Volume", "VolumeAvg20", "Azione", "Livello_Rischio",
     ]
-    output[columns].to_csv(out_path, index=False)
-    return out_path
+    return save_dataframe_csv(output[columns], out_path, index=False)
 
 
 def save_chart_data_json(
@@ -78,11 +95,10 @@ def save_chart_data_json(
         }
         for date, row in df.sort_index().iterrows()
     ]
-    out_path.write_text(
+    return write_utf8_text(
+        out_path,
         json.dumps({**metadata, "mode": "DAILY", "rows": rows}, separators=(",", ":")),
-        encoding="utf-8",
     )
-    return out_path
 
 
 def save_live_status_json(
@@ -118,8 +134,7 @@ def save_live_status_json(
         "risk_level": risk_level,
         "condition_groups": _condition_groups(buy_statuses, sell_statuses, live=True),
     }
-    out_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
-    return out_path
+    return write_utf8_text(out_path, json.dumps(payload, indent=2))
 
 
 def save_status_json(
@@ -152,8 +167,7 @@ def save_status_json(
         "previous_sma50": _json_float(previous.get("SMA50") if previous is not None else None),
         "condition_groups": _condition_groups(buy_statuses, sell_statuses, live=False),
     }
-    out_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
-    return out_path
+    return write_utf8_text(out_path, json.dumps(payload, indent=2))
 
 
 def save_text_report(
@@ -207,8 +221,7 @@ def save_text_report(
         f"- Drawdown massimo: {pct(metrics_bh.max_drawdown)}",
         f"- Sharpe Ratio: {metrics_bh.sharpe_ratio:.3f}",
     ]
-    out_path.write_text("\n".join(lines), encoding="utf-8")
-    return out_path
+    return write_utf8_text(out_path, "\n".join(lines))
 
 
 def plot_price_and_sma_with_signals(df: pd.DataFrame, out_path: str | Path) -> Path:

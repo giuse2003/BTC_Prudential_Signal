@@ -1,8 +1,9 @@
 # BTC-USD Signal - Valori per valutazione esterna
 
-Questo documento descrive la baseline v1 riproducibile. La fonte canonica dei
-numeri e [`docs/manifest.json`](docs/manifest.json); in caso di differenza fa
-fede il manifest dell'ultimo pacchetto completo.
+Questo documento descrive la baseline v1 congelata. La fonte canonica dei
+numeri e
+[`docs/runs/baseline-v1-2026-07-26/manifest.json`](docs/runs/baseline-v1-2026-07-26/manifest.json).
+Il manifest operativo in `docs/manifest.json` cambia invece con le nuove candele.
 
 ## Identita e dati
 
@@ -63,6 +64,19 @@ Sono risultati storici lordi, non una previsione. L'assenza di costi e di un
 vero periodo out-of-sample congelato impone prudenza: non e corretto tradurre
 questi rendimenti in un'aspettativa realistica di profitto futuro.
 
+## Verifica indipendente
+
+Il pacchetto congelato include l'esatto CSV Coinbase usato. Con Python 3.13.0 e
+le dipendenze bloccate da `requirements.lock`, il comando seguente ricostruisce
+gli output senza rete e ne richiede l'identita byte per byte:
+
+```powershell
+python reproduce.py --manifest docs/runs/baseline-v1-2026-07-26/manifest.json
+```
+
+Istruzioni da clone pulito, controlli e limiti sono in
+[`REPRODUCIBILITY.md`](REPRODUCIBILITY.md).
+
 ## Output correnti
 
 `status.json` contiene il DAILY ufficiale; `live-status.json` contiene una LIVE
@@ -86,6 +100,8 @@ gli hash SHA-256 di report, storico, equity e grafico.
 | 2026-07-27 | Report ed esperimenti non appartenenti alla baseline v1 rimossi. |
 | 2026-07-27 | Aggiunti manifest, hash, validazione e pubblicazione transazionale. |
 | 2026-07-27 | Dashboard e Worker collegati allo stesso pacchetto informativo. |
+| 2026-07-27 | Congelati input, ambiente e output della baseline v1 con verifica offline. |
+| 2026-07-27 | Il run operativo pubblica anche le candele grezze e tutti gli artefatti del manifest. |
 
 ## Valutazione critica
 

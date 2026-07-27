@@ -11,10 +11,12 @@
 - DAILY e LIVE PREVIEW separati.
 - Backtest e Buy & Hold sullo stesso periodo successivo al warm-up SMA200.
 - Pubblicazione transazionale con manifest e hash.
+- Baseline v1 congelata al 2026-07-26 e riproducibile offline.
+- Ambiente Python e dipendenze bloccati con hash.
 
-I valori ufficiali correnti sono esclusivamente quelli di
-[`docs/manifest.json`](docs/manifest.json). Questo evita che documenti e
-dashboard mantengano copie manuali non piu sincronizzate.
+I valori ufficiali della baseline sono in
+[`docs/runs/baseline-v1-2026-07-26/manifest.json`](docs/runs/baseline-v1-2026-07-26/manifest.json).
+I valori operativi correnti sono separati in [`docs/manifest.json`](docs/manifest.json).
 
 ## Limiti aperti
 
@@ -23,3 +25,4 @@ dashboard mantengano copie manuali non piu sincronizzate.
 - I risultati dipendono dallo storico e dalla microstruttura Coinbase.
 - LIVE PREVIEW e provvisorio e puo cambiare prima della chiusura UTC.
 - Non esiste ancora un modello autonomo BTC-EUR.
+- La riproducibilita dimostra il calcolo storico, non elimina overfitting o rischio futuro.

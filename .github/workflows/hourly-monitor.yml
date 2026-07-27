@@ -24,7 +24,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.13"
+          python-version: "3.13.0"
 
       - name: Restore monitor state (cache)
         id: cache-state
@@ -40,7 +40,7 @@ jobs:
       - name: Install deps
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          python -m pip install --require-hashes -r requirements.lock
 
       - name: Run hourly monitor
         env:
@@ -57,10 +57,15 @@ jobs:
           cp reports/status.json docs/status.json
           cp reports/chart-data.json docs/chart-data.json
           cp reports/live-status.json docs/live-status.json
+          cp reports/raw_candles.csv docs/raw_candles.csv
+          cp reports/historical_signals.csv docs/historical_signals.csv
+          cp reports/equity_timeseries.csv docs/equity_timeseries.csv
+          cp reports/report.txt docs/report.txt
+          cp reports/price_sma_signals.png docs/price_sma_signals.png
           cp reports/manifest.json docs/manifest.json
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add docs/status.json docs/chart-data.json docs/live-status.json docs/manifest.json
+          git add docs/status.json docs/chart-data.json docs/live-status.json docs/raw_candles.csv docs/historical_signals.csv docs/equity_timeseries.csv docs/report.txt docs/price_sma_signals.png docs/manifest.json
           git diff --cached --quiet || git commit -m "Aggiorna pacchetto BTC-USD Signal"
           git push
 

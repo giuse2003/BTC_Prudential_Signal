@@ -173,6 +173,7 @@ def fetch_daily_candles(
     start_date: str = CFG.start_date,
     cache_path: str | Path | None = None,
     refresh_all: bool = False,
+    as_of: str | date | None = None,
     now_utc: datetime | pd.Timestamp | None = None,
     timeout_s: int = 20,
     session: requests.Session | None = None,
@@ -180,7 +181,9 @@ def fetch_daily_candles(
     """Aggiorna la cache Coinbase e restituisce solo candele daily concluse."""
     current = pd.Timestamp.now(tz="UTC") if now_utc is None else pd.Timestamp(now_utc)
     current = current.tz_localize("UTC") if current.tzinfo is None else current.tz_convert("UTC")
-    today = current.date()
+    cutoff_date = date.fromisoformat(as_of) if isinstance(as_of, str) else as_of
+    last_included_date = cutoff_date or (current.date() - timedelta(days=1))
+    end_exclusive = last_included_date + timedelta(days=1)
     path = Path(cache_path) if cache_path is not None else _default_cache_path(product_id)
     cached: pd.DataFrame | None = None
     if path.exists() and not refresh_all:
@@ -195,7 +198,7 @@ def fetch_daily_candles(
         downloaded = _download_candles(
             product_id,
             fetch_start,
-            today,
+            end_exclusive,
             timeout_s=timeout_s,
             session=session,
         )
@@ -209,7 +212,8 @@ def fetch_daily_candles(
         raise RuntimeError(f"Nessuna candela Coinbase disponibile per {product_id}.")
     merged = pd.concat(frames).sort_index()
     merged = merged[~merged.index.duplicated(keep="last")]
-    merged = keep_closed_daily_candles(merged, now_utc=current)
+    cutoff_utc = pd.Timestamp(end_exclusive, tz="UTC")
+    merged = keep_closed_daily_candles(merged, now_utc=cutoff_utc)
     validate_daily_candles(merged)
 
     path.parent.mkdir(parents=True, exist_ok=True)

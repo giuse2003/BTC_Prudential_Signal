@@ -1,0 +1,51 @@
+{
+  "run_id": "baseline-v1-2026-07-26",
+  "run_type": "frozen-baseline",
+  "as_of": "2026-07-26",
+  "project": "BTC-USD Signal",
+  "model_version": "1.0",
+  "data_source": "Coinbase Advanced Trade",
+  "market": "BTC-USD",
+  "timezone": "UTC",
+  "mode": "DAILY",
+  "candle_date": "2026-07-26",
+  "action": "MANTIENI STATO ATTUALE",
+  "price_usd": 65341.07,
+  "price_eur": null,
+  "status": "Attivo",
+  "risk_level": "ALTO",
+  "rsi": 55.02170605477543,
+  "sma50": 63259.690800000004,
+  "sma200": 72130.95235,
+  "atr": 1677.952105217959,
+  "volume_btc": 2390.56790196,
+  "volume_avg20_btc": 5791.065690604,
+  "previous_close": 64295.61,
+  "previous_sma50": 63169.879,
+  "condition_groups": {
+    "buy": [
+      {
+        "label": "prezzo sopra SMA200",
+        "passed": false
+      },
+      {
+        "label": "RSI uguale o maggiore di 40",
+        "passed": true
+      },
+      {
+        "label": "prezzo sopra quello di 7 giorni prima",
+        "passed": true
+      },
+      {
+        "label": "volume BTC-USD sopra media 20 giorni",
+        "passed": false
+      }
+    ],
+    "sell": [
+      {
+        "label": "prezzo sotto SMA50 per 2 giorni consecutivi",
+        "passed": false
+      }
+    ]
+  }
+}

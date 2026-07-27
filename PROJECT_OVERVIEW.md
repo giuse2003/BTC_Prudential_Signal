@@ -20,6 +20,8 @@ informativo nei contenuti LIVE PREVIEW.
 | `backtest/backtest.py` | esposizione 0/100, shift di un giorno, metriche e Buy & Hold |
 | `pipeline.py` | esecuzione comune a CLI e monitor |
 | `reports/publication.py` | staging, manifest, hash, validazione, promozione e rollback |
+| `reproducibility.py` | creazione e verifica offline di baseline congelate |
+| `reproduce.py` | comando di verifica della baseline ufficiale |
 | `docs/` | dashboard e pacchetto pubblico coerente |
 | `cloudflare-worker/` | Telegram e API pubbliche; consuma il pacchetto, non ricalcola il modello |
 
@@ -29,8 +31,13 @@ informativo nei contenuti LIVE PREVIEW.
 una riga provvisoria con prezzo e volume 24h del medesimo mercato Coinbase.
 Entrambi applicano le stesse regole, ma soltanto DAILY alimenta il backtest.
 
-## Riproducibilita
+## Riproducibilita e tracciabilita
 
 Ogni run ha un `run_id`. `status.json`, `live-status.json`, `chart-data.json` e
 `manifest.json` devono avere lo stesso identificativo. Il manifest registra il
 periodo, la metodologia, le metriche e l'hash SHA-256 di ogni artefatto.
+
+La baseline `baseline-v1-2026-07-26` e immutabile: conserva input grezzo,
+versione Python, dipendenze, hash dei sorgenti e output canonici. `reproduce.py`
+ricalcola tutto offline. Il run operativo resta dinamico ma pubblica il proprio
+`raw_candles.csv` e la provenienza necessaria a ricostruire cosa e stato usato.
