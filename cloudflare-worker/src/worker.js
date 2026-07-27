@@ -204,7 +204,9 @@ function formatSignalConditions(groups) {
 }
 
 function formatConditionGroup(conditions) {
-  return conditions.map((condition, index) => `${condition.passed ? "OK" : "NO"} ${index + 1}.`);
+  return conditions.map(
+    (condition, index) => `${condition.passed ? "✅" : "🅾️"} ${index + 1}.`,
+  );
 }
 
 async function subscribeUser(request, env) {
