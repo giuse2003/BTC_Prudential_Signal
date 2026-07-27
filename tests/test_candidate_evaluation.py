@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import unittest
+from pathlib import Path
 
 import pandas as pd
 
@@ -8,9 +9,12 @@ from experiments.candidate_evaluation import (
     VARIANTS,
     _moving_block_bootstrap,
     build_signals,
+    prepare_market,
     strategy_path,
 )
+from pipeline import evaluation_frame
 from strategy.rules import ACTION_BUY, ACTION_HOLD, ACTION_SELL
+from strategy.signals import compute_signals
 
 
 def signal_frame() -> pd.DataFrame:
@@ -65,6 +69,21 @@ class CandidateEvaluationTests(unittest.TestCase):
         second = _moving_block_bootstrap(difference, samples=100, block_days=5, seed=7)
 
         self.assertEqual(first, second)
+
+    def test_experimental_baseline_preserves_prewarmup_sell_context(self) -> None:
+        root = Path(__file__).resolve().parents[1]
+        candles = pd.read_csv(
+            root / "docs/runs/baseline-v1-2026-07-26/raw_candles.csv",
+            parse_dates=["Date"],
+            index_col="Date",
+        )
+        indicators = prepare_market(candles)
+        evaluated = evaluation_frame(indicators)
+        experimental = build_signals(indicators, VARIANTS[0]).loc[evaluated.index]
+        official = evaluation_frame(compute_signals(indicators))["Segnale"]
+
+        pd.testing.assert_series_equal(experimental, official, check_names=False)
+        self.assertEqual(experimental.iloc[0], ACTION_SELL)
 
 
 if __name__ == "__main__":

@@ -1,8 +1,7 @@
 # Protocollo di valutazione candidati BTC-USD Signal
 
-Stato: preregistrato prima della prima valutazione dei segnali su ETH-USD.
-
-Data del protocollo: 2026-07-27.
+Versione aggiornata il 2026-07-27 su richiesta dell'utente: l'esperimento usa
+esclusivamente BTC-USD e non accede, modifica o valuta il progetto ETH-USD.
 
 ## Scopo
 
@@ -13,9 +12,9 @@ modificare segnali, dashboard o monitor operativi:
 - `V1-B1`: eliminazione della condizione volume dall'acquisto.
 
 Le candidate sono nate da un'analisi esplorativa sullo storico BTC completo.
-Pertanto nessun sottoperiodo BTC puo essere definito un vero out-of-sample. La
-verifica BTC misura soltanto stabilita temporale. ETH-USD viene usato come
-controllo cross-asset senza modificare soglie o regole.
+Pertanto nessun sottoperiodo disponibile puo essere definito un vero
+out-of-sample. I blocchi temporali e il bootstrap misurano stabilita interna,
+non rendimento futuro.
 
 ## Regole confrontate
 
@@ -26,7 +25,7 @@ Acquisto con tutte vere:
 1. Close sopra SMA200;
 2. RSI14 maggiore o uguale a 40;
 3. Close sopra quello di 7 giorni prima;
-4. volume base sopra la media a 20 giorni.
+4. volume BTC-USD sopra la media a 20 giorni.
 
 Vendita dopo due Close consecutivi sotto SMA50.
 
@@ -39,22 +38,23 @@ Stesso acquisto della baseline. Vendita dopo il primo Close sotto SMA50.
 Acquisto con trend, RSI e momentum; la condizione volume viene rimossa. Vendita
 invariata dopo due Close consecutivi sotto SMA50.
 
-Non verranno ottimizzate altre soglie dopo aver osservato ETH.
+Non vengono valutate combinazioni delle due modifiche o altre soglie.
 
 ## Dati
 
-- BTC-USD: snapshot congelato della baseline v1, cutoff 2026-07-26.
-- ETH-USD: Coinbase `ONE_DAY`, cutoff comune 2026-07-26.
+- Unico input: snapshot Coinbase `BTC-USD` della baseline v1.
+- Storico congelato dal 2015-07-20 al 2026-07-26.
 - UTC e sole candele concluse.
-- ETH parte dal primo tratto giornaliero continuo, 2016-05-23. Le candele
-  Coinbase 2016-05-21 e 2016-05-22 sono assenti e non vengono sintetizzate.
-- Ogni asset usa il proprio warm-up SMA200, escluso dalla valutazione.
-- Nessun dato Yahoo o conversione EUR entra nel test.
+- Warm-up SMA200 escluso dalla valutazione.
+- Periodo valutato dal 2016-02-04 al 2026-07-26.
+- Nessun dato ETH, Yahoo o BTC-EUR entra nel test.
 
 ## Esecuzione
 
-- Segnale calcolato alla chiusura `t`.
-- Esposizione effettiva dal rendimento del giorno successivo.
+- Segnale calcolato sull'intera storia, incluso il warm-up necessario a valutare
+  correttamente la persistenza della vendita al primo giorno utile.
+- Warm-up rimosso soltanto dopo il calcolo dei segnali.
+- Segnale della chiusura `t` applicato dal rendimento del giorno successivo.
 - Esposizione 0% o 100%.
 - `MANTIENI STATO ATTUALE` conserva l'esposizione.
 - Vendita con precedenza sull'acquisto.
@@ -80,17 +80,17 @@ https://help.coinbase.com/en/coinbase/trading-and-funding/advanced-trade/advance
 
 ## Metriche
 
-Per ogni asset, variante e costo:
+Per ogni variante e costo:
 
 - rendimento totale e annualizzato;
 - drawdown massimo;
 - Sharpe annualizzato a 365 giorni;
 - operazioni completate e win rate;
 - tempo investito;
-- numero di lati negoziati e costo cumulativo indicativo.
+- numero di lati negoziati.
 
-Il confronto usa anche blocchi temporali comuni con stato della posizione
-conservato dalla serie completa:
+Il confronto usa anche blocchi temporali con stato della posizione conservato
+dalla serie completa:
 
 - 2017-2018;
 - 2019-2020;
@@ -100,7 +100,7 @@ conservato dalla serie completa:
 
 ## Bootstrap
 
-Per ogni candidato e asset si esegue un moving-block bootstrap accoppiato sulla
+Per ogni candidato si esegue un moving-block bootstrap accoppiato sulla
 differenza dei rendimenti giornalieri netti rispetto alla baseline:
 
 - costo 0,60% per lato;
@@ -111,32 +111,32 @@ differenza dei rendimenti giornalieri netti rispetto alla baseline:
 - probabilita empirica che la differenza sia positiva.
 
 Il bootstrap non elimina il selection bias originario, ma evita di interpretare
-una piccola differenza di Sharpe come certezza.
+una piccola differenza come certezza.
 
 ## Criteri di promozione
 
 Un candidato e indicato come `PROMUOVIBILE` soltanto se soddisfa tutti i criteri
 al costo primario di 0,60% per lato:
 
-1. Sharpe superiore alla baseline sia su BTC sia su ETH.
-2. Drawdown non peggiore di oltre 2 punti percentuali su nessun asset.
-3. Rendimento annualizzato non inferiore di oltre 5 punti percentuali su nessun
-   asset.
-4. Sharpe superiore alla baseline in almeno 6 dei 10 confronti asset/blocco.
-5. Incremento dei lati negoziati non superiore al 50% su nessun asset.
-6. Probabilita bootstrap di differenza media positiva almeno 90% su entrambi gli
-   asset.
+1. Sharpe superiore alla baseline.
+2. Drawdown non peggiore di oltre 2 punti percentuali.
+3. Rendimento annualizzato non inferiore di oltre 5 punti percentuali.
+4. Sharpe superiore alla baseline in almeno 3 dei 5 blocchi temporali.
+5. Incremento dei lati negoziati non superiore al 50%.
+6. Probabilita bootstrap di differenza media positiva almeno 90%.
 
-Un fallimento non significa che la variante sia inutile; significa che non c'e
-evidenza sufficiente per sostituire la baseline v1.
+Un fallimento non significa che la variante sia inutile; significa che lo
+storico BTC disponibile non fornisce evidenza sufficiente per sostituire la
+baseline v1.
 
 ## Vincoli decisionali
 
 - La baseline v1 rimane immutabile qualunque sia il risultato.
-- Nessuna combinazione `V1-S1 + V1-B1` viene promossa in questo esperimento.
-- Non si modificano soglie dopo aver letto i risultati ETH.
-- Un candidato promuovibile richiedera comunque paper trading prima di diventare
-  una nuova baseline operativa.
+- Nessun file o dato ETH viene usato.
+- Nessuna combinazione `V1-S1 + V1-B1` viene promossa.
+- Non si modificano soglie dopo aver letto i risultati.
+- Un candidato promuovibile richiedera comunque paper trading su nuovi dati
+  prima di diventare una nuova baseline operativa.
 - Un'eventuale nuova baseline avra nuovo nome, manifest e tag Git.
 
 La selezione ripetuta di varianti sul medesimo storico puo gonfiare i risultati;

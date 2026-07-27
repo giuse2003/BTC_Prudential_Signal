@@ -24,6 +24,7 @@ from reproducibility import (
     sha256_source_file,
 )
 from strategy.rules import ACTION_BUY, ACTION_HOLD, ACTION_SELL
+from strategy.signals import compute_signals
 
 AS_OF = "2026-07-26"
 PRIMARY_COST = 0.006
@@ -46,7 +47,6 @@ EXPERIMENT_SOURCE_FILES = (
     "reproduce_candidate_experiment.py",
 )
 CANONICAL_ARTIFACTS = (
-    "eth-usd-raw-candles.csv",
     "full_results.csv",
     "fold_results.csv",
     "bootstrap_results.csv",
@@ -82,7 +82,7 @@ class ExperimentResult:
 def prepare_market(candles: pd.DataFrame) -> pd.DataFrame:
     frame = candles.copy().sort_index()
     frame.index = pd.DatetimeIndex(frame.index).tz_localize(None)
-    return evaluation_frame(compute_all_indicators(frame))
+    return compute_all_indicators(frame)
 
 
 def build_signals(frame: pd.DataFrame, variant: Variant) -> pd.Series:
@@ -199,12 +199,20 @@ def full_path_metrics(path: pd.DataFrame) -> dict[str, float | int]:
 
 
 def _assert_matches_official_backtest(
-    frame: pd.DataFrame,
+    indicators: pd.DataFrame,
     signals: pd.Series,
     metrics: dict,
 ) -> None:
+    official_frame = evaluation_frame(compute_signals(indicators))
+    official_signals = official_frame["Segnale"]
+    differences = signals.ne(official_signals)
+    if differences.any():
+        first = differences[differences].index[0].strftime("%Y-%m-%d")
+        raise RuntimeError(
+            f"La baseline sperimentale diverge dai segnali ufficiali dal {first}."
+        )
     _, official, _ = run_backtest(
-        pd.DataFrame({"Close": frame["Close"], "Segnale": signals})
+        official_frame[["Close", "Segnale"]]
     )
     checks = {
         "total_return": official.total_return,
@@ -270,72 +278,68 @@ def _moving_block_bootstrap(
 
 def evaluate_candidates(
     btc_candles: pd.DataFrame,
-    eth_candles: pd.DataFrame,
 ) -> ExperimentResult:
-    markets = {"BTC-USD": btc_candles, "ETH-USD": eth_candles}
     full_rows: list[dict] = []
     fold_rows: list[dict] = []
     bootstrap_rows: list[dict] = []
-    primary_paths: dict[tuple[str, str], pd.DataFrame] = {}
-    periods: dict[str, dict] = {}
+    primary_paths: dict[str, pd.DataFrame] = {}
 
-    for asset, candles in markets.items():
-        frame = prepare_market(candles)
-        periods[asset] = _period_payload(candles, frame)
-        for variant in VARIANTS:
-            signals = build_signals(frame, variant)
-            for cost in COST_RATES:
-                path = strategy_path(frame, signals, cost)
-                metrics = full_path_metrics(path)
-                if variant.key == "BASELINE" and cost == 0.0:
-                    _assert_matches_official_backtest(frame, signals, metrics)
-                full_rows.append(
-                    {
-                        "asset": asset,
-                        "variant": variant.key,
-                        "label": variant.label,
-                        "cost_per_side": cost,
-                        **metrics,
-                    }
-                )
-                if cost == PRIMARY_COST:
-                    primary_paths[(asset, variant.key)] = path
-
-    for asset in markets:
-        for variant in VARIANTS:
-            path = primary_paths[(asset, variant.key)]
-            for fold, start, end in FOLDS:
-                segment = path.loc[start:end]
-                if segment.empty:
-                    raise RuntimeError(f"Fold {fold} vuoto per {asset}.")
-                metrics = _metrics_from_returns(
-                    segment["NetReturn"],
-                    annualization_periods=len(segment),
-                )
-                fold_rows.append(
-                    {
-                        "asset": asset,
-                        "fold": fold,
-                        "start": segment.index[0].strftime("%Y-%m-%d"),
-                        "end": segment.index[-1].strftime("%Y-%m-%d"),
-                        "variant": variant.key,
-                        "cost_per_side": PRIMARY_COST,
-                        **metrics,
-                        "turnover_sides": float(segment["TurnoverSides"].sum()),
-                    }
-                )
-
-        baseline_returns = primary_paths[(asset, "BASELINE")]["NetReturn"]
-        for variant in VARIANTS[1:]:
-            candidate_returns = primary_paths[(asset, variant.key)]["NetReturn"]
-            bootstrap_rows.append(
+    indicators = prepare_market(btc_candles)
+    frame = evaluation_frame(indicators)
+    periods = {"BTC-USD": _period_payload(btc_candles, frame)}
+    for variant in VARIANTS:
+        signals = build_signals(indicators, variant).loc[frame.index]
+        for cost in COST_RATES:
+            path = strategy_path(frame, signals, cost)
+            metrics = full_path_metrics(path)
+            if variant.key == "BASELINE" and cost == 0.0:
+                _assert_matches_official_backtest(indicators, signals, metrics)
+            full_rows.append(
                 {
-                    "asset": asset,
+                    "asset": "BTC-USD",
                     "variant": variant.key,
-                    "cost_per_side": PRIMARY_COST,
-                    **_moving_block_bootstrap(candidate_returns - baseline_returns),
+                    "label": variant.label,
+                    "cost_per_side": cost,
+                    **metrics,
                 }
             )
+            if cost == PRIMARY_COST:
+                primary_paths[variant.key] = path
+
+    for variant in VARIANTS:
+        path = primary_paths[variant.key]
+        for fold, start, end in FOLDS:
+            segment = path.loc[start:end]
+            if segment.empty:
+                raise RuntimeError(f"Fold BTC-USD {fold} vuoto.")
+            metrics = _metrics_from_returns(
+                segment["NetReturn"],
+                annualization_periods=len(segment),
+            )
+            fold_rows.append(
+                {
+                    "asset": "BTC-USD",
+                    "fold": fold,
+                    "start": segment.index[0].strftime("%Y-%m-%d"),
+                    "end": segment.index[-1].strftime("%Y-%m-%d"),
+                    "variant": variant.key,
+                    "cost_per_side": PRIMARY_COST,
+                    **metrics,
+                    "turnover_sides": float(segment["TurnoverSides"].sum()),
+                }
+            )
+
+    baseline_returns = primary_paths["BASELINE"]["NetReturn"]
+    for variant in VARIANTS[1:]:
+        candidate_returns = primary_paths[variant.key]["NetReturn"]
+        bootstrap_rows.append(
+            {
+                "asset": "BTC-USD",
+                "variant": variant.key,
+                "cost_per_side": PRIMARY_COST,
+                **_moving_block_bootstrap(candidate_returns - baseline_returns),
+            }
+        )
 
     full = pd.DataFrame(full_rows).sort_values(
         ["asset", "cost_per_side", "variant"]
@@ -359,78 +363,52 @@ def promotion_decisions(
     decisions: dict[str, dict] = {}
 
     for variant in (item.key for item in VARIANTS[1:]):
-        asset_checks: dict[str, dict] = {}
-        for asset in ("BTC-USD", "ETH-USD"):
-            baseline = primary.loc[
-                (primary["asset"] == asset) & (primary["variant"] == "BASELINE")
-            ].iloc[0]
-            candidate = primary.loc[
-                (primary["asset"] == asset) & (primary["variant"] == variant)
-            ].iloc[0]
-            asset_checks[asset] = {
-                "sharpe_improves": bool(candidate["sharpe_ratio"] > baseline["sharpe_ratio"]),
-                "drawdown_within_2pp": bool(
-                    candidate["max_drawdown"] >= baseline["max_drawdown"] - 0.02
-                ),
-                "annualized_return_within_5pp": bool(
-                    candidate["annualized_return"] >= baseline["annualized_return"] - 0.05
-                ),
-                "turnover_increase_within_50pct": bool(
-                    candidate["turnover_sides"] <= baseline["turnover_sides"] * 1.5
-                ),
-            }
+        baseline = primary.loc[primary["variant"] == "BASELINE"].iloc[0]
+        candidate = primary.loc[primary["variant"] == variant].iloc[0]
+        metric_checks = {
+            "sharpe_improves": bool(candidate["sharpe_ratio"] > baseline["sharpe_ratio"]),
+            "drawdown_within_2pp": bool(
+                candidate["max_drawdown"] >= baseline["max_drawdown"] - 0.02
+            ),
+            "annualized_return_within_5pp": bool(
+                candidate["annualized_return"] >= baseline["annualized_return"] - 0.05
+            ),
+            "turnover_increase_within_50pct": bool(
+                candidate["turnover_sides"] <= baseline["turnover_sides"] * 1.5
+            ),
+        }
 
         fold_wins = 0
         fold_comparisons = 0
-        for asset in ("BTC-USD", "ETH-USD"):
-            for fold, _, _ in FOLDS:
-                baseline = folds.loc[
-                    (folds["asset"] == asset)
-                    & (folds["fold"] == fold)
-                    & (folds["variant"] == "BASELINE")
-                ].iloc[0]
-                candidate = folds.loc[
-                    (folds["asset"] == asset)
-                    & (folds["fold"] == fold)
-                    & (folds["variant"] == variant)
-                ].iloc[0]
-                fold_comparisons += 1
-                fold_wins += int(candidate["sharpe_ratio"] > baseline["sharpe_ratio"])
-
-        bootstrap_probabilities = {
-            asset: float(
-                bootstrap.loc[
-                    (bootstrap["asset"] == asset) & (bootstrap["variant"] == variant),
-                    "probability_positive",
-                ].iloc[0]
+        for fold, _, _ in FOLDS:
+            fold_baseline = folds.loc[
+                (folds["fold"] == fold) & (folds["variant"] == "BASELINE")
+            ].iloc[0]
+            fold_candidate = folds.loc[
+                (folds["fold"] == fold) & (folds["variant"] == variant)
+            ].iloc[0]
+            fold_comparisons += 1
+            fold_wins += int(
+                fold_candidate["sharpe_ratio"] > fold_baseline["sharpe_ratio"]
             )
-            for asset in ("BTC-USD", "ETH-USD")
-        }
+
+        bootstrap_probability = float(
+            bootstrap.loc[
+                bootstrap["variant"] == variant,
+                "probability_positive",
+            ].iloc[0]
+        )
         criteria = {
-            "sharpe_improves_both_assets": all(
-                checks["sharpe_improves"] for checks in asset_checks.values()
-            ),
-            "drawdown_within_2pp_both_assets": all(
-                checks["drawdown_within_2pp"] for checks in asset_checks.values()
-            ),
-            "annualized_return_within_5pp_both_assets": all(
-                checks["annualized_return_within_5pp"] for checks in asset_checks.values()
-            ),
-            "turnover_within_50pct_both_assets": all(
-                checks["turnover_increase_within_50pct"] for checks in asset_checks.values()
-            ),
-            "at_least_6_of_10_fold_sharpe_wins": fold_wins >= 6,
-            "bootstrap_probability_at_least_90pct_both_assets": all(
-                probability >= 0.90 for probability in bootstrap_probabilities.values()
-            ),
+            **metric_checks,
+            "at_least_3_of_5_fold_sharpe_wins": fold_wins >= 3,
+            "bootstrap_probability_at_least_90pct": bootstrap_probability >= 0.90,
         }
         decisions[variant] = {
             "status": "PROMUOVIBILE" if all(criteria.values()) else "NON PROMUOVIBILE",
             "criteria": criteria,
-            "asset_checks": asset_checks,
             "fold_sharpe_wins": fold_wins,
             "fold_comparisons": fold_comparisons,
-            "bootstrap_probability_positive": bootstrap_probabilities,
+            "bootstrap_probability_positive": bootstrap_probability,
         }
     return decisions
 
@@ -466,19 +444,18 @@ def _markdown_report(result: ExperimentResult, source_commit: str | None) -> str
         f"Commit sorgente: `{source_commit or 'non disponibile'}`.",
         "",
         "La baseline operativa non e stata modificata. I candidati sono valutati secondo",
-        "`MODEL_CANDIDATE_PROTOCOL.md`, fissato prima della prima analisi ETH.",
+        "`MODEL_CANDIDATE_PROTOCOL.md` e usano esclusivamente BTC-USD.",
         "",
         "## Decisione",
         "",
-        "| Candidato | Esito | Fold Sharpe vinti | Bootstrap BTC | Bootstrap ETH |",
-        "|---|---|---:|---:|---:|",
+        "| Candidato | Esito | Fold Sharpe vinti | Probabilita bootstrap |",
+        "|---|---|---:|---:|",
     ]
     for variant, decision in result.decisions.items():
-        probabilities = decision["bootstrap_probability_positive"]
         lines.append(
             f"| {variant} | {decision['status']} | "
             f"{decision['fold_sharpe_wins']}/{decision['fold_comparisons']} | "
-            f"{_pct(probabilities['BTC-USD'])} | {_pct(probabilities['ETH-USD'])} |"
+            f"{_pct(decision['bootstrap_probability_positive'])} |"
         )
 
     lines.extend(
@@ -527,9 +504,9 @@ def _markdown_report(result: ExperimentResult, source_commit: str | None) -> str
             "## Interpretazione corretta",
             "",
             "I candidati sono stati scelti dopo aver osservato l'intero storico BTC. I risultati",
-            "BTC non sono quindi out-of-sample. ETH e un controllo cross-asset, non una prova",
-            "di rendimento futuro. Il bootstrap misura l'incertezza campionaria della differenza",
-            "giornaliera, ma non corregge interamente selection bias e cambi di regime.",
+            "non sono quindi out-of-sample. I blocchi e il bootstrap misurano stabilita interna,",
+            "ma non correggono interamente selection bias e cambi di regime. Nessun dato o",
+            "progetto ETH-USD e stato usato in questa valutazione.",
             "",
             "Le commissioni Coinbase effettive dipendono da maker/taker e volume personale.",
             "Gli scenari sono stress test, non un preventivo di costo. Slippage, spread, imposte",
@@ -547,14 +524,10 @@ def _markdown_report(result: ExperimentResult, source_commit: str | None) -> str
 
 def _write_outputs(
     result: ExperimentResult,
-    eth_candles: pd.DataFrame,
     target: Path,
     source_commit: str | None,
 ) -> None:
     target.mkdir(parents=True, exist_ok=True)
-    eth_output = eth_candles.copy().sort_index()
-    eth_output.index.name = "Date"
-    save_dataframe_csv(eth_output, target / "eth-usd-raw-candles.csv", index=True)
     save_dataframe_csv(result.full_results, target / "full_results.csv", index=False)
     save_dataframe_csv(result.fold_results, target / "fold_results.csv", index=False)
     save_dataframe_csv(
@@ -571,7 +544,6 @@ def _write_outputs(
 
 def create_experiment_run(
     btc_candles: pd.DataFrame,
-    eth_candles: pd.DataFrame,
     output_dir: str | Path,
     *,
     source_commit: str | None = None,
@@ -579,8 +551,8 @@ def create_experiment_run(
     project_root = Path(__file__).resolve().parents[1]
     target = Path(output_dir)
     commit = source_commit if source_commit is not None else _git_commit(project_root)
-    result = evaluate_candidates(btc_candles, eth_candles)
-    _write_outputs(result, eth_candles, target, commit)
+    result = evaluate_candidates(btc_candles)
+    _write_outputs(result, target, commit)
 
     artifacts = {
         name: {
@@ -616,13 +588,7 @@ def create_experiment_run(
                     project_root
                     / "docs/runs/baseline-v1-2026-07-26/raw_candles.csv"
                 ),
-            },
-            "ETH-USD": {
-                "path": "eth-usd-raw-candles.csv",
-                "sha256": artifacts["eth-usd-raw-candles.csv"]["sha256"],
-                "coinbase_contiguous_start": "2016-05-23",
-                "excluded_missing_dates_before_start": ["2016-05-21", "2016-05-22"],
-            },
+            }
         },
         "parameters": {
             "variants": [variant.__dict__ for variant in VARIANTS],
@@ -677,18 +643,14 @@ def verify_experiment_run(
             raise RuntimeError(f"Artefatto esperimento non valido: {name}")
 
     btc_path = (run_dir / manifest["inputs"]["BTC-USD"]["path"]).resolve()
-    eth_path = (run_dir / manifest["inputs"]["ETH-USD"]["path"]).resolve()
     if sha256_file(btc_path) != manifest["inputs"]["BTC-USD"]["sha256"]:
         raise RuntimeError("Snapshot BTC non valido.")
-    if sha256_file(eth_path) != manifest["inputs"]["ETH-USD"]["sha256"]:
-        raise RuntimeError("Snapshot ETH non valido.")
     btc = pd.read_csv(btc_path, parse_dates=["Date"], index_col="Date")
-    eth = pd.read_csv(eth_path, parse_dates=["Date"], index_col="Date")
 
     with tempfile.TemporaryDirectory(prefix="btc-candidate-reproduce-") as temp_dir:
         generated = Path(temp_dir)
-        result = evaluate_candidates(btc, eth)
-        _write_outputs(result, eth, generated, manifest["source"]["commit"])
+        result = evaluate_candidates(btc)
+        _write_outputs(result, generated, manifest["source"]["commit"])
         for name in CANONICAL_ARTIFACTS:
             actual = sha256_file(generated / name)
             expected = manifest["artifacts"][name]["sha256"]
