@@ -52,6 +52,18 @@ controlla ambiente, sorgenti, snapshot e artefatti, ricalcola il backtest dal
 CSV congelato e richiede output byte per byte identici. La procedura completa e
 descritta in [`REPRODUCIBILITY.md`](REPRODUCIBILITY.md).
 
+## Ricerca sul modello
+
+La baseline v1 non viene modificata durante gli esperimenti. `V1-S1` (vendita
+dopo un solo Close sotto SMA50) e `V1-B1` (acquisto senza filtro volume) sono
+stati valutati esclusivamente su BTC-USD con costi e bootstrap. Entrambi sono
+classificati `NON PROMUOVIBILE`; nessuno alimenta i segnali pubblicati.
+
+Protocollo e risultati:
+
+- [`MODEL_CANDIDATE_PROTOCOL.md`](MODEL_CANDIDATE_PROTOCOL.md)
+- [`docs/experiments/btc-model-candidates-v1-2026-07-26/report.md`](docs/experiments/btc-model-candidates-v1-2026-07-26/report.md)
+
 ## Run operativo
 
 ```powershell

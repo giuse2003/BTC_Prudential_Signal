@@ -1,0 +1,30 @@
+{
+  "V1-S1": {
+    "status": "NON PROMUOVIBILE",
+    "criteria": {
+      "sharpe_improves": true,
+      "drawdown_within_2pp": true,
+      "annualized_return_within_5pp": true,
+      "turnover_increase_within_50pct": true,
+      "at_least_3_of_5_fold_sharpe_wins": true,
+      "bootstrap_probability_at_least_90pct": false
+    },
+    "fold_sharpe_wins": 4,
+    "fold_comparisons": 5,
+    "bootstrap_probability_positive": 0.493
+  },
+  "V1-B1": {
+    "status": "NON PROMUOVIBILE",
+    "criteria": {
+      "sharpe_improves": true,
+      "drawdown_within_2pp": true,
+      "annualized_return_within_5pp": true,
+      "turnover_increase_within_50pct": true,
+      "at_least_3_of_5_fold_sharpe_wins": false,
+      "bootstrap_probability_at_least_90pct": false
+    },
+    "fold_sharpe_wins": 2,
+    "fold_comparisons": 5,
+    "bootstrap_probability_positive": 0.6596
+  }
+}

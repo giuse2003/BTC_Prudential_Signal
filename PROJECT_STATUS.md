@@ -13,10 +13,18 @@
 - Pubblicazione transazionale con manifest e hash.
 - Baseline v1 congelata al 2026-07-26 e riproducibile offline.
 - Ambiente Python e dipendenze bloccati con hash.
+- Esperimento BTC-only `V1-S1`/`V1-B1` riproducibile e separato dal modello.
 
 I valori ufficiali della baseline sono in
 [`docs/runs/baseline-v1-2026-07-26/manifest.json`](docs/runs/baseline-v1-2026-07-26/manifest.json).
 I valori operativi correnti sono separati in [`docs/manifest.json`](docs/manifest.json).
+
+## Ricerca non operativa
+
+Le varianti `V1-S1` e `V1-B1` sono risultate `NON PROMUOVIBILE` secondo il
+protocollo registrato. La baseline, le regole pubblicate e i segnali live non
+sono stati cambiati. Il report e in
+[`docs/experiments/btc-model-candidates-v1-2026-07-26/report.md`](docs/experiments/btc-model-candidates-v1-2026-07-26/report.md).
 
 ## Limiti aperti
 

@@ -31,3 +31,6 @@ jobs:
 
       - name: Reproduce frozen baseline offline
         run: python reproduce.py --manifest docs/runs/baseline-v1-2026-07-26/manifest.json
+
+      - name: Reproduce BTC candidate experiment offline
+        run: python reproduce_candidate_experiment.py --manifest docs/experiments/btc-model-candidates-v1-2026-07-26/manifest.json
