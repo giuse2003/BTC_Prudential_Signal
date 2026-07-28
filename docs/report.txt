@@ -5,8 +5,8 @@ Fonte: Coinbase Advanced Trade - BTC-USD
 Azione: MANTIENI STATO ATTUALE
 Rischio informativo: ALTO
 Close BTC-USD: 63694.43 USD
-Spot BTC-USD: 63797.99 USD
-Spot BTC-EUR: 56045.53 EUR
+Spot BTC-USD: 63702.39 USD
+Spot BTC-EUR: 55962.42 EUR
 SMA50: 63267.52
 SMA200: 71994.29
 RSI14: 47.65
@@ -18,8 +18,8 @@ Azione: MANTIENI STATO ATTUALE
 Rischio: ALTO
 
 Prezzo:
-63.797 USD
-56.045 EUR
+63.702 USD
+55.962 EUR
 
 Sintesi:
 Trend lungo periodo negativo.
