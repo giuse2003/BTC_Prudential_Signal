@@ -1,16 +1,16 @@
 BTC-USD SIGNAL
-Candela DAILY: 2026-07-29 UTC
+Candela DAILY: 2026-07-30 UTC
 Fonte: Coinbase Advanced Trade - BTC-USD
 
 Azione: MANTIENI STATO ATTUALE
 Rischio informativo: ALTO
-Close BTC-USD: 63896.14 USD
-Spot BTC-USD: 64789.25 USD
-Spot BTC-EUR: 56221.78 EUR
-SMA50: 63327.41
-SMA200: 71728.51
-RSI14: 48.57
-ATR14: 1674.13
+Close BTC-USD: 64721.90 USD
+Spot BTC-USD: 65049.35 USD
+Spot BTC-EUR: 56504.26 EUR
+SMA50: 63392.86
+SMA200: 71597.76
+RSI14: 52.49
+ATR14: 1669.92
 
 BTC-USD Signal
 
@@ -18,8 +18,8 @@ Azione: MANTIENI STATO ATTUALE
 Rischio: ALTO
 
 Prezzo:
-64.789 USD
-56.221 EUR
+65.049 USD
+56.504 EUR
 
 Sintesi:
 Trend lungo periodo negativo.
@@ -29,20 +29,20 @@ Nessuna conferma sufficiente per acquistare.
 Indicazione:
 Attendere. Nessuna nuova operazione consigliata.
 
-BACKTEST 2016-02-04 - 2026-07-29
+BACKTEST 2016-02-04 - 2026-07-30
 Esecuzione: azione a chiusura t applicata al rendimento t+1
 Costi e slippage: non inclusi
 
 BTC-USD Signal
 - Rendimento totale: 36738.21%
-- Rendimento annualizzato: 75.67%
+- Rendimento annualizzato: 75.64%
 - Drawdown massimo: -48.31%
 - Operazioni completate: 37
 - Operazioni vincenti: 48.6%
-- Sharpe Ratio: 1.487
+- Sharpe Ratio: 1.486
 
 Buy & Hold BTC-USD
-- Rendimento totale: 16368.50%
-- Rendimento annualizzato: 62.69%
+- Rendimento totale: 16581.33%
+- Rendimento annualizzato: 62.87%
 - Drawdown massimo: -83.80%
-- Sharpe Ratio: 1.063
+- Sharpe Ratio: 1.065
