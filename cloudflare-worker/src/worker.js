@@ -187,6 +187,8 @@ function formatMonitorMessage(action, priceEur, conditionGroups) {
     "(per le regole: /conditions)",
     "",
     ...formatSignalConditions(conditionGroups),
+    "",
+    "🔗 Dashboard: https://giuse2003.github.io/BTC_Prudential_Signal/"
   ].join("\n");
 }
 
