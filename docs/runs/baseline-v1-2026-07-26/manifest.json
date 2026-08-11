@@ -20,7 +20,7 @@
       "reports/generate.py": "204e498361e5edad677c26fb00061351b711707219844d7093529c4e49298206",
       "reproducibility.py": "1497334010d832bf6c34e5c28841acb6046a30d35bffacfe5f9de60e5b31d1ce",
       "strategy/rules.py": "3319ddf5d326f4bb2b197aa9505cb264b4a3f58583dbbcdaa019a898058e48b7",
-      "strategy/signals.py": "43afa96e6f0851c966a8af9ac241226e85f9bd4b1f751cd7402cb2282adfc116"
+      "strategy/signals.py": "5e5afca270c731593b5b94804d3963d8b9c8dfaa9657e352deb2c733d0700dbb"
     }
   },
   "environment": {
