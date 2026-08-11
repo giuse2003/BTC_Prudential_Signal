@@ -51,6 +51,7 @@ class HourlyMonitorNotificationTests(unittest.TestCase):
         self.assertNotIn("should_notify", source)
         self.assertNotIn("DAILY!", source)
         self.assertNotIn("broadcast DAILY", source)
+        self.assertIn("https://giuse2003.github.io/BTC_Prudential_Signal/", source)
         self.assertEqual(source.count("send_telegram_message("), 2)
 
     def test_local_analysis_does_not_send_telegram_messages(self) -> None:

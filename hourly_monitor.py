@@ -163,6 +163,13 @@ def main() -> None:
                 sell_statuses=result.sell_statuses,
                 title="BTC-USD Signal - LIVE PREVIEW",
             )
+            message = "\n".join(
+                [
+                    message,
+                    "",
+                    "🔗 <a href=\"https://giuse2003.github.io/BTC_Prudential_Signal/\">Apri la Dashboard</a>",
+                ]
+            )
             send_telegram_message(
                 TelegramConfig(bot_token=bot_token, chat_id=admin_chat_id),
                 message,
