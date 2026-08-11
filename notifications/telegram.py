@@ -69,6 +69,7 @@ def send_telegram_message(cfg: TelegramConfig, text: str, timeout_s: int = 20) -
         "chat_id": cfg.chat_id,
         "text": text,
         "disable_web_page_preview": True,
+        "parse_mode": "HTML",
     }
     r = requests.post(url, json=payload, timeout=timeout_s)
     r.raise_for_status()

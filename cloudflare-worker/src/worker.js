@@ -188,7 +188,7 @@ function formatMonitorMessage(action, priceEur, conditionGroups) {
     "",
     ...formatSignalConditions(conditionGroups),
     "",
-    "🔗 Dashboard: https://giuse2003.github.io/BTC_Prudential_Signal/"
+    "🔗 <a href=\"https://giuse2003.github.io/BTC_Prudential_Signal/\">Apri la Dashboard</a>"
   ].join("\n");
 }
 
@@ -290,7 +290,7 @@ async function sendTelegramMessage(env, chatId, text) {
   const response = await fetch(`https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ chat_id: chatId, text, disable_web_page_preview: true }),
+    body: JSON.stringify({ chat_id: chatId, text, disable_web_page_preview: true, parse_mode: "HTML" }),
   });
   if (!response.ok) throw new Error(`Telegram HTTP ${response.status}: ${await response.text()}`);
 }
