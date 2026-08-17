@@ -5,8 +5,8 @@ Fonte: Coinbase Advanced Trade - BTC-USD
 Azione: VENDI
 Rischio informativo: ALTO
 Close BTC-USD: 62836.66 USD
-Spot BTC-USD: 63390.95 USD
-Spot BTC-EUR: 54670.13 EUR
+Spot BTC-USD: 63581.86 USD
+Spot BTC-EUR: 54845.89 EUR
 SMA50: 63565.40
 SMA200: 69240.40
 RSI14: 41.96
@@ -18,8 +18,8 @@ Azione: VENDI
 Rischio: ALTO
 
 Prezzo:
-63.390 USD
-54.670 EUR
+63.581 USD
+54.845 EUR
 
 Sintesi:
 Trend lungo periodo negativo.
