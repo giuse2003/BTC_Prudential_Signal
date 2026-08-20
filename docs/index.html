@@ -9,7 +9,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="./style.css?v=8" />
+    <link rel="stylesheet" href="./style.css?v=9" />
   </head>
   <body>
     <main class="container">
@@ -41,9 +41,40 @@
             >
               Iscriviti al bot Telegram
             </a>
-            <a class="ghost-link" href="#metodo">Scopri il metodo</a>
           </div>
+          <p class="hero-subscriber-count" id="subscriberCount" aria-live="polite">
+            Iscritti attivi: caricamento...
+          </p>
         </div>
+      </section>
+
+      <section class="explainer-grid" id="metodo">
+        <article class="card method-card">
+          <div class="label">Metodo</div>
+          <h2>Come nasce un segnale</h2>
+          <p>
+            La strategia non prova a prevedere il prezzo minuto per minuto.
+            Usa solo candele giornaliere chiuse e cerca conferme su trend,
+            momentum e volume.
+          </p>
+          <div class="condition-columns">
+            <div>
+              <h3>ACQUISTA</h3>
+              <ol id="buyConditions">
+                <li>Prezzo sopra SMA200</li>
+                <li>RSI uguale o maggiore di 40</li>
+                <li>Prezzo sopra quello di 7 giorni prima</li>
+                <li>Volume sopra media 20 giorni</li>
+              </ol>
+            </div>
+            <div>
+              <h3>VENDI</h3>
+              <ol id="sellConditions">
+                <li>Prezzo sotto SMA50 per 2 giorni consecutivi</li>
+              </ol>
+            </div>
+          </div>
+        </article>
 
         <div class="live-panel card">
           <div class="metric highlight-card" id="signalCard">
@@ -149,34 +180,32 @@
         </div>
       </section>
 
-      <section class="explainer-grid" id="metodo">
-        <article class="card method-card">
-          <div class="label">Metodo</div>
-          <h2>Come nasce un segnale</h2>
-          <p>
-            La strategia non prova a prevedere il prezzo minuto per minuto.
-            Usa solo candele giornaliere chiuse e cerca conferme su trend,
-            momentum e volume.
-          </p>
-          <div class="condition-columns">
+      <section class="explainer-grid">
+        <section class="card telegram-card" aria-labelledby="telegramTitle">
+          <div class="telegram-content">
             <div>
-              <h3>ACQUISTA</h3>
-              <ol id="buyConditions">
-                <li>Prezzo sopra SMA200</li>
-                <li>RSI uguale o maggiore di 40</li>
-                <li>Prezzo sopra quello di 7 giorni prima</li>
-                <li>Volume sopra media 20 giorni</li>
-              </ol>
+              <div class="label">Notifiche Telegram</div>
+              <h2 id="telegramTitle">Ricevi solo i cambi LIVE</h2>
+              <p class="telegram-description">
+                Nessun segnale DAILY. Il bot scrive solo quando una delle 5
+                condizioni LIVE passa da verde a rossa, o viceversa. Puoi
+                comunque chiedere il segnale LIVE in qualsiasi momento con
+                <span class="mono">/segnale</span>.
+              </p>
             </div>
-            <div>
-              <h3>VENDI</h3>
-              <ol id="sellConditions">
-                <li>Prezzo sotto SMA50 per 2 giorni consecutivi</li>
-              </ol>
+            <div class="telegram-action">
+              <a
+                class="telegram-button"
+                href="https://t.me/BTC_Prudential_Signal_bot?start=iscrivimi"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Iscriviti su Telegram
+              </a>
+              <span>Il bot completerà automaticamente l'iscrizione.</span>
             </div>
           </div>
-        </article>
-
+        </section>
         <article class="card backtest-card">
           <div class="label">Cos'e un backtest</div>
           <h2>Una simulazione storica, non una promessa</h2>
@@ -196,35 +225,6 @@
             <li>Esclusi costi, spread, slippage e imposte</li>
           </ul>
         </article>
-      </section>
-
-      <section class="card telegram-card" aria-labelledby="telegramTitle">
-        <div class="telegram-content">
-          <div>
-            <div class="label">Notifiche Telegram</div>
-            <h2 id="telegramTitle">Ricevi solo i cambi LIVE</h2>
-            <p class="telegram-description">
-              Nessun segnale DAILY. Il bot scrive solo quando una delle 5
-              condizioni LIVE passa da verde a rossa, o viceversa. Puoi
-              comunque chiedere il segnale LIVE in qualsiasi momento con
-              <span class="mono">/segnale</span>.
-            </p>
-            <p class="telegram-count" id="subscriberCount" aria-live="polite">
-              Iscritti attivi: caricamento...
-            </p>
-          </div>
-          <div class="telegram-action">
-            <a
-              class="telegram-button"
-              href="https://t.me/BTC_Prudential_Signal_bot?start=iscrivimi"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Iscriviti su Telegram
-            </a>
-            <span>Il bot completerà automaticamente l'iscrizione.</span>
-          </div>
-        </div>
       </section>
 
       <!-- Detailed Info & Controls -->

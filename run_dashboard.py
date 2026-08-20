@@ -4,13 +4,16 @@ import webbrowser
 import threading
 import time
 import sys
+from functools import partial
+from pathlib import Path
 
 # Force UTF-8 output on Windows
 sys.stdout.reconfigure(encoding='utf-8', errors='replace')
 
 PORT = 8000
 HOST = "127.0.0.1"
-Handler = http.server.SimpleHTTPRequestHandler
+DOCS_DIR = Path(__file__).resolve().parent / "docs"
+Handler = partial(http.server.SimpleHTTPRequestHandler, directory=str(DOCS_DIR))
 
 def start_server():
     socketserver.TCPServer.allow_reuse_address = True

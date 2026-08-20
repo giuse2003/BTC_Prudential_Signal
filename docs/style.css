@@ -153,20 +153,20 @@ h1 {
 }
 
 .hero {
-  display: grid;
-  grid-template-columns: minmax(0, 1.22fr) minmax(340px, 0.78fr);
-  gap: 20px;
-  align-items: stretch;
+  display: block;
   margin-bottom: 20px;
+  text-align: center;
 }
 
 .hero-copy {
-  padding: 34px 0;
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 34px 0 42px;
 }
 
 .hero-copy h2 {
-  max-width: 760px;
-  margin: 10px 0 16px;
+  max-width: 860px;
+  margin: 10px auto 16px;
   font-size: 54px;
   line-height: 1.02;
   letter-spacing: 0;
@@ -175,7 +175,7 @@ h1 {
 
 .hero-copy p {
   max-width: 640px;
-  margin: 0;
+  margin: 0 auto;
   color: var(--muted);
   font-size: 18px;
   line-height: 1.55;
@@ -184,9 +184,17 @@ h1 {
 .hero-actions {
   display: flex;
   align-items: center;
+  justify-content: center;
   flex-wrap: wrap;
   gap: 14px;
   margin-top: 26px;
+}
+
+.hero-subscriber-count {
+  margin-top: 14px !important;
+  color: var(--text) !important;
+  font-size: 13px !important;
+  font-weight: 700;
 }
 
 .ghost-link {
@@ -203,6 +211,7 @@ h1 {
   flex-direction: column;
   gap: 14px;
   margin-bottom: 0;
+  align-self: stretch;
 }
 
 .live-price-row {
@@ -603,6 +612,15 @@ h1 {
   align-items: center;
   justify-content: space-between;
   gap: 24px;
+}
+
+.explainer-grid .telegram-card .telegram-content {
+  align-items: stretch;
+  flex-direction: column;
+}
+
+.explainer-grid .telegram-card .telegram-description {
+  max-width: none;
 }
 
 .telegram-card h2 {
