@@ -5,8 +5,8 @@ Fonte: Coinbase Advanced Trade - BTC-USD
 Azione: ACQUISTA
 Rischio informativo: ALTO
 Close BTC-USD: 78981.59 USD
-Spot BTC-USD: 78776.81 USD
-Spot BTC-EUR: 67479.26 EUR
+Spot BTC-USD: 78952.52 USD
+Spot BTC-EUR: 67615.11 EUR
 SMA50: 65460.90
 SMA200: 69086.82
 RSI14: 82.16
@@ -18,8 +18,8 @@ Azione: ACQUISTA
 Rischio: ALTO
 
 Prezzo:
-78.776 USD
-67.479 EUR
+78.952 USD
+67.615 EUR
 
 Sintesi:
 Trend lungo periodo positivo.
