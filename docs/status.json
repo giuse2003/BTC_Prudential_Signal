@@ -1,6 +1,6 @@
 {
-  "run_id": "20260903T225714Z-e0efc5b1",
-  "generated_at_utc": "2026-09-03T22:57:14.057872+00:00",
+  "run_id": "20260904T004943Z-c9ee1b01",
+  "generated_at_utc": "2026-09-04T00:49:43.321697+00:00",
   "run_type": "operational-latest",
   "project": "BTC-USD Signal",
   "model_version": "1.0",
@@ -8,20 +8,20 @@
   "market": "BTC-USD",
   "timezone": "UTC",
   "mode": "DAILY",
-  "candle_date": "2026-09-02",
-  "action": "MANTIENI STATO ATTUALE",
-  "price_usd": 77307.36,
+  "candle_date": "2026-09-03",
+  "action": "ACQUISTA",
+  "price_usd": 81263.99,
   "price_eur": null,
   "status": "Attivo",
-  "risk_level": "MEDIO",
-  "rsi": 65.13358001253602,
-  "sma50": 68124.9396,
-  "sma200": 69507.04560000001,
-  "atr": 2303.379715497335,
-  "volume_btc": 4983.63357935,
-  "volume_avg20_btc": 7975.6197139875,
-  "previous_close": 77398.69,
-  "previous_sma50": 67878.56520000001,
+  "risk_level": "ALTO",
+  "rsi": 72.88260780101055,
+  "sma50": 68455.88680000001,
+  "sma200": 69569.40555,
+  "atr": 2521.260450104669,
+  "volume_btc": 11050.40122438,
+  "volume_avg20_btc": 8272.296406139,
+  "previous_close": 77307.36,
+  "previous_sma50": 68124.9396,
   "condition_groups": {
     "buy": [
       {
@@ -34,11 +34,11 @@
       },
       {
         "label": "prezzo sopra quello di 7 giorni prima",
-        "passed": false
+        "passed": true
       },
       {
         "label": "volume BTC-USD sopra media 20 giorni",
-        "passed": false
+        "passed": true
       }
     ],
     "sell": [
