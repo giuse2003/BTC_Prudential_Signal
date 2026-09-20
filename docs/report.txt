@@ -5,8 +5,8 @@ Fonte: Coinbase Advanced Trade - BTC-USD
 Azione: MANTIENI STATO ATTUALE
 Rischio informativo: MEDIO
 Close BTC-USD: 81233.91 USD
-Spot BTC-USD: 80824.77 USD
-Spot BTC-EUR: 70329.02 EUR
+Spot BTC-USD: 81207.51 USD
+Spot BTC-EUR: 70705.36 EUR
 SMA50: 72838.35
 SMA200: 70462.51
 RSI14: 64.21
@@ -18,8 +18,8 @@ Azione: MANTIENI STATO ATTUALE
 Rischio: MEDIO
 
 Prezzo:
-80.824 USD
-70.329 EUR
+81.207 USD
+70.705 EUR
 
 Sintesi:
 Trend lungo periodo positivo.
