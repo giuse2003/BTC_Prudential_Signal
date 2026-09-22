@@ -1,6 +1,6 @@
 {
-  "run_id": "20260922T005312Z-8352f93e",
-  "generated_at_utc": "2026-09-22T00:53:12.902865+00:00",
+  "run_id": "20260922T054859Z-6cf5de0d",
+  "generated_at_utc": "2026-09-22T05:48:59.415125+00:00",
   "run_type": "operational-latest",
   "project": "BTC-USD Signal",
   "model_version": "1.0",
@@ -9,15 +9,15 @@
   "timezone": "UTC",
   "mode": "LIVE PREVIEW",
   "action": "ACQUISTA",
-  "price_usd": 86094.73,
-  "price_eur": 75076.91,
-  "volume_24h_btc": 14056.6530588,
+  "price_usd": 85533.43,
+  "price_eur": 74532.63,
+  "volume_24h_btc": 14106.42034617,
   "status": "Attivo",
-  "rsi": 71.80339686647262,
-  "sma50": 74120.7338,
-  "sma200": 70673.36235000001,
-  "atr": 2388.4982123689133,
-  "risk_level": "ALTO",
+  "rsi": 69.74507350357878,
+  "sma50": 74109.5078,
+  "sma200": 70670.55585,
+  "atr": 2428.591069511771,
+  "risk_level": "MEDIO",
   "condition_groups": {
     "buy": [
       {
