@@ -1,6 +1,6 @@
 {
-  "run_id": "20261004T084430Z-853a368c",
-  "generated_at_utc": "2026-10-04T08:44:30.534529+00:00",
+  "run_id": "20261004T142523Z-4a9ddca5",
+  "generated_at_utc": "2026-10-04T14:25:23.483538+00:00",
   "run_type": "operational-latest",
   "project": "BTC-USD Signal",
   "model_version": "1.0",
@@ -48,7 +48,7 @@
     }
   },
   "provenance": {
-    "source_commit": "4169d240c2c2ce8f84e11c1ff02afe78bc12aa70",
+    "source_commit": "43c12e37ec392a14b2cbde0e6a280fe29d338595",
     "python": "3.13.0",
     "dependencies": {
       "numpy": "2.4.6",
@@ -72,17 +72,17 @@
     },
     "status.json": {
       "path": "status.json",
-      "sha256": "45a675a2bd03238fa9afb35f58028fdda9f0f345489dfe8f1e97dbd16a471aab",
+      "sha256": "5694edc9d1c9f1be3420225c3fb6136c928967c84a121fe498bf13a5fa9a3d92",
       "bytes": 1245
     },
     "live-status.json": {
       "path": "live-status.json",
-      "sha256": "fce7d5457d792d5142af1daa26fe35671e76dbb64db25642d54961ea1c55de96",
+      "sha256": "4160c34dbed44eb6a628fdc26d9309f88e6a76187b1d5151176dd6308f827a6d",
       "bytes": 1150
     },
     "chart-data.json": {
       "path": "chart-data.json",
-      "sha256": "8b0b4a7956571d8f4d6398cc099b97caeb4442ea8e1b4070f0825fb5f49a1943",
+      "sha256": "604b21cc53f938550891c6556a1f62ab53741bb43ca85964c1a0774f22ca3677",
       "bytes": 901682
     },
     "historical_signals.csv": {
@@ -97,7 +97,7 @@
     },
     "report.txt": {
       "path": "report.txt",
-      "sha256": "50f4a666ca90b6695085416534fb2057f3d1d3bf599396bf8ff997d9b83ab213",
+      "sha256": "0746bdb44624e1d33e8b9d3174f817240de54dda743896fd8d3929d8448d8fb5",
       "bytes": 998
     },
     "price_sma_signals.png": {
