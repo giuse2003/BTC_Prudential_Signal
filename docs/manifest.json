@@ -1,6 +1,6 @@
 {
-  "run_id": "20261017T232937Z-2b52971d",
-  "generated_at_utc": "2026-10-17T23:29:37.954274+00:00",
+  "run_id": "20261018T012635Z-be67986c",
+  "generated_at_utc": "2026-10-18T01:26:35.231950+00:00",
   "run_type": "operational-latest",
   "project": "BTC-USD Signal",
   "model_version": "1.0",
@@ -11,8 +11,8 @@
     "coinbase_history_start": "2015-07-20",
     "warmup_end": "2016-02-03",
     "evaluation_start": "2016-02-04",
-    "evaluation_end": "2026-10-16",
-    "calendar_days": 3908
+    "evaluation_end": "2026-10-17",
+    "calendar_days": 3909
   },
   "rules": {
     "buy": [
@@ -31,24 +31,24 @@
   },
   "metrics": {
     "strategy": {
-      "total_return": 432.23447030217284,
-      "annualized_return": 0.7633076939284167,
+      "total_return": 431.5868515339255,
+      "annualized_return": 0.7628054761735177,
       "max_drawdown": -0.48310296740433956,
       "num_operations": 37,
       "win_rate": 0.4864864864864865,
-      "sharpe_ratio": 1.498789389802846
+      "sharpe_ratio": 1.4982790622568627
     },
     "buy_and_hold": {
-      "total_return": 209.05706332637436,
-      "annualized_return": 0.6480012641198507,
+      "total_return": 208.74306038815433,
+      "annualized_return": 0.6475603983523746,
       "max_drawdown": -0.8380153496105092,
       "num_operations": 0,
       "win_rate": 0.0,
-      "sharpe_ratio": 1.0853206345128235
+      "sharpe_ratio": 1.084970782675464
     }
   },
   "provenance": {
-    "source_commit": "65a3f3da50e4159951c1a795b44caf3804a271b0",
+    "source_commit": "bcc8d39311916e06c8f3ce44a0661d4da0c5beb5",
     "python": "3.13.0",
     "dependencies": {
       "numpy": "2.4.6",
@@ -57,53 +57,53 @@
       "requests": "2.34.2"
     },
     "requirements_lock_sha256": "fab3e8cfa60b28ba3c8d3999d5a78c1077b20eb8b2066e74811d9b4ddd39073b",
-    "input_candles_sha256": "3aa7b27f2aeea5d4657ce71c3bbec0990ef2daca1d8e1cf0b44bb4bf767ee2b8",
-    "input_observations": 4107,
+    "input_candles_sha256": "2d01ac99718761e778180283fd45e47b6f0cc432f43a2d5f5df93fefb1142bca",
+    "input_observations": 4108,
     "input_first_candle": "2015-07-20",
-    "input_last_candle": "2026-10-16",
+    "input_last_candle": "2026-10-17",
     "historical_cache_allowed": true,
     "frozen_baseline_manifest": "runs/baseline-v1-2026-07-26/manifest.json"
   },
   "artifacts": {
     "raw_candles.csv": {
       "path": "raw_candles.csv",
-      "sha256": "3aa7b27f2aeea5d4657ce71c3bbec0990ef2daca1d8e1cf0b44bb4bf767ee2b8",
-      "bytes": 239967
+      "sha256": "2d01ac99718761e778180283fd45e47b6f0cc432f43a2d5f5df93fefb1142bca",
+      "bytes": 240027
     },
     "status.json": {
       "path": "status.json",
-      "sha256": "f39daf187e57b16be506dc194452e4e335ddd43ad662c91f626b2daac680fac8",
-      "bytes": 1233
+      "sha256": "f2a1d07ff70e5041c3d483363fb5c6395e0c37ab28298ae2defd8e01270bbde0",
+      "bytes": 1237
     },
     "live-status.json": {
       "path": "live-status.json",
-      "sha256": "914d26b5b5f764e5cc5378100238eb3d87e6fcfd5f53ecdfd5317be889808782",
+      "sha256": "edc0525092af250c61fb6c1e02564be9866aca96b0f496e3c802a86f3c2323f1",
       "bytes": 1144
     },
     "chart-data.json": {
       "path": "chart-data.json",
-      "sha256": "45ff21e38b9c9e2d857b5da6d6c2119bd1c126d2e98e5334baa48a17080a5403",
-      "bytes": 904761
+      "sha256": "e2b4be4da7ca4810c4c083e5517e4bb8698dd83eb3f35b8272803f024ec43af5",
+      "bytes": 905000
     },
     "historical_signals.csv": {
       "path": "historical_signals.csv",
-      "sha256": "218deee49a0542829c7e520ffa043d7e793cf1c6d1473fd43f941130ec88bb3c",
-      "bytes": 651308
+      "sha256": "69f35c25ce2d766716a95a27da417e84763f4d3b12e03ce901f0b96067f12831",
+      "bytes": 651483
     },
     "equity_timeseries.csv": {
       "path": "equity_timeseries.csv",
-      "sha256": "e878b1a8795030fbd73e94cb2a3126e9bf3eb589c982e597139ed507626ed4ab",
-      "bytes": 334882
+      "sha256": "a971c30a655d3596f2c09efa230a7a50bce0224119af990d6ee1eaa6191d5235",
+      "bytes": 334980
     },
     "report.txt": {
       "path": "report.txt",
-      "sha256": "5fb12f47c1baa75fd270dfc04455b4b8bcbd7b404c588262d9712bc0ba9ffcac",
+      "sha256": "b9e9042aeddf4aece537774d2ce96bf559a461029c3615b8134ee5c4eb041b03",
       "bytes": 998
     },
     "price_sma_signals.png": {
       "path": "price_sma_signals.png",
-      "sha256": "5d831692e372b758b3e3b97a7fd66f070d05da28be45a41f5f0fdbeb018dee89",
-      "bytes": 223307
+      "sha256": "a92851f5b63fc569accdebb78e652a7d3fa74b28881eb17bf79174f2d5b52828",
+      "bytes": 223246
     }
   }
 }
