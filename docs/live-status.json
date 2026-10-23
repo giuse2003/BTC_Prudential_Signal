@@ -1,6 +1,6 @@
 {
-  "run_id": "20261023T152623Z-896720e7",
-  "generated_at_utc": "2026-10-23T15:26:23.268830+00:00",
+  "run_id": "20261023T192658Z-78149b9a",
+  "generated_at_utc": "2026-10-23T19:26:58.126649+00:00",
   "run_type": "operational-latest",
   "project": "BTC-USD Signal",
   "model_version": "1.0",
@@ -9,14 +9,14 @@
   "timezone": "UTC",
   "mode": "LIVE PREVIEW",
   "action": "VENDI",
-  "price_usd": 81530.23,
-  "price_eur": 72790.38,
-  "volume_24h_btc": 5509.37699923,
+  "price_usd": 81207.12,
+  "price_eur": 72561.6,
+  "volume_24h_btc": 4513.03055124,
   "status": "Attivo",
-  "rsi": 46.90947614285149,
-  "sma50": 81784.7366,
-  "sma200": 72857.14795,
-  "atr": 2076.729864580615,
+  "rsi": 45.68369481102734,
+  "sma50": 81778.2744,
+  "sma200": 72855.5324,
+  "atr": 2067.942007437759,
   "risk_level": "BASSO",
   "condition_groups": {
     "buy": [
@@ -30,11 +30,11 @@
       },
       {
         "label": "prezzo live sopra quello di 7 giorni prima",
-        "passed": true
+        "passed": false
       },
       {
         "label": "volume BTC-USD live sopra media 20 giorni",
-        "passed": true
+        "passed": false
       }
     ],
     "sell": [
