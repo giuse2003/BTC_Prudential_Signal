@@ -1,6 +1,6 @@
 {
-  "run_id": "20261102T193958Z-da1c1ca9",
-  "generated_at_utc": "2026-11-02T19:39:58.348101+00:00",
+  "run_id": "20261103T014733Z-28a5b39b",
+  "generated_at_utc": "2026-11-03T01:47:33.718625+00:00",
   "run_type": "operational-latest",
   "project": "BTC-USD Signal",
   "model_version": "1.0",
@@ -8,20 +8,20 @@
   "market": "BTC-USD",
   "timezone": "UTC",
   "mode": "DAILY",
-  "candle_date": "2026-11-01",
+  "candle_date": "2026-11-02",
   "action": "VENDI",
-  "price_usd": 78230.55,
+  "price_usd": 76674.13,
   "price_eur": null,
   "status": "Attivo",
   "risk_level": "BASSO",
-  "rsi": 39.58507945041954,
-  "sma50": 81912.07059999999,
-  "sma200": 73146.8917,
-  "atr": 1982.8752607605488,
-  "volume_btc": 3035.64400621,
-  "volume_avg20_btc": 5479.164862634,
-  "previous_close": 77423.98,
-  "previous_sma50": 81892.7166,
+  "rsi": 35.00901003310295,
+  "sma50": 81909.5562,
+  "sma200": 73154.4469,
+  "atr": 1999.0484564205099,
+  "volume_btc": 7782.90667531,
+  "volume_avg20_btc": 5609.077854063,
+  "previous_close": 78230.55,
+  "previous_sma50": 81912.07059999999,
   "condition_groups": {
     "buy": [
       {
@@ -38,7 +38,7 @@
       },
       {
         "label": "volume BTC-USD sopra media 20 giorni",
-        "passed": false
+        "passed": true
       }
     ],
     "sell": [
