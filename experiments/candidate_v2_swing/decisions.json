@@ -1,0 +1,95 @@
+{
+  "baseline_v1": {
+    "candidate_id": "BASELINE_V1",
+    "total_return": 429.9912205262523,
+    "annualized_return": 0.7536069637469225,
+    "max_drawdown": -0.48310296740433956,
+    "sharpe_ratio": 1.490623589013572,
+    "num_operations": 38,
+    "win_rate": 0.5,
+    "calmar_ratio": 1.559930314226741,
+    "avg_trade_return": 0.0
+  },
+  "buy_and_hold": {
+    "total_return": 150.58893270445114,
+    "annualized_return": 0.59189220801966,
+    "max_drawdown": -0.8380153496105092,
+    "num_operations": 0,
+    "win_rate": 0.0,
+    "sharpe_ratio": 1.0340393948259903
+  },
+  "v2_chandelier": {
+    "candidate_id": "V2-CHANDELIER-PARABOLIC",
+    "total_return": 442.1715563439761,
+    "annualized_return": 0.7578863865100367,
+    "max_drawdown": -0.48310296740433956,
+    "sharpe_ratio": 1.520288577157046,
+    "num_operations": 38,
+    "win_rate": 0.5,
+    "calmar_ratio": 1.5687885143452522,
+    "avg_trade_return": 0.2792814106412722
+  },
+  "v2_dual_tranche": {
+    "candidate_id": "V2-DUAL-TRANCHE-PYRAMID",
+    "total_return": 240.55136751458667,
+    "annualized_return": 0.6618547706395812,
+    "max_drawdown": -0.4627586262421385,
+    "sharpe_ratio": 1.4265988712642976,
+    "num_operations": 40,
+    "win_rate": 0.45,
+    "calmar_ratio": 1.4302375646980714,
+    "avg_trade_return": 0.23733907155019987
+  },
+  "cost_scenarios": [
+    {
+      "cost_bps": 0.0,
+      "baseline_total_return": 429.9912205262523,
+      "baseline_sharpe": 1.490433452654995,
+      "baseline_max_dd": -0.48310296740433956,
+      "v2_chandelier_total_return": 442.1715563439761,
+      "v2_chandelier_sharpe": 1.520288577157046,
+      "v2_chandelier_max_dd": -0.48310296740433956,
+      "sharpe_delta": 0.029855124502051078
+    },
+    {
+      "cost_bps": 10.0,
+      "baseline_total_return": 398.42409787306957,
+      "baseline_sharpe": 1.490433452654995,
+      "baseline_max_dd": -0.4882672219843053,
+      "v2_chandelier_total_return": 409.7123084306893,
+      "v2_chandelier_sharpe": 1.520288577157046,
+      "v2_chandelier_max_dd": -0.4882672219843056,
+      "sharpe_delta": 0.029855124502051078
+    },
+    {
+      "cost_bps": 25.0,
+      "baseline_total_return": 355.3041880440643,
+      "baseline_sharpe": 1.490433452654995,
+      "baseline_max_dd": -0.4959265680074033,
+      "v2_chandelier_total_return": 365.37377753208125,
+      "v2_chandelier_sharpe": 1.520288577157046,
+      "v2_chandelier_max_dd": -0.49592656800740287,
+      "sharpe_delta": 0.029855124502051078
+    },
+    {
+      "cost_bps": 50.0,
+      "baseline_total_return": 293.41904006455087,
+      "baseline_sharpe": 1.490433452654995,
+      "baseline_max_dd": -0.5090742527758971,
+      "v2_chandelier_total_return": 301.73968004125135,
+      "v2_chandelier_sharpe": 1.520288577157046,
+      "v2_chandelier_max_dd": -0.5090742527758969,
+      "sharpe_delta": 0.029855124502051078
+    },
+    {
+      "cost_bps": 100.0,
+      "baseline_total_return": 199.73773454777233,
+      "baseline_sharpe": 1.490433452654995,
+      "baseline_max_dd": -0.5445774843716386,
+      "v2_chandelier_total_return": 205.41082694880876,
+      "v2_chandelier_sharpe": 1.520288577157046,
+      "v2_chandelier_max_dd": -0.5445774843716389,
+      "sharpe_delta": 0.029855124502051078
+    }
+  ]
+}
