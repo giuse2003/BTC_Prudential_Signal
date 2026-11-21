@@ -8,6 +8,7 @@ import requests
 
 from hourly_monitor import (
     broadcast_to_subscribers,
+    ping_supabase_keepalive,
     should_force_daily_download,
 )
 from state.state_store import MonitorState
@@ -179,6 +180,35 @@ class WorkflowConcurrencyTests(unittest.TestCase):
         self.assertIn("concurrency:", workflow)
         self.assertIn("group: btc-usd-signal-monitor", workflow)
         self.assertIn("cancel-in-progress: false", workflow)
+
+
+class SupabaseKeepAliveTests(unittest.TestCase):
+    @patch("hourly_monitor.SupabaseSubscriberStore")
+    def test_ping_supabase_keepalive_calls_count_active(self, mock_store_cls: Mock) -> None:
+        mock_store = Mock()
+        mock_store.count_active.return_value = 9
+        mock_store_cls.return_value = mock_store
+
+        result = ping_supabase_keepalive("https://test.supabase.co", "test-key")
+
+        self.assertEqual(result, 9)
+        mock_store_cls.assert_called_once_with("https://test.supabase.co", "test-key")
+        mock_store.count_active.assert_called_once()
+
+    @patch("hourly_monitor.SupabaseSubscriberStore")
+    def test_ping_supabase_keepalive_handles_exceptions_gracefully(self, mock_store_cls: Mock) -> None:
+        mock_store = Mock()
+        mock_store.count_active.side_effect = RuntimeError("Connection timeout")
+        mock_store_cls.return_value = mock_store
+
+        result = ping_supabase_keepalive("https://test.supabase.co", "test-key")
+
+        self.assertIsNone(result)
+
+    def test_ping_supabase_keepalive_skips_when_empty_credentials(self) -> None:
+        self.assertIsNone(ping_supabase_keepalive("", ""))
+        self.assertIsNone(ping_supabase_keepalive("https://test.supabase.co", ""))
+        self.assertIsNone(ping_supabase_keepalive("", "test-key"))
 
 
 if __name__ == "__main__":

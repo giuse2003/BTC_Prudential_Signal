@@ -124,6 +124,20 @@ def broadcast_to_subscribers(
             )
 
 
+def ping_supabase_keepalive(supabase_url: str, supabase_key: str) -> int | None:
+    """Interroga leggermente Supabase per azzerare il timer di inattivita (7 giorni) del Free Tier."""
+    if not supabase_url or not supabase_key:
+        return None
+    try:
+        store = SupabaseSubscriberStore(supabase_url, supabase_key)
+        count = store.count_active()
+        print(f"Supabase keep-alive eseguito con successo (iscritti attivi: {count}).")
+        return count
+    except Exception as exc:
+        print(f"Avviso: ping keep-alive Supabase non riuscito (non bloccante): {exc}")
+        return None
+
+
 def main() -> None:
     now_utc = datetime.now(timezone.utc)
     is_manual = os.environ.get("GITHUB_EVENT_NAME", "").strip() == "workflow_dispatch"
@@ -147,6 +161,9 @@ def main() -> None:
     admin_chat_id = os.environ.get("TELEGRAM_CHAT_ID", "").strip()
     supabase_url = os.environ.get("SUPABASE_URL", "").strip()
     supabase_key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "").strip()
+
+    # Keep-alive per prevenire la pausa automatica di Supabase dopo 7 giorni di inattivita
+    ping_supabase_keepalive(supabase_url, supabase_key)
 
     if not is_manual:
         must_notify, reason = should_send_live_alert(
