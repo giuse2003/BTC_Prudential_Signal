@@ -4,7 +4,7 @@ Registro canonico di provenienza e integrita al byte di tutti i sorgenti Python,
 
 - **Regola di Integrita**: gli hash `SHA-256` sono calcolati sui byte esatti del file.
 - **Verifica Automatica**: eseguire `python tools/verify_manifests.py` per controllare l'integrita crittografica.
-- **Ultimo Aggiornamento**: `2026-11-21 23:03:16 UTC`
+- **Ultimo Aggiornamento**: `2026-11-22 15:37:24 UTC`
 
 | Nome File | Ruolo Architetturale | Bytes | SHA-256 | Percorso Canonico | Stato |
 | :--- | :--- | ---: | :--- | :--- | :---: |
@@ -36,5 +36,8 @@ Registro canonico di provenienza e integrita al byte di tutti i sorgenti Python,
 | `wrangler.jsonc` | Configurazione Cloudflare Worker | 365 | `14479ad160e660de5ac22f34e3115580e16564fb81223e9aeec7ec1b10a848cf` | `cloudflare-worker/wrangler.jsonc` | `CONFIG` |
 | `package.json` | Dipendenze Cloudflare Worker | 217 | `c1a8129e448f0c77052d10ca3746f09de00e5f1e68fe8fbf0f8a287fc928902c` | `cloudflare-worker/package.json` | `CONFIG` |
 | `verify_manifests.py` | Verificatore integrita crittografica | 3,995 | `fbb691b78008580bca2701cd6af5fff947d220a9788d5d9e4958028b2e526025` | `tools/verify_manifests.py` | `TOOL` |
-| `update_manifests.py` | Aggiornatore automatico dei manifesti | 7,534 | `d442f919c8989edb74a372cbf9ade1e7ca4ca9be53d92f775addb82d7e224eaf` | `tools/update_manifests.py` | `TOOL` |
+| `update_manifests.py` | Aggiornatore automatico dei manifesti | 7,831 | `d0e798c5c40525daa541f1e80c8be07b4faac0fba9b74a9de848633dffd2d44d` | `tools/update_manifests.py` | `TOOL` |
+| `run_mt5_test.py` | Runner automazione MT5 Strategy Tester e parsing report | 7,883 | `54528f2d326db976d228333eca4afeeeaf0381319831fa926ce19c67672b7541` | `tools/run_mt5_test.py` | `TOOL` |
+| `BTC_Swing_Sentinel_v100.mq5` | MQL5 Expert Advisor Swing Sentinel v1.00 | 16,497 | `070358fc6b2535d87b7fcdc5f6d4943bfb6b003206337be7a3e54d5b3a5a15c3` | `mt5/src/BTC_Swing_Sentinel_v100.mq5` | `MQL5_EA` |
+| `BTC_Swing_Sentinel_v100.set` | Preset parametri Strategy Tester MT5 | 326 | `c9fe82b071ee8ef129b35b4e97c5f58f0d9c9b4c3c5fc2b80edf4e08f04d39c6` | `mt5/presets/BTC_Swing_Sentinel_v100.set` | `PRESET` |
 | `test_manifests.py` | Test di integrita crittografica manifesti | 1,158 | `cbebaf8b754e164a0347b4a67f2e399bade47440a16459791ddee0f408f088a1` | `tests/test_manifests.py` | `TEST` |

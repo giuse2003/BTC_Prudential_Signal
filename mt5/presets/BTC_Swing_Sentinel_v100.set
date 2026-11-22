@@ -1,0 +1,16 @@
+InpMagic=20261122
+InpTradeComment=BTC_Swing_Sentinel
+InpRsiThreshold=40.0
+InpMomentumDays=7
+InpUseVolumeFilter=true
+InpVolumeMaPeriod=20
+InpUseChandelier=true
+InpStretchRatio=1.50
+InpTrailK=2.50
+InpConsecBelowSMA50=2
+InpLotMode=1
+InpFixedLot=0.10
+InpEquityPct=95.0
+InpCoinbaseFeePct=0.60
+InpShowHUD=false
+InpHUDColor=16766720

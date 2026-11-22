@@ -32,3 +32,7 @@ reports/equity_timeseries.csv
 # GitHub Actions cached state (do not commit)
 .state/
 
+# MT5 temporary compile logs
+mt5/src/*.log
+
+

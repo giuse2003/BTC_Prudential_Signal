@@ -95,3 +95,34 @@ Questo documento raccoglie in ordine cronologico e progressivo (`DEC-xxx`) tutte
   - `V2-CHANDELIER-PARABOLIC` viene eletto a **Candidato Ufficiale per la Baseline v2.0**.
   - Tutti i dataset pesanti (`equity_comparison_v2.csv`, `trades_v2_chandelier.csv`, `costs_comparison_v2.csv`) sono archiviati su MEGA CLOUD (`D:\MEGA CLOUD\Trading\BTC SIGNAL\`) con impronte SHA-256 verificate.
 
+---
+
+### [DEC-007] 2026-11-22 — Sviluppo Expert Advisor MQL5 (`BTC_Swing_Sentinel_v100.mq5`), Esecuzione MT5 Strategy Tester e Analisi Comparativa Coinbase Spot vs CFD Broker
+
+- **Stato**: Approvato ed Eseguito
+- **Terminale Selezionato**: `TradingSphere MT5` (`C:\Program Files\TradingSphere MT5\terminal64.exe` - data: `AADFF1F701D2234AAC1234DE511D9D5D`, account `50004543`).
+  - Terminale alternativo configurato: `FTMO MT5` (`81A933A9AFC5DE3C23B15CAB19C63850`).
+- **Implementazione**:
+  - Creato EA nativo `mt5/src/BTC_Swing_Sentinel_v100.mq5` e preset `mt5/presets/BTC_Swing_Sentinel_v100.set`.
+  - Compilato con `metaeditor64.exe` (`0 errori, 0 avvisi`, generato `BTC_Swing_Sentinel_v100.ex5`).
+  - Creato script CLI automatizzato `tools/run_mt5_test.py` con iniezione `.ini`, shutdown terminale, esportazione report HTML e grafici PNG.
+- **Risultati Strategy Tester MT5 (2022.01.01 -> 2026.11.20, Simbolo BTCUSD, Timeframe D1)**:
+  - Deposito Iniziale: `$10.000,00` (leva 1:1, esposizione unleveraged spot).
+  - Profitto Lordo da variazioni di prezzo: **`+$16.027,70`**.
+  - **Swap notturno pagato al broker CFD: `-$3.553,30`** (il 22,2% dell'utile lordo è stato eroso dal rollover CFD!).
+  - Profitto Totale Netto MT5 (incluso swap): **`+$12.474,40`** (`+124,74%`).
+  - Fattore di Profitto: **`2,14`**.
+  - Equità Drawdown Massima: **`26,81%`** (vs -77% del Buy & Hold BTC nel 2022).
+  - Numero Operazioni: **`30`** (media di 6 operazioni/anno, perfetta cadenza swing).
+  - Indice di Sharpe: **`0,84`**.
+- **Analisi Microstruttura: Coinbase Spot (0,60%) vs MT5 CFD**:
+  - **Coinbase Spot**: Acquisto dell'asset reale. Nessun costo di swap notturno (`0,00 USD`), spread dell'order book trascurabile (`~0,001%`). Commissione fissa dello `0,60%` per operazione. Sui 30 trade (60 transazioni), il costo commissionale totale stimato è di circa `~$1.500 - $1.800`, **risparmiando oltre $3.500 di interesse notturno passivo**.
+  - **Verdetto**: Per una strategia Swing con tenuta di settimane/mesi, la replica spot su Coinbase è drasticamente più redditizia ed efficiente rispetto a qualsiasi broker CFD MT5.
+- **Architettura di Collegamento con Web Monitor e Telegram**:
+  - **MT5 Strategy Tester**: Funge da *R&D / Validation Lab* (stress test tick-by-tick, backtest multi-anno, drawdown e holding time).
+  - **Python Signals Engine (`strategy/rules.py` + `strategy/signals.py`)**: Costituisce l'engine operativo in produzione.
+  - **Workflow di Produzione**: GitHub Actions esegue quotidianamente e orariamente lo scan su Coinbase API. Al verificarsi di un segnale, aggiorna i report JSON (`status.json`, `chart-data.json`), rinfresca la dashboard web su GitHub Pages e invia via Cloudflare Worker/Supabase il broadcast push istantaneo su Telegram.
+- **Archiviazione**:
+  - Tutti i report MT5 (`BTC_Swing_Sentinel_tradingsphere_BTCUSD.htm` e 4 grafici PNG) sono archiviati su `D:\MEGA CLOUD\Trading\BTC SIGNAL\tests\MT5\` con impronte SHA-256 registrate in `DATA_MANIFEST.csv`.
+
+

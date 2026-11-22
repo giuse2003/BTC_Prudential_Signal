@@ -43,6 +43,9 @@ TRACKED_SOURCES = [
     ("cloudflare-worker/package.json", "Dipendenze Cloudflare Worker", "CONFIG"),
     ("tools/verify_manifests.py", "Verificatore integrita crittografica", "TOOL"),
     ("tools/update_manifests.py", "Aggiornatore automatico dei manifesti", "TOOL"),
+    ("tools/run_mt5_test.py", "Runner automazione MT5 Strategy Tester e parsing report", "TOOL"),
+    ("mt5/src/BTC_Swing_Sentinel_v100.mq5", "MQL5 Expert Advisor Swing Sentinel v1.00", "MQL5_EA"),
+    ("mt5/presets/BTC_Swing_Sentinel_v100.set", "Preset parametri Strategy Tester MT5", "PRESET"),
     ("tests/test_manifests.py", "Test di integrita crittografica manifesti", "TEST"),
 ]
 
